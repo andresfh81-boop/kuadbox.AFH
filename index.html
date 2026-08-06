@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Configurador de Placas — KÜADBOX-400</title>
+<meta name="description" content="Configurador de placas y plano técnico para toldos KÜADBOX-400 de LLAZA. Funciona sin conexión.">
+<meta name="theme-color" content="#c0102e">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KÜADBOX">
+<style>
+:root {
+--primary: #c0102e;
+--primary-hover: #a00d26;
+--bg-color: #f4f6f8;
+--panel-bg: #ffffff;
+--text-main: #1f2937;
+--text-muted: #6b7280;
+--border-color: #d1d5db;
+--border-radius: 12px;
+--focus-ring: rgba(192, 16, 46, 0.15);
+--error-bg: #fef2f2;
+--error-border: #fca5a5;
+--success-bg: #f0fdf4;
+--success-border: #86efac;
+}
+
+* { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { margin: 0; background: var(--bg-color); color: var(--text-main); -webkit-font-smoothing: antialiased; line-height: 1.5; }
+
+header { background: var(--primary); color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+header span { font-size: 0.85rem; opacity: 0.9; display: block; margin-top: 2px;}
+
+.lang-selector { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.lang-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; }
+.lang-btn.active { background: rgba(255,255,255,0.25); border-color: #fff; }
+.lang-btn:hover { background: rgba(255,255,255,0.2); }
+
+.wrap { display: flex; gap: 24px; padding: 24px; flex-wrap: wrap; max-width: 1400px; margin: 0 auto; }
+
+.panel { background: var(--panel-bg); border-radius: var(--border-radius); padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05); }
+.panel.form { flex: 1 1 350px; max-width: 500px; }
+.panel.plan { flex: 2 1 600px; min-width: 300px; display: flex; flex-direction: column; }
+
+label { display: block; font-size: 0.85rem; font-weight: 600; margin: 16px 0 6px; color: var(--text-main);}
+input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; transition: all 0.2s ease; background-color: #fff; color: var(--text-main); }
+input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--focus-ring); }
+
+.input-error { border-color: #f87171 !important; background-color: #fef2f2 !important; }
+.input-success { border-color: #34d399 !important; background-color: #f0fdf4 !important; }
+
+.row { display: flex; gap: 16px; flex-wrap: wrap; }
+.row > div { flex: 1; min-width: 140px; }
+
+.brazo-item { display: flex; align-items: center; gap: 12px; background: #f8f9fa; padding: 12px 14px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); flex-wrap: wrap; transition: border-color 0.2s; }
+.brazo-item:focus-within { border-color: #9ca3af; }
+.brazo-item label { margin: 0; min-width: 60px; font-size: 0.9rem; color: var(--text-muted);}
+.brazo-item select, .brazo-item input[type=number] { flex: 1; min-width: 120px; }
+
+button { margin-top: 24px; width: 100%; padding: 14px; background: #1f2937; color: #fff; border: 0; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+button:hover { background: #111827; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+button:active { transform: translateY(0); }
+button.secondary { background: #6b7280; margin-top: 12px; }
+button.secondary:hover { background: #4b5563; }
+button.export { background: #10b981; margin-top: 12px; }
+button.export:hover { background: #059669; }
+button.pdf { background: #2563eb; margin-top: 12px; }
+button.pdf:hover { background: #1d4ed8; }
+
+svg.plano-main { width: 100%; height: auto; display: block; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-render { animation: fadeUp 0.4s ease-out forwards; }
+
+.alert { padding: 14px 16px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 16px; display: flex; gap: 10px; align-items: flex-start; }
+.alert.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.alert.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+
+.plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 12px; flex-wrap: wrap; gap: 12px; }
+.plan-meta { font-size: 0.85rem; text-align: right; color: var(--text-muted); }
+.plan-meta b { color: var(--text-main); }
+
+.terminal-table { margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 14px; }
+.terminal-table h4 { margin: 0 0 10px; font-size: 0.9rem; color: var(--text-main); }
+.terminal-table table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.terminal-table th, .terminal-table td { text-align: left; padding: 6px 10px; border: 1px solid var(--border-color); }
+.terminal-table th { background: #f3f4f6; font-weight: 600; color: var(--text-muted); }
+
+.btn-group { display: flex; gap: 12px; margin-top: 24px; }
+.btn-group > button { flex: 1; margin-top: 0; }
+
+.install-banner { display: none; align-items: center; gap: 10px; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; }
+.install-banner.show { display: flex; }
+.install-banner button { margin: 0; width: auto; padding: 6px 14px; font-size: 0.8rem; background: #ea580c; }
+.install-banner button:hover { background: #c2410c; }
+.offline-banner { display: none; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
+.offline-banner.show { display: block; }
+
+@media (max-width: 768px) {
+.panel.form { max-width: 100%; }
+.plan-meta { text-align: left; }
+.btn-group { flex-direction: column; }
+.lang-selector { margin-left: 0; }
+}
+
+@media print {
+@page { size: landscape; margin: 10mm; }
+header, .panel.form, .no-print, .btn-group, button.secondary, button.export, button.pdf, .lang-selector { display: none !important; }
+body { background: #fff; }
+.wrap { padding: 0; display: block; }
+.panel.plan { box-shadow: none; border: none; width: 100%; padding: 0; display: block; }
+.alert { display: none; }
+#planoOut, #planoContainer { display: block; }
+#planoContainer svg.plano-main { width: auto; height: auto; max-width: 100%; max-height: 140mm; display: block; margin: 0 auto; page-break-inside: avoid; }
+.plan-header { margin-bottom: 4px; padding-bottom: 4px; }
+.plan-header svg { width: 50px; height: auto; }
+.terminal-table { page-break-inside: avoid; margin-top: 8px; padding-top: 6px; }
+.terminal-table h4 { font-size: 11px; margin-bottom: 4px; }
+.terminal-table table { font-size: 9px; }
+.terminal-table th, .terminal-table td { padding: 3px 6px; }
+.plan-meta { font-size: 9px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+<svg width="46" height="34" viewBox="0 0 120 80">
+<ellipse cx="60" cy="40" rx="56" ry="30" fill="none" stroke="#fff" stroke-width="5"/>
+<path d="M14 40 Q60 18 106 40 Q60 62 14 40 Z" fill="#fff"/>
+</svg>
+<div>
+<h1 data-i18n="header.title">Configurador de Placas — KÜADBOX-400</h1>
+<span data-i18n="header.subtitle">LLAZA WORLD · Aux. A>200 · Auxiliar si sep.>4500 · 2 mitades si L>7000</span>
+</div>
+<div class="lang-selector">
+<button class="lang-btn active" data-lang="es">ES</button>
+<button class="lang-btn" data-lang="en">EN</button>
+</div>
+</header>
+
+<div class="wrap">
+<div class="panel form no-print">
+<div id="offlineBanner" class="offline-banner" data-i18n="offline.msg">Sin conexión — la app sigue funcionando con los datos guardados en el dispositivo.</div>
+<div id="installBanner" class="install-banner">
+<span data-i18n="install.msg" style="flex:1;">Instala esta app en tu móvil para usarla sin conexión.</span>
+<button id="btnInstall" data-i18n="install.btn">Instalar</button>
+</div>
+<div class="row">
+<div><label data-i18n="form.pedido" for="pedido">Nº Pedido</label><input id="pedido" type="text" placeholder="Ej. 12345"></div>
+<div><label data-i18n="form.cliente" for="cliente">Cliente</label><input id="cliente" type="text" placeholder="Nombre"></div>
+</div>
+
+<div class="row">
+<div><label data-i18n="form.linea" for="linea">Línea L (mm)</label><input id="linea" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+<div><label data-i18n="form.salida" for="salida">Salida S (mm)</label><input id="salida" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+</div>
+
+<div class="row">
+<div>
+<label data-i18n="form.ladoMotor" for="ladoMotor">Lado motor</label>
+<select id="ladoMotor">
+<option value="izq" data-i18n="form.izquierdo">Izquierdo</option>
+<option value="der" data-i18n="form.derecho">Derecho</option>
+</select>
+</div>
+<div>
+<label data-i18n="form.holgura" for="holgura">Holgura seg. (mm)</label>
+<input id="holgura" type="number" placeholder="0" min="0" inputmode="numeric">
+</div>
+</div>
+
+<label data-i18n="form.numBrazos" for="numBrazos">Número de brazos (2–4)</label>
+<select id="numBrazos">
+<option value="" data-i18n="form.elegir">— Elegir —</option>
+<option value="2" data-i18n="form.2brazos">2 brazos</option>
+<option value="3" data-i18n="form.3brazos">3 brazos</option>
+<option value="4" data-i18n="form.4brazos">4 brazos</option>
+</select>
+
+<div id="brazosContainer"></div>
+
+<div class="btn-group">
+<button id="btnPrint" data-i18n="form.imprimir">🖨 Imprimir plano</button>
+<button id="btnPDF" class="pdf" data-i18n="form.generarPdf">📄 Generar PDF</button>
+<button id="btnExport" class="export" data-i18n="form.exportar">⬇ Exportar PNG</button>
+</div>
+</div>
+
+<div class="panel plan">
+<div id="alertOut"></div>
+<div id="planoOut">
+<div style="text-align: center; color: #888; padding: 40px; font-style: italic;" data-i18n="plan.placeholder">
+Introduce los parámetros de línea, salida y brazos para generar el plano.
+</div>
+</div>
+</div>
+</div>
+
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script>
+// Translation dictionary - Incorporando el inglés técnico oficial de los manuales LLAZA WORLD
+const i18n = {
+es: {
+'header.title': 'Configurador de Placas — KÜADBOX-400',
+'header.subtitle': 'LLAZA WORLD · Aux. A>200 · Auxiliar si sep.>4500 · 2 mitades si L>7000',
+'form.pedido': 'Nº Pedido',
+'form.cliente': 'Cliente',
+'form.linea': 'Línea L (mm)',
+'form.salida': 'Salida S (mm)',
+'form.ladoMotor': 'Lado motor',
+'form.izquierdo': 'Izquierdo',
+'form.derecho': 'Derecho',
+'form.holgura': 'Holgura seg. (mm)',
+'form.numBrazos': 'Número de brazos (2–4)',
+'form.elegir': '— Elegir —',
+'form.2brazos': '2 brazos',
+'form.3brazos': '3 brazos',
+'form.4brazos': '4 brazos',
+'form.imprimir': '🖨 Imprimir plano',
+'form.generarPdf': '📄 Generar PDF',
+'form.exportar': '⬇ Exportar PNG',
+'brazo.label': 'Brazo',
+'brazo.select': '— Lado —',
+'brazo.izq': 'Izq (Roja) → pliega dcha',
+'brazo.der': 'Der (Verde) → pliega izq',
+'brazo.cota': 'Cota en mm',
+'plan.placeholder': 'Introduce los parámetros de línea, salida y brazos para generar el plano.',
+'plan.titulo': 'Plano Técnico Pendiente',
+'plan.desc': 'Introduce los parámetros de línea, salida y brazos para generar el esquema.',
+'alert.colision': 'Riesgo de colisión durante el plegado.',
+'alert.fuera': 'está fuera de la línea principal',
+'alert.partido': 'El toldo debe fabricarse en DOS MITADES.',
+'alert.union': 'Unión de cofre al centro:',
+'plan.motor': 'MOTOR',
+'plan.punta': 'PUNTA',
+'plan.unidad': 'UNIDAD: MILÍMETROS',
+'plan.leyenda.soporte': 'Soporte brazo',
+'plan.leyenda.aux': 'Aux. (A>200)',
+'plan.leyenda.patin': 'Auxiliar (sep>4500)',
+'plan.leyenda.union': 'Placa unión cofre',
+'plan.leyenda.cotas': 'Cotas en mm al centro · Origen: Lado Izq. Visual',
+'plan.terminalCorto': 'Term.',
+'plan.tablaTerminales': 'Cálculo de terminales de brazo',
+'plan.colBrazo': 'Brazo',
+'plan.colLado': 'Lado',
+'plan.colSoporte': 'Cota soporte (mm)',
+'plan.colTerminal': 'Cota terminal (mm)',
+'plan.generado': 'Generado',
+'install.msg': 'Instala esta app en tu móvil para usarla sin conexión.',
+'install.btn': 'Instalar',
+'offline.msg': 'Sin conexión — la app sigue funcionando con los datos guardados en el dispositivo.',
+},
+en: {
+'header.title': 'Plates Configurator — KÜADBOX-400',
+'header.subtitle': 'LLAZA WORLD · Aux. A>200 · Intermediate support if sep.>4500 · 2 halves if L>7000',
+'form.pedido': 'Order No.',
+'form.cliente': 'Customer',
+'form.linea': 'Width L (mm)',
+'form.salida': 'Projection S (mm)',
+'form.ladoMotor': 'Motor side',
+'form.izquierdo': 'Left hand side',
+'form.derecho': 'Right hand side',
+'form.holgura': 'Safety clearance (mm)',
+'form.numBrazos': 'Number of arms (2–4)',
+'form.elegir': '— Choose —',
+'form.2brazos': '2 arms',
+'form.3brazos': '3 arms',
+'form.4brazos': '4 arms',
+'form.imprimir': '🖨 Print drawing',
+'form.generarPdf': '📄 Generate PDF',
+'form.exportar': '⬇ Export PNG',
+'brazo.label': 'Arm',
+'brazo.select': '— Side —',
+'brazo.izq': 'Left (Red band) → folds right',
+'brazo.der': 'Right (Green band) → folds left',
+'brazo.cota': 'Coordinate in mm',
+'plan.placeholder': 'Enter width, projection and arm data to generate the drawing.',
+'plan.titulo': 'Technical Drawing Pending',
+'plan.desc': 'Enter width, projection and arm data to generate the drawing template.',
+'alert.colision': 'Collision risk during folding.',
+'alert.fuera': 'is outside the main width line',
+'alert.partido': 'The awning must be manufactured in TWO HALVES.',
+'alert.union': 'Cassette joining at center:',
+'plan.motor': 'MOTOR SIDE',
+'plan.punta': 'AUTOMATIC BRACKET',
+'plan.unidad': 'UNIT: MILLIMETERS',
+'plan.leyenda.soporte': 'Arm support',
+'plan.leyenda.aux': 'Auxiliary plate (A>200)',
+'plan.leyenda.patin': 'Auxiliary (sep>4500)',
+'plan.leyenda.union': 'Cassette joining plate',
+'plan.leyenda.cotas': 'Dimensions in mm to center · Origin: Left Visual Side',
+'plan.terminalCorto': 'End',
+'plan.tablaTerminales': 'Arm terminal calculation',
+'plan.colBrazo': 'Arm',
+'plan.colLado': 'Side',
+'plan.colSoporte': 'Support position (mm)',
+'plan.colTerminal': 'Terminal position (mm)',
+'plan.generado': 'Generated',
+'install.msg': 'Install this app on your phone to use it offline.',
+'install.btn': 'Install',
+'offline.msg': 'Offline — the app keeps working with data stored on this device.',
+}
+};
+
+let currentLang = 'es';
+
+function t(key) {
+return i18n[currentLang][key] || key;
+}
+
+function setLanguage(lang) {
+currentLang = lang;
+document.documentElement.lang = lang;
+
+// Guardar los valores actuales de los brazos antes de reconstruir la interfaz reactiva
+const savedValues = [];
+document.querySelectorAll('.brazo-item').forEach((item, idx) => {
+const i = idx + 1;
+const lado = document.getElementById(`lado${i}`)?.value || '';
+const cota = document.getElementById(`cota${i}`)?.value || '';
+savedValues.push({ lado, cota });
+});
+
+// Traducir todos los elementos estáticos marcados con data-i18n
+document.querySelectorAll('[data-i18n]').forEach(el => {
+const key = el.getAttribute('data-i18n');
+el.textContent = t(key);
+});
+
+// Cambiar la clase de estado activo en los botones de idioma
+document.querySelectorAll('.lang-btn').forEach(btn => {
+btn.classList.toggle('active', btn.dataset.lang === lang);
+});
+
+// Reconstruir los elementos del contenedor de brazos inyectando el idioma correcto
+const numBrazosVal = document.getElementById('numBrazos').value;
+if (numBrazosVal) {
+App.rebuildBrazosUIWithValues(savedValues);
+}
+
+App.render();
+}
+
+const App = (() => {
+const A_AUX = 200;
+const SEP_PATIN = 4500;
+const L_PARTIDO = 7000;
+const MIN_VISUAL_WIDTH = 300;
+const TERMINAL_OFFSET = 230;
+
+const escapeHtml = (str) => String(str).replace(/[&<>"']/g, ch => ({
+'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[ch]));
+
+const sanitizeFilename = (str) => String(str).replace(/[^a-z0-9_-]+/gi, '_');
+
+const refs = {
+linea: document.getElementById('linea'),
+salida: document.getElementById('salida'),
+numBrazos: document.getElementById('numBrazos'),
+pedido: document.getElementById('pedido'),
+cliente: document.getElementById('cliente'),
+ladoMotor: document.getElementById('ladoMotor'),
+holgura: document.getElementById('holgura'),
+brazosContainer: document.getElementById('brazosContainer'),
+alertOut: document.getElementById('alertOut'),
+planoOut: document.getElementById('planoOut'),
+btnPrint: document.getElementById('btnPrint'),
+btnPDF: document.getElementById('btnPDF'),
+btnExport: document.getElementById('btnExport')
+};
+
+const init = () => {
+['linea', 'salida', 'ladoMotor', 'holgura', 'pedido', 'cliente'].forEach(id => {
+refs[id].addEventListener('input', render);
+});
+
+refs.numBrazos.addEventListener('change', (e) => {
+const newN = +e.target.value || 0;
+const existing = document.querySelectorAll('.brazo-item').length;
+if (newN < existing) {
+const hasData = Array.from({ length: existing }, (_, idx) => idx + 1)
+.some(i => document.getElementById('cota' + i)?.value);
+if (hasData) {
+const msg = currentLang === 'es'
+? 'Vas a reducir el número de brazos. Se perderán los datos de los brazos eliminados. ¿Continuar?'
+: 'You are reducing the number of arms. Data for the removed arms will be lost. Continue?';
+if (!confirm(msg)) {
+e.target.value = existing;
+return;
+}
+}
+}
+buildBrazosUI();
+});
+refs.btnPrint.addEventListener('click', printPlan);
+refs.btnPDF.addEventListener('click', exportPDF);
+refs.btnExport.addEventListener('click', exportPNG);
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+});
+
+render();
+};
+
+const buildBrazosUI = () => {
+const v = refs.numBrazos.value;
+refs.brazosContainer.innerHTML = '';
+
+if (!v) {
+render();
+return;
+}
+
+const n = +v;
+let html = '';
+for (let i = 1; i <= n; i++) {
+html += `
+<div class="brazo-item animate-render" style="animation-delay: ${i * 0.05}s">
+<label>${t('brazo.label')} ${i}</label>
+<select id="lado${i}" class="brazo-input">
+<option value="">${t('brazo.select')}</option>
+<option value="izq">${t('brazo.izq')}</option>
+<option value="der">${t('brazo.der')}</option>
+</select>
+<input id="cota${i}" class="brazo-input" type="number" placeholder="${t('brazo.cota')}" inputmode="numeric">
+</div>`;
+}
+refs.brazosContainer.innerHTML = html;
+
+document.querySelectorAll('.brazo-input').forEach(el => {
+el.addEventListener('input', render);
+});
+
+render();
+};
+
+const rebuildBrazosUIWithValues = (values) => {
+buildBrazosUI();
+values.forEach((val, idx) => {
+const i = idx + 1;
+const ladoEl = document.getElementById(`lado${i}`);
+const cotaEl = document.getElementById(`cota${i}`);
+if (ladoEl) ladoEl.value = val.lado;
+if (cotaEl) cotaEl.value = val.cota;
+});
+document.querySelectorAll('.brazo-input').forEach(el => {
+el.addEventListener('input', render);
+});
+};
+
+const validateInputs = (L, brazos) => {
+let hasError = false;
+const lineaEl = refs.linea;
+const lineaRaw = lineaEl.value;
+if (lineaRaw === '') {
+lineaEl.classList.remove('input-error', 'input-success');
+} else if (L <= 0) {
+lineaEl.classList.add('input-error');
+lineaEl.classList.remove('input-success');
+hasError = true;
+} else {
+lineaEl.classList.remove('input-error');
+lineaEl.classList.add('input-success');
+}
+
+brazos.forEach(b => {
+const input = document.getElementById('cota' + b.n);
+if (!input) return;
+if (b.cota < 0 || b.cota > L || isNaN(b.cota)) {
+input.classList.add('input-error');
+input.classList.remove('input-success');
+hasError = true;
+} else {
+input.classList.remove('input-error');
+input.classList.add('input-success');
+}
+});
+return hasError;
+};
+
+const render = () => {
+const L = +refs.linea.value || 0;
+const S = +refs.salida.value || 0;
+const v = refs.numBrazos.value;
+const n = v ? +v : 0;
+const pedido = escapeHtml(refs.pedido.value || '—');
+const cliente = escapeHtml(refs.cliente.value || '—');
+const ladoMotor = refs.ladoMotor.value;
+const holgura = +refs.holgura.value || 0;
+const brazoRep = S / 2;
+const partido = L > L_PARTIDO;
+
+let brazos = [];
+for (let i = 1; i <= n; i++) {
+const cotaInput = document.getElementById('cota' + i);
+const ladoInput = document.getElementById('lado' + i);
+if (!cotaInput) continue;
+const cota = cotaInput.value;
+const lado = ladoInput.value;
+if (cota === '') continue;
+brazos.push({ i, n: i, cota: +cota, lado });
+}
+brazos.sort((a, b) => a.cota - b.cota);
+
+brazos.forEach(b => {
+if (b.lado) {
+b.terminalCota = b.lado === 'izq'
+? Math.round(b.cota + TERMINAL_OFFSET)
+: Math.round(L - b.cota + TERMINAL_OFFSET);
+}
+});
+
+const hasInputError = validateInputs(L, brazos);
+
+let aux = [];
+if (L > 0 && brazos.length > 0) {
+const prim = brazos[0];
+const ult = brazos[brazos.length - 1];
+if (prim.cota > A_AUX) {
+aux.push({ cota: Math.round(prim.cota / 2) });
+}
+if ((L - ult.cota) > A_AUX) {
+aux.push({ cota: Math.round(ult.cota + (L - ult.cota) / 2) });
+}
+}
+
+let boundaryPoints = brazos.map(b => b.cota);
+if (partido) boundaryPoints.push(L / 2);
+boundaryPoints = [...new Set(boundaryPoints)].sort((a, b) => a - b);
+
+let patines = [];
+for (let i = 1; i < boundaryPoints.length; i++) {
+const sep = boundaryPoints[i] - boundaryPoints[i - 1];
+if (sep > SEP_PATIN) {
+patines.push({ cota: Math.round((boundaryPoints[i - 1] + boundaryPoints[i]) / 2) });
+}
+}
+
+let alerts = [];
+if (L > 0 && S > 0) {
+for (let i = 1; i < brazos.length; i++) {
+const a = brazos[i - 1];
+const b = brazos[i];
+if (!a.lado || !b.lado) continue;
+const sep = b.cota - a.cota;
+const aInv = a.lado === 'izq';
+const bInv = b.lado === 'der';
+let nec, tipo;
+if (aInv && bInv) {
+nec = brazoRep * 2 + holgura;
+tipo = currentLang === 'es' ? 'enfrentados → hueco DOBLE' : 'facing → DOUBLE gap';
+} else if (aInv || bInv) {
+nec = brazoRep + holgura;
+tipo = currentLang === 'es' ? 'un brazo en el hueco' : 'one arm in gap';
+} else {
+nec = holgura;
+tipo = currentLang === 'es' ? 'divergentes' : 'diverging';
+}
+if (sep < nec) {
+alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> gap ${sep} mm < ${Math.round(nec)} mm required.<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.colision')}</span></div>`);
+a.conflict = true;
+b.conflict = true;
+}
+}
+brazos.forEach(b => {
+if (b.cota < 0 || b.cota > L) alerts.push(`<div><b>⚠ P${b.n}</b> ${t('alert.fuera')} (0 – ${L} mm).</div>`);
+});
+}
+
+let warns = [];
+if (partido) warns.push(`<div><b>ℹ L=${L} mm > 7000:</b> ${t('alert.partido')}<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.union')} ${Math.round(L / 2)} mm.</span></div>`);
+
+refs.alertOut.innerHTML =
+(alerts.length ? `<div class="alert err animate-render">${alerts.join('')}</div>` : '') +
+(warns.length ? `<div class="alert warn animate-render">${warns.join('')}</div>` : '');
+
+if (L <= 0 && n === 0) {
+refs.planoOut.innerHTML = `
+<div class="animate-render" style="text-align: center; padding: 60px 20px; border: 2px dashed var(--border-color); border-radius: var(--border-radius); background: #f9fafb; margin-top: auto; margin-bottom: auto;">
+<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 16px; color: #9ca3af;">
+<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+</svg>
+<h3 style="margin: 0 0 8px; color: var(--text-main); font-size: 1.1rem;">${t('plan.titulo')}</h3>
+<p style="margin: 0; font-size: 0.95rem; color: var(--text-muted);">${t('plan.desc')}</p>
+</div>`;
+return;
+}
+
+// Escala dinámica del contenedor SVG
+const marginLeft = 120;
+const marginRight = 120;
+const W = 1000;
+let scale = L > 0 ? (W - marginLeft - marginRight) / L : 0;
+let viewBoxWidth = W;
+if (L > 0) {
+const linePx = L * scale;
+if (linePx < MIN_VISUAL_WIDTH) {
+scale = Math.max(scale, MIN_VISUAL_WIDTH / L);
+viewBoxWidth = marginLeft + L * scale + marginRight;
+}
+}
+
+const yBar = 320;
+let bandas = '', bgLines = '', fgShapes = '', fgTexts = '', cotaLines = '';
+const txtMask = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"';
+
+if (L > 0) {
+for (let i = 0; i < brazos.length - 1; i++) {
+const a = brazos[i];
+const b = brazos[i+1];
+const x1 = marginLeft + a.cota * scale;
+const x2 = marginLeft + b.cota * scale;
+const midX = (x1 + x2) / 2;
+const yCota = yBar - 80;
+cotaLines += `
+<line x1="${x1}" y1="${yCota}" x2="${x2}" y2="${yCota}" stroke="#6b7280" stroke-width="1" stroke-dasharray="3"/>
+<line x1="${x1}" y1="${yCota - 4}" x2="${x1}" y2="${yCota + 4}" stroke="#6b7280" stroke-width="1"/>
+<line x1="${x2}" y1="${yCota - 4}" x2="${x2}" y2="${yCota + 4}" stroke="#6b7280" stroke-width="1"/>
+<text x="${midX}" y="${yCota - 8}" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" ${txtMask}>${b.cota - a.cota} mm</text>
+`;
+}
+
+brazos.forEach(b => {
+const x = marginLeft + b.cota * scale;
+const half = brazoRep * scale;
+const dir = b.lado === 'izq' ? 1 : -1;
+const x2 = x + dir * half;
+const col = b.conflict ? 'rgba(220,53,69,.28)' : 'rgba(0,102,204,.12)';
+if (b.lado) {
+const xTerm = marginLeft + b.terminalCota * scale;
+bandas += `
+<rect x="${Math.min(x, x2)}" y="${yBar - 8}" width="${Math.abs(x2 - x)}" height="16" fill="${col}"/>
+<path d="M${x2} ${yBar} l${dir * -10} -6 l0 12 z" fill="${b.conflict ? '#ef4444' : '#3b82f6'}" opacity=".7"/>
+<circle cx="${xTerm}" cy="${yBar}" r="4" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+<text x="${xTerm}" y="${yBar - 24}" font-size="10" font-weight="bold" fill="#7c3aed" text-anchor="middle" ${txtMask}>${t('plan.terminalCorto')} ${b.terminalCota} mm</text>`;
+}
+});
+
+let visualElements = [];
+if (partido) visualElements.push({ x: marginLeft + (L / 2) * scale, type: 'union', data: { cota: Math.round(L / 2) }, width: 32 });
+aux.forEach(a => visualElements.push({ x: marginLeft + a.cota * scale, type: 'aux', data: a, width: 28 }));
+patines.forEach(p => visualElements.push({ x: marginLeft + p.cota * scale, type: 'patin', data: p, width: 28 }));
+brazos.forEach(b => visualElements.push({ x: marginLeft + b.cota * scale, type: 'brazo', data: b, width: 42 }));
+
+visualElements.sort((a, b) => a.x - b.x);
+
+let lanes = [];
+visualElements.forEach(el => {
+let placed = false;
+const spaceNeeded = el.width + 12;
+for (let i = 0; i < lanes.length; i++) {
+if (!lanes[i] || lanes[i] < el.x - spaceNeeded / 2) {
+el.lane = i;
+lanes[i] = el.x + spaceNeeded / 2;
+placed = true;
+break;
+}
+}
+if (!placed) {
+el.lane = lanes.length;
+lanes.push(el.x + spaceNeeded / 2);
+}
+});
+
+visualElements.forEach(el => {
+const x = el.x;
+const dyMap = [0, -150, 150, -300, 300];
+const dy = dyMap[el.lane] || 0;
+const yB = yBar + dy;
+
+if (dy !== 0) {
+bgLines += `<line x1="${x}" y1="${yB}" x2="${x}" y2="${yBar}" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4"/>`;
+bgLines += `<circle cx="${x}" cy="${yBar}" r="3.5" fill="#fff" stroke="#6b7280" stroke-width="1.5"/>`;
+}
+
+if (el.type === 'union') {
+const unionText = currentLang === 'es' ? 'PLACA UNIÓN COFRE' : 'CASSETTE JOINING PLATE';
+const uColor = '#e69500';
+fgShapes += `
+<rect x="${x - 24}" y="${yB - 55}" width="48" height="74" rx="3" fill="#ffffff" stroke="${uColor}" stroke-width="2" filter="url(#shadow)"/>
+<rect x="${x - 24}" y="${yB - 55}" width="48" height="8" rx="2" fill="#fff5e6" stroke="${uColor}" stroke-width="1"/>
+<line x1="${x - 24}" y1="${yB - 47}" x2="${x + 24}" y2="${yB - 47}" stroke="#f3d19e" stroke-width="1"/>
+<rect x="${x - 24}" y="${yB - 14}" width="48" height="7" fill="#fffaf0" stroke="#f3d19e" stroke-width="1"/>
+<line x1="${x - 24}" y1="${yB - 7}" x2="${x + 24}" y2="${yB - 7}" stroke="#e0b374" stroke-width="1" opacity="0.6"/>
+<path d="M${x - 24},${yB + 10} h48 v7 a2,2 0 0 1 -2,2 h-44 a2,2 0 0 1 -2,-2 z" fill="#fdeacc" stroke="${uColor}" stroke-width="1.5"/>
+<line x1="${x - 20}" y1="${yB + 14}" x2="${x + 20}" y2="${yB + 14}" stroke="#e0b374" stroke-width="1" stroke-dasharray="2"/>
+<rect x="${x - 15}" y="${yB - 37}" width="10" height="6" rx="3" fill="#7a4a00" />
+<rect x="${x + 5}" y="${yB - 37}" width="10" height="6" rx="3" fill="#7a4a00" />
+<rect x="${x - 15}" y="${yB - 1}" width="10" height="6" rx="3" fill="#7a4a00" />
+<rect x="${x + 5}" y="${yB - 1}" width="10" height="6" rx="3" fill="#7a4a00" />
+<rect x="${x - 16}" y="${yB + 3}" width="32" height="7" rx="3" fill="#e0b374" stroke="#a97c3f" stroke-width="1"/>
+<line x1="${x}" y1="${yB - 60}" x2="${x}" y2="${yB + 50}" stroke="#9ca3af" stroke-dasharray="4" stroke-width="1.5"/>
+<rect x="${x - 14}" y="${yB - 84}" width="28" height="22" rx="4" fill="${uColor}" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>`;
+fgTexts += `
+<text x="${x}" y="${yB - 68}" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">U</text>
+<text x="${x}" y="${yB - 94}" font-size="10" font-weight="600" fill="#4b5563" text-anchor="middle" ${txtMask}>${unionText}</text>
+<text x="${x}" y="${yB + 80}" font-size="14" font-weight="bold" fill="${uColor}" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="10" font-weight="normal">mm</tspan></text>`;
+}
+else if (el.type === 'aux') {
+fgShapes += `
+<rect x="${x - 14}" y="${yB - 48}" width="28" height="56" rx="3" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+<rect x="${x - 14}" y="${yB - 48}" width="28" height="6" rx="2" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1"/>
+<path d="M${x - 14},${yB + 2} h28 v6 a2,2 0 0 1 -2,2 h-24 a2,2 0 0 1 -2,-2 z" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<rect x="${x - 4}" y="${yB - 34}" width="8" height="12" rx="4" fill="#1e3a8a" />
+<rect x="${x - 4}" y="${yB - 10}" width="8" height="12" rx="4" fill="#1e3a8a" />`;
+fgTexts += `
+<text x="${x}" y="${yB - 56}" font-size="10" fill="#2563eb" text-anchor="middle" font-weight="600" ${txtMask}>AUX</text>
+<text x="${x}" y="${yB + 72}" font-size="12" font-weight="bold" fill="#2563eb" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>`;
+}
+else if (el.type === 'patin') {
+fgShapes += `
+<rect x="${x - 14}" y="${yB - 48}" width="28" height="56" rx="3" fill="#ecfdf5" stroke="#10b981" stroke-width="2" filter="url(#shadow)"/>
+<rect x="${x - 14}" y="${yB - 48}" width="28" height="6" rx="2" fill="#a7f3d0" stroke="#10b981" stroke-width="1"/>
+<path d="M${x - 14},${yB + 2} h28 v6 a2,2 0 0 1 -2,2 h-24 a2,2 0 0 1 -2,-2 z" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+<rect x="${x - 4}" y="${yB - 34}" width="8" height="12" rx="4" fill="#064e3b" />
+<rect x="${x - 4}" y="${yB - 10}" width="8" height="12" rx="4" fill="#064e3b" />`;
+fgTexts += `
+<text x="${x}" y="${yB - 56}" font-size="10" fill="#059669" text-anchor="middle" font-weight="600" ${txtMask}>${currentLang === 'es' ? 'AUXILIAR' : 'AUXILIARY'}</text>
+<text x="${x}" y="${yB + 72}" font-size="12" font-weight="bold" fill="#059669" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>`;
+}
+else if (el.type === 'brazo') {
+const b = el.data;
+const color = b.lado === 'der' ? '#10b981' : (b.lado === 'izq' ? '#ef4444' : '#9ca3af');
+const letra = b.lado === 'der' ? (currentLang === 'es' ? 'D' : 'R') : (b.lado === 'izq' ? (currentLang === 'es' ? 'I' : 'L') : '?');
+const stroke = b.conflict ? '#ef4444' : '#1f2937';
+const sw = b.conflict ? 3 : 2;
+
+fgShapes += `
+<rect x="${x - 24}" y="${yB - 55}" width="48" height="74" rx="3" fill="#ffffff" stroke="${stroke}" stroke-width="${sw}" filter="url(#shadow)"/>
+<rect x="${x - 24}" y="${yB - 55}" width="48" height="8" rx="2" fill="#f1f5f9" stroke="${stroke}" stroke-width="1"/>
+<line x1="${x - 24}" y1="${yB - 47}" x2="${x + 24}" y2="${yB - 47}" stroke="#cbd5e1" stroke-width="1"/>
+<rect x="${x - 24}" y="${yB - 14}" width="48" height="7" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+<line x1="${x - 24}" y1="${yB - 7}" x2="${x + 24}" y2="${yB - 7}" stroke="#94a3b8" stroke-width="1" opacity="0.6"/>
+<path d="M${x - 24},${yB + 10} h48 v7 a2,2 0 0 1 -2,2 h-44 a2,2 0 0 1 -2,-2 z" fill="#e2e8f0" stroke="${stroke}" stroke-width="1.5"/>
+<line x1="${x - 20}" y1="${yB + 14}" x2="${x + 20}" y2="${yB + 14}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2"/>
+<rect x="${x - 15}" y="${yB - 37}" width="10" height="6" rx="3" fill="#1e293b" />
+<rect x="${x + 5}" y="${yB - 37}" width="10" height="6" rx="3" fill="#1e293b" />
+<rect x="${x - 15}" y="${yB - 1}" width="10" height="6" rx="3" fill="#1e293b" />
+<rect x="${x + 5}" y="${yB - 1}" width="10" height="6" rx="3" fill="#1e293b" />
+<rect x="${x - 16}" y="${yB + 3}" width="32" height="7" rx="3" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+<line x1="${x}" y1="${yB - 60}" x2="${x}" y2="${yB + 50}" stroke="#9ca3af" stroke-dasharray="4" stroke-width="1.5"/>
+<rect x="${x - 14}" y="${yB - 84}" width="28" height="22" rx="4" fill="${color}" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>`;
+
+let warnIcon = '';
+if (b.conflict) {
+warnIcon = `<text x="${x}" y="${yB - 72}" font-size="18" text-anchor="middle" fill="#ef4444" stroke="#fff" stroke-width="2" paint-order="stroke">⚠</text>`;
+}
+
+fgTexts += `
+${warnIcon}
+<text x="${x}" y="${yB - 68}" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">${letra}</text>
+<text x="${x}" y="${yB - 94}" font-size="12" font-weight="600" fill="#4b5563" text-anchor="middle" ${txtMask}>P${b.n}</text>
+<text x="${x}" y="${yB + 80}" font-size="14" font-weight="bold" fill="#c0102e" text-anchor="middle" ${txtMask}>${b.cota} <tspan font-size="10" font-weight="normal">mm</tspan></text>`;
+}
+});
+}
+
+const motorTxt = ladoMotor === 'izq' ? `◄ ${t('plan.motor')}` : `◄ ${t('plan.punta')}`;
+const puntaTxt = ladoMotor === 'izq' ? `${t('plan.punta')} ►` : `${t('plan.motor')} ►`;
+const Ltxt = L > 0 ? L : '—';
+
+let terminalTableHtml = '';
+const brazosConLado = brazos.filter(b => b.lado);
+if (brazosConLado.length) {
+const rows = brazosConLado.map(b => `
+<tr>
+<td>P${b.n}</td>
+<td>${b.lado === 'izq' ? t('brazo.izq') : t('brazo.der')}</td>
+<td>${b.cota} mm</td>
+<td>${b.terminalCota} mm</td>
+</tr>`).join('');
+terminalTableHtml = `
+<div class="terminal-table animate-render">
+<h4>${t('plan.tablaTerminales')}</h4>
+<table>
+<thead><tr><th>${t('plan.colBrazo')}</th><th>${t('plan.colLado')}</th><th>${t('plan.colSoporte')}</th><th>${t('plan.colTerminal')}</th></tr></thead>
+<tbody>${rows}</tbody>
+</table>
+</div>`;
+}
+
+refs.planoOut.innerHTML = `
+<div class="animate-render" id="planoContainer">
+<div class="plan-header">
+<svg width="70" height="26" viewBox="0 0 200 60">
+<ellipse cx="40" cy="30" rx="36" ry="20" fill="none" stroke="#c0102e" stroke-width="4"/>
+<path d="M8 30 Q40 16 72 30 Q40 44 8 30 Z" fill="#c0102e"/>
+<text x="86" y="42" font-size="34" font-weight="bold" fill="#333" font-family="Arial">LLAZA</text>
+</svg>
+<div class="plan-meta">
+<span class="no-print"><b>KÜADBOX-400</b> · </span>L=<b>${Ltxt}</b> mm · S=<b>${S || '—'}</b> mm · <b>${n || '—'}</b> ${n === 1 ? (currentLang === 'es' ? 'brazo' : 'arm') : (currentLang === 'es' ? 'brazos' : 'arms')} <span class="no-print">${partido ? '<span style="color:#c0102e;font-weight:bold;">· (' + (currentLang === 'es' ? '2 MITADES' : '2 HALVES') + ')</span>' : ''}</span><br>
+<span>${currentLang === 'es' ? 'Pedido' : 'Order'}: <b>${pedido}</b> · ${currentLang === 'es' ? 'Cliente' : 'Customer'}: <b>${cliente}</b></span><br>
+<span class="no-print">${t('plan.generado')}: <b>${new Date().toLocaleString(currentLang === 'es' ? 'es-ES' : 'en-GB')}</b></span>
+</div>
+</div>
+
+<svg class="plano-main" viewBox="0 0 ${viewBoxWidth} 650" xmlns="http://www.w3.org/2000/svg" style="border:1px solid var(--border-color);border-radius:12px;background:#fff;box-shadow:inset 0 0 20px rgba(0,0,0,0.01);">
+<defs>
+<pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f9fafb" stroke-width="1"/>
+</pattern>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+<feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.12" flood-color="#1f2937"/>
+</filter>
+</defs>
+<rect width="100%" height="100%" fill="url(#grid)" />
+
+<rect x="14" y="14" width="160" height="24" rx="4" fill="#f3f4f6" stroke="#d1d5db" stroke-width="1" />
+<text x="94" y="30" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" letter-spacing="1">${t('plan.unidad')}</text>
+
+${bandas}
+
+<line x1="${marginLeft}" y1="${yBar}" x2="${viewBoxWidth - marginRight}" y2="${yBar}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>
+<line x1="${marginLeft}" y1="${yBar - 16}" x2="${marginLeft}" y2="${yBar + 16}" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>
+<line x1="${viewBoxWidth - marginRight}" y1="${yBar - 16}" x2="${viewBoxWidth - marginRight}" y2="${yBar + 16}" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>
+
+<text x="${marginLeft - 14}" y="${yBar + 4}" font-size="13" font-weight="bold" fill="#c0102e" text-anchor="end">${motorTxt}</text>
+<text x="${viewBoxWidth - marginRight + 14}" y="${yBar + 4}" font-size="13" font-weight="bold" fill="#c0102e" text-anchor="start">${puntaTxt}</text>
+
+<text x="${marginLeft - 14}" y="${yBar + 24}" font-size="13" font-weight="bold" fill="#6b7280" text-anchor="end">0 mm</text>
+<text x="${viewBoxWidth - marginRight + 14}" y="${yBar + 24}" font-size="13" font-weight="bold" fill="#6b7280" text-anchor="start">${Ltxt > 0 ? Ltxt + ' mm' : '—'}</text>
+
+${cotaLines}
+${bgLines}
+${fgShapes}
+${fgTexts}
+
+<g transform="translate(0, -5)">
+<rect x="${marginLeft}" y="${610}" width="14" height="14" rx="3" fill="#fff" stroke="#1f2937" stroke-width="2"/><text x="${marginLeft + 22}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.soporte')}</text>
+<rect x="${marginLeft + 130}" y="${610}" width="14" height="14" rx="3" fill="#eef6ff" stroke="#3b82f6" stroke-width="2"/><text x="${marginLeft + 152}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.aux')}</text>
+<rect x="${marginLeft + 250}" y="${610}" width="14" height="14" rx="3" fill="#e6fff0" stroke="#10b981" stroke-width="2"/><text x="${marginLeft + 272}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.patin')}</text>
+<rect x="${marginLeft + 390}" y="${610}" width="14" height="14" rx="3" fill="#fff5e6" stroke="#e69000" stroke-width="2"/><text x="${marginLeft + 412}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.union')}</text>
+<text x="${viewBoxWidth - marginRight}" y="${620}" font-size="12" font-weight="bold" fill="#6b7280" text-anchor="end">${t('plan.leyenda.cotas')}</text>
+</g>
+</svg>
+${terminalTableHtml}
+</div>`;
+};
+
+const printPlan = () => {
+const original = document.title;
+document.title = `KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}`;
+window.print();
+document.title = original;
+};
+
+const exportPNG = () => {
+const element = document.getElementById('planoContainer');
+if (!element) {
+alert(currentLang === 'es' ? 'Primero genera el plano.' : 'Generate the drawing first.');
+return;
+}
+if (typeof html2canvas === 'undefined') {
+alert(currentLang === 'es'
+? 'No se pudo cargar el módulo de exportación PNG. Puedes usar "Imprimir / PDF".'
+: 'The PNG export module could not be loaded. You can use "Print / PDF".');
+return;
+}
+html2canvas(element, {
+scale: 2,
+useCORS: true,
+backgroundColor: '#ffffff'
+}).then(canvas => {
+const link = document.createElement('a');
+link.download = `KUADBOX400_${sanitizeFilename(refs.pedido.value || 'drawing')}.png`;
+link.href = canvas.toDataURL('image/png');
+link.click();
+}).catch(err => {
+console.error(err);
+alert(currentLang === 'es' ? 'Error al exportar la imagen.' : 'Error exporting image.');
+});
+};
+
+const exportPDF = () => {
+const element = document.getElementById('planoContainer');
+if (!element) {
+alert(currentLang === 'es' ? 'Primero genera el plano.' : 'Generate the drawing first.');
+return;
+}
+if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+alert(currentLang === 'es'
+? 'No se pudo cargar el módulo de generación de PDF. Puedes usar "Imprimir plano" y elegir "Guardar como PDF" en el diálogo de impresión.'
+: 'The PDF generation module could not be loaded. You can use "Print drawing" and choose "Save as PDF" in the print dialog.');
+return;
+}
+html2canvas(element, {
+scale: 2,
+useCORS: true,
+backgroundColor: '#ffffff'
+}).then(canvas => {
+const { jsPDF } = window.jspdf;
+const imgData = canvas.toDataURL('image/png');
+const pdf = new jsPDF({
+orientation: canvas.width >= canvas.height ? 'landscape' : 'portrait',
+unit: 'px',
+format: [canvas.width, canvas.height]
+});
+pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+pdf.save(`KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}.pdf`);
+}).catch(err => {
+console.error(err);
+alert(currentLang === 'es' ? 'Error al generar el PDF.' : 'Error generating the PDF.');
+});
+};
+
+return { init, rebuildBrazosUIWithValues, render };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);
+
+// --- PWA: instalación y estado offline ---
+if ('serviceWorker' in navigator) {
+window.addEventListener('load', () => {
+navigator.serviceWorker.register('sw.js').catch(err => console.error('SW error:', err));
+});
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+e.preventDefault();
+deferredPrompt = e;
+document.getElementById('installBanner').classList.add('show');
+});
+
+document.getElementById('btnInstall').addEventListener('click', async () => {
+if (!deferredPrompt) return;
+deferredPrompt.prompt();
+await deferredPrompt.userChoice;
+deferredPrompt = null;
+document.getElementById('installBanner').classList.remove('show');
+});
+
+window.addEventListener('appinstalled', () => {
+document.getElementById('installBanner').classList.remove('show');
+});
+
+const updateOfflineBanner = () => {
+document.getElementById('offlineBanner').classList.toggle('show', !navigator.onLine);
+};
+window.addEventListener('online', updateOfflineBanner);
+window.addEventListener('offline', updateOfflineBanner);
+updateOfflineBanner();
+</script>
+</body>
+</html>
