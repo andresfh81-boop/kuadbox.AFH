@@ -526,8 +526,10 @@ return 0;
 // hacia la izquierda.
 const huecoPlegado = (ladoA, ladoB, R, holgura) =>
 (ladoA === 'izq' ? R : 0) + (ladoB === 'der' ? R : 0) + holgura;
+// La holgura se suma encima del mínimo que mande (plegado o manual): por defecto 0; si en
+// taller aparece una colisión, se sube la holgura en el plano y se revisa.
 const huecoNecesario = (ladoA, ladoB, S, R, holgura) =>
-Math.max(huecoPlegado(ladoA, ladoB, R, holgura), huecoMinimoManual(ladoA, ladoB, S));
+Math.max(huecoPlegado(ladoA, ladoB, R, 0), huecoMinimoManual(ladoA, ladoB, S)) + holgura;
 // Lados de los brazos según el manual: 3 brazos Izq-Izq-Der, 4 brazos Izq-Izq-Der-Der.
 const LADOS_MANUAL = { 2: ['izq', 'der'], 3: ['izq', 'izq', 'der'], 4: ['izq', 'izq', 'der', 'der'] };
 const MITAD_SOPORTE = 27;
@@ -780,14 +782,14 @@ tipo = currentLang === 'es' ? 'un brazo en el hueco' : 'one arm in gap';
 } else {
 tipo = currentLang === 'es' ? 'divergentes' : 'diverging';
 }
-const necPlegado = huecoPlegado(a.lado, b.lado, brazoRep, holgura);
+const necPlegado = huecoPlegado(a.lado, b.lado, brazoRep, 0);
 const necManual = huecoMinimoManual(a.lado, b.lado, S);
-const nec = Math.max(necPlegado, necManual);
+const nec = Math.max(necPlegado, necManual) + holgura;
 if (sep < nec) {
 const motivo = necManual >= necPlegado
 ? `${t('alert.minManual')} ${aInv && bInv ? 'B' : 'C'}min = ${Math.round(necManual)} mm`
 : `${t('alert.brazoOnyx')}: ${brazoRep} mm`;
-alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> ${sep} mm < ${Math.round(nec)} mm (${motivo}).<br><span style="font-size:0.85em; opacity:0.9;">${t(necManual >= necPlegado ? 'alert.bajoManual' : 'alert.colision')}</span></div>`);
+alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> ${sep} mm < ${Math.round(nec)} mm (${motivo}${holgura ? ` + holgura ${holgura} mm` : ''}).<br><span style="font-size:0.85em; opacity:0.9;">${t(necManual >= necPlegado ? 'alert.bajoManual' : 'alert.colision')}</span></div>`);
 a.conflict = true;
 b.conflict = true;
 }
