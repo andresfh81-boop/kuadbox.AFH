@@ -526,10 +526,15 @@ return 0;
 // hacia la izquierda.
 const huecoPlegado = (ladoA, ladoB, R, holgura) =>
 (ladoA === 'izq' ? R : 0) + (ladoB === 'der' ? R : 0) + holgura;
-// La holgura se suma encima del mínimo que mande (plegado o manual): por defecto 0; si en
-// taller aparece una colisión, se sube la holgura en el plano y se revisa.
+// Holgura (criterio de Andrés, 25-sep-2026): por defecto 0. Solo se suma al hueco donde
+// se pliegan dos brazos uno contra otro (Izq → Der), que es donde chocan brazo con brazo.
+// Al cambiarla, los soportes interiores se recolocan solos (los extremos no se tocan):
+// ese hueco se abre y los demás ceden espacio sin bajar de su mínimo. Si no cabe, no se
+// mueve nada y salta el aviso de colisión.
+const esEnfrentado = (ladoA, ladoB) => ladoA === 'izq' && ladoB === 'der';
 const huecoNecesario = (ladoA, ladoB, S, R, holgura) =>
-Math.max(huecoPlegado(ladoA, ladoB, R, 0), huecoMinimoManual(ladoA, ladoB, S)) + holgura;
+Math.max(huecoPlegado(ladoA, ladoB, R, 0), huecoMinimoManual(ladoA, ladoB, S))
++ (esEnfrentado(ladoA, ladoB) ? holgura : 0);
 // Lados de los brazos según el manual: 3 brazos Izq-Izq-Der, 4 brazos Izq-Izq-Der-Der.
 const LADOS_MANUAL = { 2: ['izq', 'der'], 3: ['izq', 'izq', 'der'], 4: ['izq', 'izq', 'der', 'der'] };
 const MITAD_SOPORTE = 27;
@@ -595,6 +600,7 @@ buildBrazosUI();
 refs.btnPrint.addEventListener('click', () => printPlan(false));
 refs.btnPrintTaller.addEventListener('click', () => printPlan(true));
 refs.btnSugerirBrazos.addEventListener('click', sugerirSoportesBrazo);
+refs.holgura.addEventListener('input', () => { if (recolocarInteriores()) render(); });
 refs.btnVerCliente.addEventListener('click', () => setVistaTaller(false));
 refs.btnVerTaller.addEventListener('click', () => setVistaTaller(true));
 refs.btnPDF.addEventListener('click', exportPDF);
@@ -784,12 +790,13 @@ tipo = currentLang === 'es' ? 'divergentes' : 'diverging';
 }
 const necPlegado = huecoPlegado(a.lado, b.lado, brazoRep, 0);
 const necManual = huecoMinimoManual(a.lado, b.lado, S);
-const nec = Math.max(necPlegado, necManual) + holgura;
+const holguraHueco = esEnfrentado(a.lado, b.lado) ? holgura : 0;
+const nec = Math.max(necPlegado, necManual) + holguraHueco;
 if (sep < nec) {
 const motivo = necManual >= necPlegado
 ? `${t('alert.minManual')} ${aInv && bInv ? 'B' : 'C'}min = ${Math.round(necManual)} mm`
 : `${t('alert.brazoOnyx')}: ${brazoRep} mm`;
-alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> ${sep} mm < ${Math.round(nec)} mm (${motivo}${holgura ? ` + holgura ${holgura} mm` : ''}).<br><span style="font-size:0.85em; opacity:0.9;">${t(necManual >= necPlegado ? 'alert.bajoManual' : 'alert.colision')}</span></div>`);
+alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> ${sep} mm < ${Math.round(nec)} mm (${motivo}${holguraHueco ? ` + holgura ${holguraHueco} mm` : ''}).<br><span style="font-size:0.85em; opacity:0.9;">${t(necManual >= necPlegado ? 'alert.bajoManual' : 'alert.colision')}</span></div>`);
 a.conflict = true;
 b.conflict = true;
 }
@@ -1190,6 +1197,33 @@ const huecos = minimos.map(m => Math.max(Math.ceil(m), base));
 let resto = total - huecos.reduce((a, b) => a + b, 0);
 for (let i = 0; resto > 0 && i < huecos.length; i++) { if (huecos[i] === base) { huecos[i]++; resto--; } }
 return huecos;
+};
+
+// Recoloca los soportes interiores entre los dos extremos actuales (ver huecoNecesario).
+// Devuelve true si ha movido algo.
+const recolocarInteriores = () => {
+const L = +refs.linea.value || 0;
+const S = +refs.salida.value || 0;
+const n = +refs.numBrazos.value || 0;
+if (L <= 0 || S <= 0 || n < 3) return false;
+const lados = [], cotas = [];
+for (let i = 1; i <= n; i++) {
+lados.push(document.getElementById('lado' + i)?.value || '');
+cotas.push(document.getElementById('cota' + i)?.value);
+}
+if (lados.some(l => !l) || cotas.some(c => c === '' || c == null)) return false;
+const c = cotas.map(Number);
+for (let i = 1; i < n; i++) if (c[i] <= c[i - 1]) return false;
+const R = getBrazoPlegadoReal(S);
+const holgura = +refs.holgura.value || 0;
+const minimos = [];
+for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, holgura));
+const total = c[n - 1] - c[0];
+if (minimos.reduce((a, m) => a + Math.ceil(m), 0) > total) return false;
+const huecos = repartirHuecos(total, minimos);
+let pos = c[0];
+for (let i = 1; i < n - 1; i++) { pos += huecos[i - 1]; document.getElementById('cota' + (i + 1)).value = pos; }
+return true;
 };
 
 const sugerirSoportesBrazo = () => {
