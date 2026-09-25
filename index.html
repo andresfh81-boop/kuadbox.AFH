@@ -101,6 +101,16 @@ svg.plano-main { width: 100%; height: auto; display: block; }
 .offline-banner { display: none; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
 .offline-banner.show { display: block; }
 
+/* Vista Cliente / Taller: los elementos .solo-taller solo se ven (y se imprimen) con
+   body.view-taller; los .solo-cliente, al revés. Sirve igual para SVG y para HTML. */
+body:not(.view-taller) .solo-taller, body.view-taller .solo-cliente { display: none !important; }
+.vista-toggle { display: flex; gap: 8px; margin-right: auto; }
+.view-toggle-btn { margin-top: 0; width: auto; padding: 6px 14px; font-size: 0.85rem; background: #e5e7eb; color: #374151; border: 1px solid var(--border-color); }
+.view-toggle-btn:hover { background: #d1d5db; }
+.view-toggle-btn.active, .view-toggle-btn.active:hover { background: #1f2937; color: #fff; }
+.taller-banner { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; font-weight: 600; margin-bottom: 10px; }
+@media print { .taller-banner { font-size: 9px; padding: 2px 6px; margin-bottom: 4px; } }
+
 /* Subir presupuesto de LLAZA (OCR) */
 button.presup { margin-top: 0; background: #6b7280; }
 button.presup:hover { background: #4b5563; }
@@ -112,7 +122,7 @@ button.presup:disabled { opacity: .7; cursor: wait; transform: none; }
 #ocrDebugText { width: 100%; margin-top: 4px; font-family: monospace; font-size: 0.7rem; }
 
 /* Ampliar plano: botón, clic sobre el plano y vista a pantalla completa */
-.plano-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.plano-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .btn-zoom-plano { margin-top: 0; width: auto; padding: 6px 14px; font-size: 0.85rem; background: #6b7280; }
 .btn-zoom-plano:hover { background: #4b5563; }
 svg.plano-main { cursor: zoom-in; }
@@ -219,7 +229,8 @@ body { background: #fff; }
 <div id="brazosContainer"></div>
 
 <div class="btn-group">
-<button id="btnPrint" data-i18n="form.imprimir">🖨 Imprimir plano</button>
+<button id="btnPrint" data-i18n="form.imprimir">🖨 Imprimir (Cliente)</button>
+<button id="btnPrintTaller" class="secondary" data-i18n="form.imprimirTaller">🖨 Imprimir (Taller)</button>
 <button id="btnPDF" class="pdf" data-i18n="form.generarPdf">📄 Generar PDF</button>
 <button id="btnExport" class="export" data-i18n="form.exportar">⬇ Exportar PNG</button>
 </div>
@@ -228,6 +239,10 @@ body { background: #fff; }
 <div class="panel plan">
 <div id="alertOut"></div>
 <div class="plano-toolbar no-print">
+<div class="vista-toggle">
+<button id="btnVerCliente" class="view-toggle-btn active" type="button" data-i18n="vista.cliente">👤 Cliente</button>
+<button id="btnVerTaller" class="view-toggle-btn" type="button" data-i18n="vista.taller">🔧 Taller</button>
+</div>
 <button id="btnAmpliarPlano" class="btn-zoom-plano" type="button" data-i18n="plan.ampliar">🔍 Ampliar plano</button>
 </div>
 <div id="planoOut">
@@ -264,7 +279,18 @@ es: {
 'form.2brazos': '2 brazos',
 'form.3brazos': '3 brazos',
 'form.4brazos': '4 brazos',
-'form.imprimir': '🖨 Imprimir plano',
+'form.imprimir': '🖨 Imprimir (Cliente)',
+'form.imprimirTaller': '🖨 Imprimir (Taller)',
+'vista.cliente': '👤 Cliente',
+'vista.taller': '🔧 Taller',
+'taller.banner': '🔧 COPIA TALLER · Cotas sobre perfil SIN tapa (−20 mm) · Soporte brazo: marca al BORDE (±27 mm) · Terminal: al CENTRO',
+'taller.leyenda': 'Taller: origen extremo del perfil sin tapa',
+'taller.desdeIzq': 'desde extremo IZQ.',
+'taller.desdeDer': 'desde extremo DER.',
+'taller.bordeIzq': 'borde izq.',
+'taller.bordeDer': 'borde der.',
+'taller.colSoporte': 'Soporte taller (mm, al borde, sin tapa)',
+'taller.colTerminal': 'Terminal taller (mm, al centro, sin tapa)',
 'form.generarPdf': '📄 Generar PDF',
 'form.exportar': '⬇ Exportar PNG',
 'brazo.label': 'Brazo',
@@ -323,7 +349,18 @@ en: {
 'form.2brazos': '2 arms',
 'form.3brazos': '3 arms',
 'form.4brazos': '4 arms',
-'form.imprimir': '🖨 Print drawing',
+'form.imprimir': '🖨 Print (Customer)',
+'form.imprimirTaller': '🖨 Print (Workshop)',
+'vista.cliente': '👤 Customer',
+'vista.taller': '🔧 Workshop',
+'taller.banner': '🔧 WORKSHOP COPY · Dimensions on profile WITHOUT side cap (−20 mm) · Arm support: mark at EDGE (±27 mm) · Terminal: at CENTER',
+'taller.leyenda': 'Workshop: origin at profile end without cap',
+'taller.desdeIzq': 'from LEFT end',
+'taller.desdeDer': 'from RIGHT end',
+'taller.bordeIzq': 'left edge',
+'taller.bordeDer': 'right edge',
+'taller.colSoporte': 'Workshop support (mm, edge, no cap)',
+'taller.colTerminal': 'Workshop terminal (mm, center, no cap)',
 'form.generarPdf': '📄 Generate PDF',
 'form.exportar': '⬇ Export PNG',
 'brazo.label': 'Arm',
@@ -413,6 +450,12 @@ const SEP_PATIN = 4500;
 const L_PARTIDO = 7000;
 const MIN_VISUAL_WIDTH = 300;
 const TERMINAL_OFFSET = 230;
+// Copia Taller (confirmado por Andrés, 25-sep-2026): se mide sobre el perfil sin tapa,
+// desde su extremo. Tapas de 20 mm (también en el perfil cofre). Soporte brazo de 54 mm:
+// la marca va al borde del soporte (±27) para que el propio soporte no la tape.
+// El terminal se marca al centro, sin desplazar, desde el extremo de su lado.
+const TAPA = 20;
+const MITAD_SOPORTE = 27;
 
 const escapeHtml = (str) => String(str).replace(/[&<>"']/g, ch => ({
 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -432,6 +475,9 @@ brazosContainer: document.getElementById('brazosContainer'),
 alertOut: document.getElementById('alertOut'),
 planoOut: document.getElementById('planoOut'),
 btnPrint: document.getElementById('btnPrint'),
+btnPrintTaller: document.getElementById('btnPrintTaller'),
+btnVerCliente: document.getElementById('btnVerCliente'),
+btnVerTaller: document.getElementById('btnVerTaller'),
 btnPDF: document.getElementById('btnPDF'),
 btnExport: document.getElementById('btnExport'),
 btnAmpliarPlano: document.getElementById('btnAmpliarPlano'),
@@ -468,7 +514,10 @@ return;
 }
 buildBrazosUI();
 });
-refs.btnPrint.addEventListener('click', printPlan);
+refs.btnPrint.addEventListener('click', () => printPlan(false));
+refs.btnPrintTaller.addEventListener('click', () => printPlan(true));
+refs.btnVerCliente.addEventListener('click', () => setVistaTaller(false));
+refs.btnVerTaller.addEventListener('click', () => setVistaTaller(true));
 refs.btnPDF.addEventListener('click', exportPDF);
 refs.btnExport.addEventListener('click', exportPNG);
 
@@ -605,6 +654,8 @@ if (b.lado) {
 b.terminalCota = b.lado === 'izq'
 ? Math.round(b.cota + TERMINAL_OFFSET)
 : Math.round(L - b.cota + TERMINAL_OFFSET);
+b.soporteTaller = Math.round(b.cota - TAPA + (b.lado === 'izq' ? -MITAD_SOPORTE : MITAD_SOPORTE));
+b.terminalTaller = b.terminalCota - TAPA;
 }
 });
 
@@ -725,12 +776,15 @@ const dir = b.lado === 'izq' ? 1 : -1;
 const x2 = x + dir * half;
 const col = b.conflict ? 'rgba(220,53,69,.28)' : 'rgba(0,102,204,.12)';
 if (b.lado) {
-const xTerm = marginLeft + b.terminalCota * scale;
+// terminalCota se mide desde el extremo del lado del brazo (izq: desde 0; der: desde L),
+// así que en el dibujo el terminal de un brazo derecho va en L - terminalCota.
+const xTerm = marginLeft + (b.lado === 'izq' ? b.terminalCota : L - b.terminalCota) * scale;
 bandas += `
 <rect x="${Math.min(x, x2)}" y="${yBar - 8}" width="${Math.abs(x2 - x)}" height="16" fill="${col}"/>
 <path d="M${x2} ${yBar} l${dir * -10} -6 l0 12 z" fill="${b.conflict ? '#ef4444' : '#3b82f6'}" opacity=".7"/>
 <circle cx="${xTerm}" cy="${yBar}" r="4" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
-<text x="${xTerm}" y="${yBar - 24}" font-size="10" font-weight="bold" fill="#7c3aed" text-anchor="middle" ${txtMask}>${t('plan.terminalCorto')} ${b.terminalCota} mm</text>`;
+<text x="${xTerm}" y="${yBar - 24}" font-size="10" font-weight="bold" fill="#7c3aed" text-anchor="middle" ${txtMask}><tspan class="solo-cliente">${t('plan.terminalCorto')} ${b.terminalCota} mm</tspan><tspan class="solo-taller">${t('plan.terminalCorto')} ${b.terminalTaller} mm</tspan></text>
+<text class="solo-taller" x="${xTerm}" y="${yBar - 12}" font-size="9" fill="#7c3aed" text-anchor="middle" ${txtMask}>${t(b.lado === 'izq' ? 'taller.desdeIzq' : 'taller.desdeDer')}</text>`;
 }
 });
 
@@ -848,7 +902,9 @@ fgTexts += `
 ${warnIcon}
 <text x="${x}" y="${yB - 68}" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">${letra}</text>
 <text x="${x}" y="${yB - 94}" font-size="12" font-weight="600" fill="#4b5563" text-anchor="middle" ${txtMask}>P${b.n}</text>
-<text x="${x}" y="${yB + 80}" font-size="14" font-weight="bold" fill="#c0102e" text-anchor="middle" ${txtMask}>${b.cota} <tspan font-size="10" font-weight="normal">mm</tspan></text>`;
+<text class="solo-cliente" x="${x}" y="${yB + 80}" font-size="14" font-weight="bold" fill="#c0102e" text-anchor="middle" ${txtMask}>${b.cota} <tspan font-size="10" font-weight="normal">mm</tspan></text>
+${b.lado ? `<text class="solo-taller" x="${x}" y="${yB + 80}" font-size="14" font-weight="bold" fill="#c2410c" text-anchor="middle" ${txtMask}>${b.soporteTaller} <tspan font-size="10" font-weight="normal">mm</tspan></text>
+<text class="solo-taller" x="${x}" y="${yB + 94}" font-size="9" fill="#c2410c" text-anchor="middle" ${txtMask}>${t(b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')}</text>` : `<text class="solo-taller" x="${x}" y="${yB + 80}" font-size="12" fill="#9ca3af" text-anchor="middle" ${txtMask}>— ${t('brazo.select')}</text>`}`;
 }
 });
 }
@@ -864,14 +920,16 @@ const rows = brazosConLado.map(b => `
 <tr>
 <td>P${b.n}</td>
 <td>${b.lado === 'izq' ? t('brazo.izq') : t('brazo.der')}</td>
-<td>${b.cota} mm</td>
-<td>${b.terminalCota} mm</td>
+<td class="solo-cliente">${b.cota} mm</td>
+<td class="solo-cliente">${b.terminalCota} mm</td>
+<td class="solo-taller"><b>${b.soporteTaller} mm</b> (${t(b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')})</td>
+<td class="solo-taller"><b>${b.terminalTaller} mm</b> (${t(b.lado === 'izq' ? 'taller.desdeIzq' : 'taller.desdeDer')})</td>
 </tr>`).join('');
 terminalTableHtml = `
 <div class="terminal-table animate-render">
 <h4>${t('plan.tablaTerminales')}</h4>
 <table>
-<thead><tr><th>${t('plan.colBrazo')}</th><th>${t('plan.colLado')}</th><th>${t('plan.colSoporte')}</th><th>${t('plan.colTerminal')}</th></tr></thead>
+<thead><tr><th>${t('plan.colBrazo')}</th><th>${t('plan.colLado')}</th><th class="solo-cliente">${t('plan.colSoporte')}</th><th class="solo-cliente">${t('plan.colTerminal')}</th><th class="solo-taller">${t('taller.colSoporte')}</th><th class="solo-taller">${t('taller.colTerminal')}</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>
 </div>`;
@@ -879,6 +937,7 @@ terminalTableHtml = `
 
 refs.planoOut.innerHTML = `
 <div class="animate-render" id="planoContainer">
+<div class="taller-banner solo-taller">${t('taller.banner')}</div>
 <div class="plan-header">
 <svg width="70" height="26" viewBox="0 0 200 60">
 <ellipse cx="40" cy="30" rx="36" ry="20" fill="none" stroke="#c0102e" stroke-width="4"/>
@@ -928,18 +987,29 @@ ${fgTexts}
 <rect x="${marginLeft + 130}" y="${610}" width="14" height="14" rx="3" fill="#eef6ff" stroke="#3b82f6" stroke-width="2"/><text x="${marginLeft + 152}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.aux')}</text>
 <rect x="${marginLeft + 250}" y="${610}" width="14" height="14" rx="3" fill="#e6fff0" stroke="#10b981" stroke-width="2"/><text x="${marginLeft + 272}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.patin')}</text>
 <rect x="${marginLeft + 390}" y="${610}" width="14" height="14" rx="3" fill="#fff5e6" stroke="#e69000" stroke-width="2"/><text x="${marginLeft + 412}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.union')}</text>
-<text x="${viewBoxWidth - marginRight}" y="${620}" font-size="12" font-weight="bold" fill="#6b7280" text-anchor="end">${t('plan.leyenda.cotas')}</text>
+<text x="${viewBoxWidth - marginRight}" y="${620}" font-size="12" font-weight="bold" fill="#6b7280" text-anchor="end"><tspan class="solo-cliente">${t('plan.leyenda.cotas')}</tspan><tspan class="solo-taller">${t('taller.leyenda')}</tspan></text>
 </g>
 </svg>
 ${terminalTableHtml}
 </div>`;
 };
 
-const printPlan = () => {
+// Vista Cliente / Taller en pantalla (misma regla CSS que la copia impresa).
+const setVistaTaller = (activo) => {
+document.body.classList.toggle('view-taller', activo);
+refs.btnVerTaller.classList.toggle('active', activo);
+refs.btnVerCliente.classList.toggle('active', !activo);
+};
+
+// Imprime la copia pedida y deja la pantalla como estaba.
+const printPlan = (taller) => {
 const original = document.title;
-document.title = `KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}`;
+const previa = document.body.classList.contains('view-taller');
+setVistaTaller(taller);
+document.title = `KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}${taller ? '_TALLER' : ''}`;
 window.print();
 document.title = original;
+setVistaTaller(previa);
 };
 
 const exportPNG = () => {
