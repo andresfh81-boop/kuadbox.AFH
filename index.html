@@ -227,6 +227,7 @@ body { background: #fff; }
 </select>
 
 <div id="brazosContainer"></div>
+<button id="btnSugerirBrazos" class="secondary" type="button" data-i18n="sug.btn">📐 Sugerir soportes brazo</button>
 
 <div class="btn-group">
 <button id="btnPrint" data-i18n="form.imprimir">🖨 Imprimir (Cliente)</button>
@@ -303,6 +304,11 @@ es: {
 'plan.desc': 'Introduce los parámetros de línea, salida y brazos para generar el esquema.',
 'alert.colision': 'Riesgo de colisión durante el plegado.',
 'alert.brazoOnyx': 'brazo Onyx plegado',
+'sug.btn': '📐 Sugerir soportes brazo',
+'sug.faltanDatos': 'Introduce línea, salida y número de brazos antes de sugerir.',
+'sug.faltaLado': 'Elige el lado (Izq/Der) de los brazos centrales antes de sugerir. P1 y el último se ponen solos (Izq y Der).',
+'sug.noCabe': 'No caben sin colisión con estos lados. Línea mínima necesaria: {min} mm (actual {L} mm). Prueba a cambiar el lado de los brazos centrales.',
+'sug.confirmar': 'Se van a sustituir las cotas de los brazos ya escritas. ¿Continuar?',
 'alert.lineaMax': 'Línea máxima superada con',
 'alert.fuera': 'está fuera de la línea principal',
 'alert.partido': 'El toldo debe fabricarse en DOS MITADES.',
@@ -375,6 +381,11 @@ en: {
 'plan.desc': 'Enter width, projection and arm data to generate the drawing template.',
 'alert.colision': 'Collision risk during folding.',
 'alert.brazoOnyx': 'folded Onyx arm',
+'sug.btn': '📐 Suggest arm supports',
+'sug.faltanDatos': 'Enter width, projection and number of arms before suggesting.',
+'sug.faltaLado': 'Choose the side (L/R) of the central arms first. P1 and the last one are set automatically (L and R).',
+'sug.noCabe': 'They do not fit without collision with these sides. Minimum width: {min} mm (current {L} mm). Try changing the side of the central arms.',
+'sug.confirmar': 'The arm positions already entered will be replaced. Continue?',
 'alert.lineaMax': 'Maximum width exceeded with',
 'alert.fuera': 'is outside the main width line',
 'alert.partido': 'The awning must be manufactured in TWO HALVES.',
@@ -480,6 +491,9 @@ return Math.round(salida / 2) + 100;
 };
 // Línea máxima según nº de brazos (manual de fabricación KÜADBOX-400, apdo. 2.3).
 const LINEA_MAX_POR_BRAZOS = { 2: 6000, 3: 9000, 4: 12000 };
+// Sugerir soportes brazo (criterio de Andrés, 25-sep-2026): P1 Izq a 100 mm del extremo
+// izquierdo y el último Der a 100 mm del extremo derecho (cotas al centro del soporte).
+const DIST_EXTREMO_BRAZO = 100;
 const MITAD_SOPORTE = 27;
 
 const escapeHtml = (str) => String(str).replace(/[&<>"']/g, ch => ({
@@ -501,6 +515,7 @@ alertOut: document.getElementById('alertOut'),
 planoOut: document.getElementById('planoOut'),
 btnPrint: document.getElementById('btnPrint'),
 btnPrintTaller: document.getElementById('btnPrintTaller'),
+btnSugerirBrazos: document.getElementById('btnSugerirBrazos'),
 btnVerCliente: document.getElementById('btnVerCliente'),
 btnVerTaller: document.getElementById('btnVerTaller'),
 btnPDF: document.getElementById('btnPDF'),
@@ -541,6 +556,7 @@ buildBrazosUI();
 });
 refs.btnPrint.addEventListener('click', () => printPlan(false));
 refs.btnPrintTaller.addEventListener('click', () => printPlan(true));
+refs.btnSugerirBrazos.addEventListener('click', sugerirSoportesBrazo);
 refs.btnVerCliente.addEventListener('click', () => setVistaTaller(false));
 refs.btnVerTaller.addEventListener('click', () => setVistaTaller(true));
 refs.btnPDF.addEventListener('click', exportPDF);
@@ -1096,6 +1112,66 @@ pdf.save(`KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}.pdf`);
 console.error(err);
 alert(currentLang === 'es' ? 'Error al generar el PDF.' : 'Error generating the PDF.');
 });
+};
+
+// ===== Sugerir soportes brazo =====
+// Hueco mínimo entre dos soportes contiguos a y b (a la izquierda de b): el mismo criterio
+// que la detección de colisión de render(). Un brazo Izq pliega hacia la derecha (ocupa el
+// hueco con su brazo), uno Der hacia la izquierda.
+const huecoNecesario = (ladoA, ladoB, R, holgura) =>
+(ladoA === 'izq' ? R : 0) + (ladoB === 'der' ? R : 0) + holgura;
+
+// Reparte el espacio entre P1 y el último de forma lo más equidistante posible sin bajar
+// de ningún hueco mínimo: cada hueco = max(mínimo, t), con t tal que la suma cuadre
+// (los huecos que necesitan más se quedan en su mínimo y el resto se reparte a partes iguales).
+const repartirHuecos = (total, minimos) => {
+let lo = 0, hi = total;
+for (let k = 0; k < 60; k++) {
+const t = (lo + hi) / 2;
+const suma = minimos.reduce((acc, m) => acc + Math.max(m, t), 0);
+if (suma > total) hi = t; else lo = t;
+}
+// En milímetros enteros: los mínimos ya lo son; los huecos libres toman floor(t) y el
+// sobrante (menos de 1 mm por hueco) se reparte de 1 en 1, así la suma es exacta.
+const base = Math.floor(lo);
+const huecos = minimos.map(m => Math.max(Math.ceil(m), base));
+let resto = total - huecos.reduce((a, b) => a + b, 0);
+for (let i = 0; resto > 0 && i < huecos.length; i++) { if (huecos[i] === base) { huecos[i]++; resto--; } }
+return huecos;
+};
+
+const sugerirSoportesBrazo = () => {
+const L = +refs.linea.value || 0;
+const S = +refs.salida.value || 0;
+const n = +refs.numBrazos.value || 0;
+if (L <= 0 || S <= 0 || n < 2) { alert(t('sug.faltanDatos')); return; }
+const lados = [];
+for (let i = 1; i <= n; i++) lados.push(document.getElementById('lado' + i)?.value || '');
+lados[0] = 'izq';
+lados[n - 1] = 'der';
+if (lados.some(l => !l)) { alert(t('sug.faltaLado')); return; }
+
+const R = getBrazoPlegadoReal(S);
+const holgura = +refs.holgura.value || 0;
+const minimos = [];
+for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], R, holgura));
+const total = L - 2 * DIST_EXTREMO_BRAZO;
+const sumaMin = minimos.reduce((a, b) => a + b, 0);
+if (sumaMin > total) {
+alert(t('sug.noCabe').replace('{min}', Math.ceil(sumaMin + 2 * DIST_EXTREMO_BRAZO)).replace('{L}', L));
+return;
+}
+const huecos = repartirHuecos(total, minimos);
+const cotas = [DIST_EXTREMO_BRAZO];
+for (let i = 0; i < n - 1; i++) cotas.push(cotas[i] + huecos[i]);
+
+const hayCotas = lados.some((_, i) => document.getElementById('cota' + (i + 1))?.value);
+if (hayCotas && !confirm(t('sug.confirmar'))) return;
+for (let i = 1; i <= n; i++) {
+document.getElementById('lado' + i).value = lados[i - 1];
+document.getElementById('cota' + i).value = cotas[i - 1];
+}
+render();
 };
 
 // ===== Ampliar plano a pantalla completa =====
