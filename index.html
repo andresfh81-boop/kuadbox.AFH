@@ -101,6 +101,31 @@ svg.plano-main { width: 100%; height: auto; display: block; }
 .offline-banner { display: none; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
 .offline-banner.show { display: block; }
 
+/* Subir presupuesto de LLAZA (OCR) */
+button.presup { margin-top: 0; background: #6b7280; }
+button.presup:hover { background: #4b5563; }
+button.presup:disabled { opacity: .7; cursor: wait; transform: none; }
+.presup-status { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; min-height: 1em; }
+.presup-status.ok { color: #047857; }
+.presup-status.err { color: #b91c1c; }
+#ocrDebugBox summary { cursor: pointer; font-size: 0.8rem; color: var(--text-muted); }
+#ocrDebugText { width: 100%; margin-top: 4px; font-family: monospace; font-size: 0.7rem; }
+
+/* Ampliar plano: botón, clic sobre el plano y vista a pantalla completa */
+.plano-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.btn-zoom-plano { margin-top: 0; width: auto; padding: 6px 14px; font-size: 0.85rem; background: #6b7280; }
+.btn-zoom-plano:hover { background: #4b5563; }
+svg.plano-main { cursor: zoom-in; }
+.plano-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.92); z-index: 2000; overflow: auto; }
+.plano-modal-overlay.active { display: block; }
+.plano-modal-close { position: fixed; top: 16px; right: 16px; z-index: 2001; width: 44px; height: 44px; border-radius: 50%; margin-top: 0; padding: 0; background: #fff; color: #111827; border: none; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.35); }
+.plano-modal-close:hover { background: #f3f4f6; }
+.plano-modal-body { min-height: 100%; display: flex; align-items: flex-start; padding: 60px 24px; width: max-content; min-width: 100%; }
+/* En pantalla completa el plano se dibuja al menos a 1400px de ancho: en el móvil se
+   desplaza con el dedo para ver los detalles. */
+.plano-modal-body #planoOut { background: #fff; padding: 24px; border-radius: 14px; width: max(calc(100vw - 48px), 1400px); margin: 0 auto; flex-shrink: 0; }
+.plano-modal-body svg.plano-main { cursor: zoom-out; }
+
 @media (max-width: 768px) {
 .panel.form { max-width: 100%; }
 .plan-meta { text-align: left; }
@@ -151,6 +176,14 @@ body { background: #fff; }
 <span data-i18n="install.msg" style="flex:1;">Instala esta app en tu móvil para usarla sin conexión.</span>
 <button id="btnInstall" data-i18n="install.btn">Instalar</button>
 </div>
+<button id="btnUploadPresupuesto" class="presup" type="button" data-i18n="presup.btn">📤 Subir presupuesto (foto/PDF)</button>
+<input id="filePresupuesto" type="file" accept="image/*,application/pdf" hidden>
+<div id="presupStatus" class="presup-status"></div>
+<details id="ocrDebugBox" hidden>
+<summary data-i18n="presup.debug">🔍 Ver texto leído (OCR)</summary>
+<textarea id="ocrDebugText" readonly rows="8"></textarea>
+</details>
+
 <div class="row">
 <div><label data-i18n="form.pedido" for="pedido">Nº Pedido</label><input id="pedido" type="text" placeholder="Ej. 12345"></div>
 <div><label data-i18n="form.cliente" for="cliente">Cliente</label><input id="cliente" type="text" placeholder="Nombre"></div>
@@ -194,12 +227,20 @@ body { background: #fff; }
 
 <div class="panel plan">
 <div id="alertOut"></div>
+<div class="plano-toolbar no-print">
+<button id="btnAmpliarPlano" class="btn-zoom-plano" type="button" data-i18n="plan.ampliar">🔍 Ampliar plano</button>
+</div>
 <div id="planoOut">
 <div style="text-align: center; color: #888; padding: 40px; font-style: italic;" data-i18n="plan.placeholder">
 Introduce los parámetros de línea, salida y brazos para generar el plano.
 </div>
 </div>
 </div>
+</div>
+
+<div id="planoModalOverlay" class="plano-modal-overlay no-print">
+<button id="btnCerrarPlano" class="plano-modal-close" type="button">✕</button>
+<div id="planoModalBody" class="plano-modal-body"></div>
 </div>
 
 <script src="vendor/html2canvas.min.js"></script>
@@ -256,6 +297,15 @@ es: {
 'install.msg': 'Instala esta app en tu móvil para usarla sin conexión.',
 'install.btn': 'Instalar',
 'offline.msg': 'Sin conexión — la app sigue funcionando con los datos guardados en el dispositivo.',
+'plan.ampliar': '🔍 Ampliar plano',
+'plan.ampliarClick': 'Clic para ampliar / reducir',
+'presup.btn': '📤 Subir presupuesto (foto/PDF)',
+'presup.leyendo': '⏳ Leyendo presupuesto…',
+'presup.debug': '🔍 Ver texto leído (OCR)',
+'presup.ok': 'Presupuesto leído: {n} campos rellenados. Revísalos antes de seguir.',
+'presup.sinPedido': 'Presupuesto leído ({n} campos), pero no salió el Nº de pedido: escríbelo a mano.',
+'presup.vacio': 'No se reconoció ningún dato del presupuesto.',
+'presup.err': 'No se pudo leer el presupuesto.',
 },
 en: {
 'header.title': 'Plates Configurator — KÜADBOX-400',
@@ -306,6 +356,15 @@ en: {
 'install.msg': 'Install this app on your phone to use it offline.',
 'install.btn': 'Install',
 'offline.msg': 'Offline — the app keeps working with data stored on this device.',
+'plan.ampliar': '🔍 Enlarge drawing',
+'plan.ampliarClick': 'Click to enlarge / reduce',
+'presup.btn': '📤 Upload quote (photo/PDF)',
+'presup.leyendo': '⏳ Reading quote…',
+'presup.debug': '🔍 View scanned text (OCR)',
+'presup.ok': 'Quote read: {n} fields filled in. Check them before continuing.',
+'presup.sinPedido': 'Quote read ({n} fields), but the order number was not found: type it in.',
+'presup.vacio': 'No data recognised from the quote.',
+'presup.err': 'Could not read the quote.',
 }
 };
 
@@ -374,7 +433,16 @@ alertOut: document.getElementById('alertOut'),
 planoOut: document.getElementById('planoOut'),
 btnPrint: document.getElementById('btnPrint'),
 btnPDF: document.getElementById('btnPDF'),
-btnExport: document.getElementById('btnExport')
+btnExport: document.getElementById('btnExport'),
+btnAmpliarPlano: document.getElementById('btnAmpliarPlano'),
+btnCerrarPlano: document.getElementById('btnCerrarPlano'),
+planoModalOverlay: document.getElementById('planoModalOverlay'),
+planoModalBody: document.getElementById('planoModalBody'),
+btnUploadPresupuesto: document.getElementById('btnUploadPresupuesto'),
+filePresupuesto: document.getElementById('filePresupuesto'),
+presupStatus: document.getElementById('presupStatus'),
+ocrDebugBox: document.getElementById('ocrDebugBox'),
+ocrDebugText: document.getElementById('ocrDebugText')
 };
 
 const init = () => {
@@ -403,6 +471,27 @@ buildBrazosUI();
 refs.btnPrint.addEventListener('click', printPlan);
 refs.btnPDF.addEventListener('click', exportPDF);
 refs.btnExport.addEventListener('click', exportPNG);
+
+refs.btnAmpliarPlano.addEventListener('click', abrirPlanoModal);
+refs.planoOut.addEventListener('click', (e) => {
+if (!e.target.closest('svg.plano-main')) return;
+if (refs.planoModalOverlay.classList.contains('active')) cerrarPlanoModal();
+else abrirPlanoModal();
+});
+refs.btnCerrarPlano.addEventListener('click', cerrarPlanoModal);
+refs.planoModalOverlay.addEventListener('click', (e) => {
+if (e.target === refs.planoModalOverlay || e.target === refs.planoModalBody) cerrarPlanoModal();
+});
+document.addEventListener('keydown', (e) => {
+if (e.key === 'Escape') cerrarPlanoModal();
+});
+
+refs.btnUploadPresupuesto.addEventListener('click', () => refs.filePresupuesto.click());
+refs.filePresupuesto.addEventListener('change', (e) => {
+const file = e.target.files && e.target.files[0];
+e.target.value = '';
+procesarPresupuesto(file);
+});
 
 document.querySelectorAll('.lang-btn').forEach(btn => {
 btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
@@ -910,6 +999,269 @@ pdf.save(`KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}.pdf`);
 console.error(err);
 alert(currentLang === 'es' ? 'Error al generar el PDF.' : 'Error generating the PDF.');
 });
+};
+
+// ===== Ampliar plano a pantalla completa =====
+// Se mueve el propio #planoOut dentro del overlay (no se copia), así sigue
+// actualizándose si cambia algo y vuelve a su sitio al cerrar.
+const abrirPlanoModal = () => {
+if (!document.getElementById('planoContainer')) return;
+refs.planoModalBody.appendChild(refs.planoOut);
+refs.planoModalOverlay.classList.add('active');
+};
+
+const cerrarPlanoModal = () => {
+if (!refs.planoModalOverlay.classList.contains('active')) return;
+document.querySelector('.panel.plan').appendChild(refs.planoOut);
+refs.planoModalOverlay.classList.remove('active');
+};
+
+// ===== Subir presupuesto de LLAZA + autocompletado por OCR =====
+// Portado de MODULBOX-400. Librerías (tesseract.js + pdf.js) servidas desde vendor/
+// pero NO precargadas en el service worker: se cargan la primera vez que se usa esta
+// función (hace falta internet esa primera vez; luego el SW las cachea y va offline).
+const PRESUP = {
+tesseract: 'vendor/tesseract/tesseract.min.js',
+pdfjs: 'vendor/pdfjs/pdf.min.js',
+pdfWorker: 'vendor/pdfjs/pdf.worker.min.js',
+worker: 'vendor/tesseract/worker.min.js',
+core: 'vendor/tesseract/',
+lang: 'vendor/tesseract/lang',
+};
+let presupLibsPromise = null;
+const loadScriptOnce = (src) => new Promise((res, rej) => {
+if ([...document.scripts].some(s => s.src && s.src.includes(src))) return res();
+const s = document.createElement('script');
+s.src = src;
+s.onload = () => res();
+s.onerror = () => rej(new Error('No se pudo cargar ' + src));
+document.head.appendChild(s);
+});
+const cargarPresupLibs = () => {
+if (!presupLibsPromise) {
+presupLibsPromise = Promise.all([
+loadScriptOnce(PRESUP.tesseract),
+loadScriptOnce(PRESUP.pdfjs),
+]).then(() => {
+if (window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc = PRESUP.pdfWorker;
+}).catch(e => { presupLibsPromise = null; throw e; });
+}
+return presupLibsPromise;
+};
+
+// Umbral automático (Otsu) a partir de un histograma de grises.
+const otsu = (hist, total) => {
+let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+let sumB = 0, wB = 0, maxVar = -1, u = 160;
+for (let t = 0; t < 256; t++) {
+wB += hist[t]; if (!wB) continue;
+const wF = total - wB; if (!wF) break;
+sumB += t * hist[t];
+const mB = sumB / wB, mF = (sum - sumB) / wF;
+const v = wB * wF * (mB - mF) * (mB - mF);
+if (v > maxVar) { maxVar = v; u = t; }
+}
+return u;
+};
+
+// Prepara la imagen para el OCR: reescala, recorta (opcional) y binariza a
+// blanco/negro. La binarización elimina la marca de agua "PEDIDO" y las líneas
+// grises de la tabla de LLAZA — si no, tesseract se salta las primeras filas
+// (Nº de pedido). `crop` = [fx, fy, fw, fh] en fracción 0..1 del original.
+const aCanvasEscalado = (source, crop) => new Promise((res, rej) => {
+const prep = (draw, w, h) => {
+const c = document.createElement('canvas');
+c.width = w; c.height = h;
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#fff';
+ctx.fillRect(0, 0, w, h);
+draw(ctx, w, h);
+try {
+const d = ctx.getImageData(0, 0, w, h), p = d.data;
+const gris = new Uint8Array(w * h), hist = new Uint32Array(256);
+for (let i = 0, j = 0; i < p.length; i += 4, j++) {
+const v = (p[i] * 0.3 + p[i + 1] * 0.59 + p[i + 2] * 0.11) | 0;
+gris[j] = v; hist[v]++;
+}
+const u = Math.min(205, Math.max(170, otsu(hist, w * h) + 20));
+for (let i = 0, j = 0; i < p.length; i += 4, j++) {
+const o = gris[j] < u ? 0 : 255;
+p[i] = p[i + 1] = p[i + 2] = o; p[i + 3] = 255;
+}
+ctx.putImageData(d, 0, 0);
+} catch (e) { /* canvas tainted: se usa sin binarizar */ }
+return c;
+};
+const dibujar = (src, natW, natH) => {
+const fw = crop ? crop[2] : 1, fh = crop ? crop[3] : 1;
+const sx = crop ? crop[0] * natW : 0, sy = crop ? crop[1] * natH : 0;
+const sw = fw * natW, sh = fh * natH;
+const objetivo = crop ? 1800 : 2200;
+const escala = Math.min(3.5, Math.max(1, objetivo / Math.max(sw, sh)));
+const w = Math.round(sw * escala), h = Math.round(sh * escala);
+return prep((ctx) => ctx.drawImage(src, sx, sy, sw, sh, 0, 0, w, h), w, h);
+};
+if (source instanceof HTMLCanvasElement) return res(dibujar(source, source.width, source.height));
+const img = new Image();
+img.onload = () => {
+const c = dibujar(img, img.naturalWidth, img.naturalHeight);
+if (img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+res(c);
+};
+img.onerror = () => rej(new Error('No se pudo abrir la imagen'));
+img.src = URL.createObjectURL(source);
+});
+
+let ocrWorker = null;
+const ocrImagen = async (source, crop) => {
+if (!ocrWorker) {
+ocrWorker = await window.Tesseract.createWorker('spa', 1, {
+workerPath: PRESUP.worker,
+corePath: PRESUP.core,
+langPath: PRESUP.lang,
+gzip: true,
+});
+// PSM 3 (auto): sin esto tesseract.js usa "bloque único" y se salta la tabla
+// superior del pedido de LLAZA.
+await ocrWorker.setParameters({ tessedit_pageseg_mode: '3', preserve_interword_spaces: '1' });
+}
+const canvas = await aCanvasEscalado(source, crop);
+const { data } = await ocrWorker.recognize(canvas);
+return data.text || '';
+};
+
+const esPDF = (file) => file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+
+const textoDesdePDF = async (file) => {
+const buf = await file.arrayBuffer();
+const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+const page = await pdf.getPage(1);
+const tc = await page.getTextContent();
+const txt = tc.items.map(i => i.str).join(' ').trim();
+if (txt.replace(/\s/g, '').length > 40) return txt; // el PDF ya trae capa de texto
+const viewport = page.getViewport({ scale: 2 }); // si no, rasterizar y OCR
+const canvas = document.createElement('canvas');
+canvas.width = viewport.width;
+canvas.height = viewport.height;
+await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+return ocrImagen(canvas);
+};
+
+const extraerTextoPresupuesto = (file) => esPDF(file) ? textoDesdePDF(file) : ocrImagen(file);
+
+// --- Parser de la confirmación de pedido de LLAZA ---
+// Mismo formato que la de MODULBOX; en KÜADBOX solo se usan pedido, cliente,
+// línea, salida, nº de brazos y lado del motor.
+const normOCR = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+.replace(/\r/g, '').replace(/[·•|]/g, ' ').replace(/[—–]/g, ' ');
+
+const parsePresupuestoLlaza = (raw) => {
+const U = normOCR(raw).toUpperCase();
+const out = {};
+const grab = (re) => { const m = U.match(re); return m ? m[1].trim() : null; };
+const has = (re) => re.test(U);
+
+// Nº de pedido: 7-9 dígitos tras "Num. Pedido", tolerante a erratas de OCR
+// (O->0, I/l->1, S->5, B->8).
+const deOCR = (s) => s.replace(/[OoQ]/g, '0').replace(/[IilL!|]/g, '1')
+.replace(/[Ss]/g, '5').replace(/B/g, '8').replace(/[^0-9]/g, '');
+const normPed = (m) => {
+if (!m) return null;
+const n = deOCR(m[1]);
+return (n.length >= 7 && n.length <= 9) ? n : null;
+};
+const ped =
+normPed(U.match(/PEDIDO\D{0,60}?([0-9OoQIilL!|SsB]{7,10})(?![0-9OoQIilL!|SsB])/))
+|| normPed(U.match(/(?:^|[^0-9])([0-9]{7,9})(?![0-9])[^0-9]{0,20}[0-3]?[0-9][.\/\-][0-1]?[0-9][.\/\-](?:20)?[0-9]{2}/));
+if (ped) out.pedido = ped;
+
+// Cliente: "Su ref:" y si no, "Observaciones". Se descartan cabeceras coladas.
+const JUNK = /ACCESORIO|PARA\s+TODO|AUTOMATIZ|PERSIANA|ESTUDIOS|PROYECTOS|SHIP|PARTY|CONDICION|TRANSPORT|FABRICAC|PEDIDO|UNIT|PRICE|MATERIAL|DESCR|QUANTITY|KUADBOX|MODULBOX|RECACRIL/;
+const limpiaCli = (v) => {
+if (!v) return null;
+v = v.replace(/\s+(?:UNIT|PRICE|ITEM|MATERIAL|DESCR|QUANTITY|KUADBOX|MODULBOX)\b[\s\S]*$/, '').replace(/\s{2,}/g, ' ').trim();
+return (v.length >= 3 && v.length <= 40 && !JUNK.test(v)) ? v : null;
+};
+let cli = limpiaCli(grab(/SU\s*REF[\s:.\-]{0,4}([A-Z][A-Z0-9.'\/-]*(?: [A-Z0-9][A-Z0-9.'\/-]*){0,3})/));
+if (!cli) cli = limpiaCli(grab(/OBSERVACIONES[\s:.\-]{0,4}([A-Z][A-Z.'\/-]*(?: [A-Z][A-Z.'\/-]*){0,3})/));
+if (cli) out.cliente = cli;
+
+const lin = grab(/LINEA\s*TOTAL[:\s]*([0-9]{3,5})\s*MM/) || grab(/LINEA[^0-9]{0,10}([0-9]{3,5})\s*MM/);
+if (lin) out.linea = lin;
+
+// Salida: "Medida de brazos 3,00 m" -> 3000 mm (campo libre en KÜADBOX).
+const salM = U.match(/(?:MEDIDA\s*DE\s*BRAZOS|MODELO\s*Y\s*MEDIDA)[\s\S]{0,60}?(\d{1,2})\s*[.,]\s*(\d{1,2})\s*M(?![A-LN-Z])/)
+|| U.match(/\bBRAZOS[\s\S]{0,40}?(\d{1,2})\s*[.,]\s*(\d{1,2})\s*M(?![A-LN-Z])/);
+if (salM) {
+const mm = Math.round(parseFloat(salM[1] + '.' + salM[2]) * 1000);
+if (mm >= 1000 && mm <= 5000) out.salida = String(mm);
+}
+
+const nb = grab(/N[UO]?MERO\s*DE\s*BRAZOS[:\s]*([234])/) || grab(/\b([234])\s*UN\b/);
+if (nb) out.numBrazos = nb;
+
+let lado = grab(/LADO\s*ACCIONAMIENTO[:\s]*([A-Z]+)/);
+if (!lado) lado = has(/\bIZQUIERDA\b/) ? 'IZQUIERDA' : has(/\bDERECHA\b/) ? 'DERECHA' : null;
+if (lado) { if (/IZQ/.test(lado)) out.ladoMotor = 'izq'; else if (/DER/.test(lado)) out.ladoMotor = 'der'; }
+
+return out;
+};
+
+const setPresupStatus = (msg, tipo) => {
+refs.presupStatus.textContent = msg;
+refs.presupStatus.className = 'presup-status' + (tipo ? ' ' + tipo : '');
+};
+
+const aplicarPresupuesto = (parcial) => {
+const n = Object.keys(parcial).length;
+if (!n) { setPresupStatus(t('presup.vacio'), 'err'); return; }
+['pedido', 'cliente', 'linea', 'salida', 'ladoMotor'].forEach(k => {
+if (parcial[k] != null) refs[k].value = parcial[k];
+});
+// Solo se reconstruyen los brazos si cambia el número (así no se pierden cotas ya escritas).
+if (parcial.numBrazos && parcial.numBrazos !== refs.numBrazos.value) {
+refs.numBrazos.value = parcial.numBrazos;
+buildBrazosUI();
+}
+render();
+setPresupStatus(t(parcial.pedido ? 'presup.ok' : 'presup.sinPedido').replace('{n}', n), parcial.pedido ? 'ok' : 'err');
+};
+
+const procesarPresupuesto = async (file) => {
+if (!file) return;
+const btn = refs.btnUploadPresupuesto;
+btn.disabled = true;
+btn.textContent = t('presup.leyendo');
+setPresupStatus('');
+try {
+await cargarPresupLibs();
+const texto = await extraerTextoPresupuesto(file);
+const parcial = parsePresupuestoLlaza(texto);
+let dbg = texto;
+// La tabla del Nº de pedido (arriba a la izq., con recuadros) se lee mal en la
+// pasada completa. Si no salió, se reintenta OCR sobre 2 recortes de esa zona.
+if (!parcial.pedido && !esPDF(file)) {
+const recortes = [[0, 0.03, 0.48, 0.42], [0, 0, 0.60, 0.30]];
+for (let i = 0; i < recortes.length && !parcial.pedido; i++) {
+try {
+const t2 = await ocrImagen(file, recortes[i]);
+const p2 = parsePresupuestoLlaza(t2);
+dbg += '\n\n----- recorte ' + (i + 1) + ' -----\n' + t2;
+['pedido', 'cliente'].forEach(k => { if (!parcial[k] && p2[k]) parcial[k] = p2[k]; });
+} catch (e2) { console.warn('[presupuesto] recorte falló', e2); }
+}
+}
+console.log('[presupuesto] detectado:', parcial);
+refs.ocrDebugText.value = dbg;
+refs.ocrDebugBox.hidden = false;
+aplicarPresupuesto(parcial);
+} catch (e) {
+console.error('[presupuesto]', e);
+setPresupStatus(t('presup.err'), 'err');
+} finally {
+btn.disabled = false;
+btn.textContent = t('presup.btn');
+}
 };
 
 return { init, rebuildBrazosUIWithValues, render };
