@@ -1201,6 +1201,27 @@ return huecos;
 
 // Recoloca los soportes interiores entre los dos extremos actuales (ver huecoNecesario).
 // Devuelve true si ha movido algo.
+// Reparto con holgura (criterio de Andrés, 25-sep-2026): se parte del reparto equidistante
+// sin holgura y cada hueco enfrentado (Izq → Der) se agranda EXACTAMENTE la holgura, tenga
+// margen o no, para que el soporte interior siempre se mueva. Los demás huecos ceden ese
+// espacio repartido a partes iguales sin bajar de su mínimo; si no hay sitio para toda la
+// holgura, se aplica la que quepa.
+const repartoConHolgura = (total, lados, minimos0, holgura) => {
+const base = repartirHuecos(total, minimos0);
+const idxEnf = [], idxOtros = [];
+for (let i = 0; i < minimos0.length; i++) (lados[i] === 'izq' && lados[i + 1] === 'der' ? idxEnf : idxOtros).push(i);
+if (!holgura || !idxEnf.length || !idxOtros.length) return base;
+const minOtros = idxOtros.reduce((a, i) => a + Math.ceil(minimos0[i]), 0);
+const baseEnf = idxEnf.reduce((a, i) => a + base[i], 0);
+const extra = Math.max(0, Math.min(Math.round(holgura) * idxEnf.length, total - minOtros - baseEnf));
+const huecos = base.slice();
+idxEnf.forEach((i, k) => { huecos[i] = base[i] + Math.floor(extra / idxEnf.length) + (k < extra % idxEnf.length ? 1 : 0); });
+const restante = total - idxEnf.reduce((a, i) => a + huecos[i], 0);
+const otros = repartirHuecos(restante, idxOtros.map(i => minimos0[i]));
+idxOtros.forEach((i, k) => { huecos[i] = otros[k]; });
+return huecos;
+};
+
 const recolocarInteriores = () => {
 const L = +refs.linea.value || 0;
 const S = +refs.salida.value || 0;
@@ -1217,10 +1238,10 @@ for (let i = 1; i < n; i++) if (c[i] <= c[i - 1]) return false;
 const R = getBrazoPlegadoReal(S);
 const holgura = +refs.holgura.value || 0;
 const minimos = [];
-for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, holgura));
+for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, 0));
 const total = c[n - 1] - c[0];
 if (minimos.reduce((a, m) => a + Math.ceil(m), 0) > total) return false;
-const huecos = repartirHuecos(total, minimos);
+const huecos = repartoConHolgura(total, lados, minimos, holgura);
 let pos = c[0];
 for (let i = 1; i < n - 1; i++) { pos += huecos[i - 1]; document.getElementById('cota' + (i + 1)).value = pos; }
 return true;
@@ -1243,17 +1264,19 @@ if (lados.some(l => !l)) { alert(t('sug.faltaLado')); return; }
 const R = getBrazoPlegadoReal(S);
 const holgura = +refs.holgura.value || 0;
 const minimos = [];
-for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, holgura));
+for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, 0));
 const sumaMin = minimos.reduce((a, b) => a + Math.ceil(b), 0);
-// Extremos a 100 mm; si no caben, se acercan lo justo (mismo valor a ambos lados)
-// sin bajar de 90 (A = 70).
-const dist = Math.max(DIST_EXTREMO_MIN, Math.min(DIST_EXTREMO_BRAZO, Math.floor((L - sumaMin) / 2)));
+let enfrentados = 0;
+for (let i = 0; i < n - 1; i++) if (esEnfrentado(lados[i], lados[i + 1])) enfrentados++;
+// Extremos a 100 mm; si no caben (contando la holgura), se acercan lo justo (mismo valor
+// a ambos lados) sin bajar de 90 (A = 70).
+const dist = Math.max(DIST_EXTREMO_MIN, Math.min(DIST_EXTREMO_BRAZO, Math.floor((L - sumaMin - holgura * enfrentados) / 2)));
 const total = L - 2 * dist;
 if (sumaMin > total) {
 alert(t('sug.noCabe').replace('{min}', sumaMin + 2 * DIST_EXTREMO_MIN).replace('{L}', L));
 return;
 }
-const huecos = repartirHuecos(total, minimos);
+const huecos = repartoConHolgura(total, lados, minimos, holgura);
 const cotas = [dist];
 for (let i = 0; i < n - 1; i++) cotas.push(cotas[i] + huecos[i]);
 
