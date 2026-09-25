@@ -311,7 +311,7 @@ es: {
 'sug.btn': '📐 Sugerir soportes brazo',
 'sug.faltanDatos': 'Introduce línea, salida y número de brazos antes de sugerir.',
 'sug.faltaLado': 'Elige el lado (Izq/Der) de los brazos centrales antes de sugerir. P1 y el último se ponen solos (Izq y Der).',
-'sug.noCabe': 'Con los extremos a 100 mm no se cumplen las separaciones mínimas del manual. Línea mínima necesaria: {min} mm (actual {L} mm).',
+'sug.noCabe': 'No se cumplen las separaciones mínimas del manual ni con los extremos a 90 mm (A = 70). Línea mínima necesaria: {min} mm (actual {L} mm).',
 'sug.confirmar': 'Se van a sustituir las cotas de los brazos ya escritas. ¿Continuar?',
 'alert.lineaMax': 'Línea máxima superada con',
 'alert.fuera': 'está fuera de la línea principal',
@@ -392,7 +392,7 @@ en: {
 'sug.btn': '📐 Suggest arm supports',
 'sug.faltanDatos': 'Enter width, projection and number of arms before suggesting.',
 'sug.faltaLado': 'Choose the side (L/R) of the central arms first. P1 and the last one are set automatically (L and R).',
-'sug.noCabe': 'With the end supports at 100 mm the manual minimum spacings are not met. Minimum width: {min} mm (current {L} mm).',
+'sug.noCabe': 'The manual minimum spacings are not met even with the end supports at 90 mm (A = 70). Minimum width: {min} mm (current {L} mm).',
 'sug.confirmar': 'The arm positions already entered will be replaced. Continue?',
 'alert.lineaMax': 'Maximum width exceeded with',
 'alert.fuera': 'is outside the main width line',
@@ -502,6 +502,12 @@ const LINEA_MAX_POR_BRAZOS = { 2: 6000, 3: 9000, 4: 12000 };
 // Sugerir soportes brazo (criterio de Andrés, 25-sep-2026): P1 Izq a 100 mm del extremo
 // izquierdo y el último Der a 100 mm del extremo derecho (cotas al centro del soporte).
 const DIST_EXTREMO_BRAZO = 100;
+// Si a 100 mm no se cumplen las separaciones del manual, los extremos se acercan lo justo,
+// como mucho hasta A = 70 (Amin del manual) → cota 90 contando la tapa.
+const DIST_EXTREMO_MIN = 90;
+// Placa pared auxiliar (manual, apdo. 3.4): si A > 200 se pone en A* = 40 desde el extremo
+// del perfil sin tapa → cota 60 contando la tapa.
+const A_AUX_POS = 40;
 
 // Huecos mínimos entre soportes brazo contiguos (centro a centro) según el manual de
 // fabricación KÜADBOX-400 REV 2.2, apdos. 3.4–3.6 (pág. 9–15). Coinciden con las tablas
@@ -736,11 +742,12 @@ let aux = [];
 if (L > 0 && brazos.length > 0) {
 const prim = brazos[0];
 const ult = brazos[brazos.length - 1];
-if (prim.cota > A_AUX) {
-aux.push({ cota: Math.round(prim.cota / 2) });
+// A = del extremo del perfil sin tapa al centro del soporte brazo.
+if (prim.cota - TAPA > A_AUX) {
+aux.push({ cota: TAPA + A_AUX_POS });
 }
-if ((L - ult.cota) > A_AUX) {
-aux.push({ cota: Math.round(ult.cota + (L - ult.cota) / 2) });
+if (L - ult.cota - TAPA > A_AUX) {
+aux.push({ cota: L - TAPA - A_AUX_POS });
 }
 }
 
@@ -1201,14 +1208,17 @@ const R = getBrazoPlegadoReal(S);
 const holgura = +refs.holgura.value || 0;
 const minimos = [];
 for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, holgura));
-const total = L - 2 * DIST_EXTREMO_BRAZO;
-const sumaMin = minimos.reduce((a, b) => a + b, 0);
+const sumaMin = minimos.reduce((a, b) => a + Math.ceil(b), 0);
+// Extremos a 100 mm; si no caben, se acercan lo justo (mismo valor a ambos lados)
+// sin bajar de 90 (A = 70).
+const dist = Math.max(DIST_EXTREMO_MIN, Math.min(DIST_EXTREMO_BRAZO, Math.floor((L - sumaMin) / 2)));
+const total = L - 2 * dist;
 if (sumaMin > total) {
-alert(t('sug.noCabe').replace('{min}', Math.ceil(sumaMin + 2 * DIST_EXTREMO_BRAZO)).replace('{L}', L));
+alert(t('sug.noCabe').replace('{min}', sumaMin + 2 * DIST_EXTREMO_MIN).replace('{L}', L));
 return;
 }
 const huecos = repartirHuecos(total, minimos);
-const cotas = [DIST_EXTREMO_BRAZO];
+const cotas = [dist];
 for (let i = 0; i < n - 1; i++) cotas.push(cotas[i] + huecos[i]);
 
 const hayCotas = lados.some((_, i) => document.getElementById('cota' + (i + 1))?.value);
