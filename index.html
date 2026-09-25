@@ -304,10 +304,14 @@ es: {
 'plan.desc': 'Introduce los parámetros de línea, salida y brazos para generar el esquema.',
 'alert.colision': 'Riesgo de colisión durante el plegado.',
 'alert.brazoOnyx': 'brazo Onyx plegado',
+'alert.minManual': 'mínimo manual Küadbox',
+'alert.bajoManual': 'Por debajo de la separación mínima del manual de fabricación.',
+'alert.lineaMin': 'Línea por debajo de la mínima del manual',
+'alert.aMin': 'Soporte brazo a menos de A = 70 mm del extremo del perfil (mínimo del manual)',
 'sug.btn': '📐 Sugerir soportes brazo',
 'sug.faltanDatos': 'Introduce línea, salida y número de brazos antes de sugerir.',
 'sug.faltaLado': 'Elige el lado (Izq/Der) de los brazos centrales antes de sugerir. P1 y el último se ponen solos (Izq y Der).',
-'sug.noCabe': 'No caben sin colisión con estos lados. Línea mínima necesaria: {min} mm (actual {L} mm). Prueba a cambiar el lado de los brazos centrales.',
+'sug.noCabe': 'Con los extremos a 100 mm no se cumplen las separaciones mínimas del manual. Línea mínima necesaria: {min} mm (actual {L} mm).',
 'sug.confirmar': 'Se van a sustituir las cotas de los brazos ya escritas. ¿Continuar?',
 'alert.lineaMax': 'Línea máxima superada con',
 'alert.fuera': 'está fuera de la línea principal',
@@ -381,10 +385,14 @@ en: {
 'plan.desc': 'Enter width, projection and arm data to generate the drawing template.',
 'alert.colision': 'Collision risk during folding.',
 'alert.brazoOnyx': 'folded Onyx arm',
+'alert.minManual': 'Küadbox manual minimum',
+'alert.bajoManual': 'Below the minimum spacing in the assembly manual.',
+'alert.lineaMin': 'Width below the manual minimum',
+'alert.aMin': 'Arm support closer than A = 70 mm to the profile end (manual minimum)',
 'sug.btn': '📐 Suggest arm supports',
 'sug.faltanDatos': 'Enter width, projection and number of arms before suggesting.',
 'sug.faltaLado': 'Choose the side (L/R) of the central arms first. P1 and the last one are set automatically (L and R).',
-'sug.noCabe': 'They do not fit without collision with these sides. Minimum width: {min} mm (current {L} mm). Try changing the side of the central arms.',
+'sug.noCabe': 'With the end supports at 100 mm the manual minimum spacings are not met. Minimum width: {min} mm (current {L} mm).',
 'sug.confirmar': 'The arm positions already entered will be replaced. Continue?',
 'alert.lineaMax': 'Maximum width exceeded with',
 'alert.fuera': 'is outside the main width line',
@@ -494,6 +502,28 @@ const LINEA_MAX_POR_BRAZOS = { 2: 6000, 3: 9000, 4: 12000 };
 // Sugerir soportes brazo (criterio de Andrés, 25-sep-2026): P1 Izq a 100 mm del extremo
 // izquierdo y el último Der a 100 mm del extremo derecho (cotas al centro del soporte).
 const DIST_EXTREMO_BRAZO = 100;
+
+// Huecos mínimos entre soportes brazo contiguos (centro a centro) según el manual de
+// fabricación KÜADBOX-400 REV 2.2, apdos. 3.4–3.6 (pág. 9–15). Coinciden con las tablas
+// para todas las salidas (1,50 → 4,00 m):
+//  - enfrentados (Izq → Der), cota "B":        Bmin = S + 360
+//  - mismo lado (Izq → Izq o Der → Der), "C":  Cmin = S/2 + 250
+//  - divergentes (Der → Izq): el manual no lo contempla; solo se aplica el plegado.
+// Son más exigentes que el cálculo geométrico de plegado (brazo Onyx + holgura), así que
+// se usa siempre el mayor de los dos.
+const huecoMinimoManual = (ladoA, ladoB, S) => {
+if (ladoA === 'izq' && ladoB === 'der') return S + 360;
+if (ladoA === ladoB) return S / 2 + 250;
+return 0;
+};
+// Plegado: un brazo Izq pliega hacia la derecha (ocupa el hueco con su brazo), uno Der
+// hacia la izquierda.
+const huecoPlegado = (ladoA, ladoB, R, holgura) =>
+(ladoA === 'izq' ? R : 0) + (ladoB === 'der' ? R : 0) + holgura;
+const huecoNecesario = (ladoA, ladoB, S, R, holgura) =>
+Math.max(huecoPlegado(ladoA, ladoB, R, holgura), huecoMinimoManual(ladoA, ladoB, S));
+// Lados de los brazos según el manual: 3 brazos Izq-Izq-Der, 4 brazos Izq-Izq-Der-Der.
+const LADOS_MANUAL = { 2: ['izq', 'der'], 3: ['izq', 'izq', 'der'], 4: ['izq', 'izq', 'der', 'der'] };
 const MITAD_SOPORTE = 27;
 
 const escapeHtml = (str) => String(str).replace(/[&<>"']/g, ch => ({
@@ -735,19 +765,22 @@ if (!a.lado || !b.lado) continue;
 const sep = b.cota - a.cota;
 const aInv = a.lado === 'izq';
 const bInv = b.lado === 'der';
-let nec, tipo;
+let tipo;
 if (aInv && bInv) {
-nec = brazoRep * 2 + holgura;
 tipo = currentLang === 'es' ? 'enfrentados → hueco DOBLE' : 'facing → DOUBLE gap';
 } else if (aInv || bInv) {
-nec = brazoRep + holgura;
 tipo = currentLang === 'es' ? 'un brazo en el hueco' : 'one arm in gap';
 } else {
-nec = holgura;
 tipo = currentLang === 'es' ? 'divergentes' : 'diverging';
 }
+const necPlegado = huecoPlegado(a.lado, b.lado, brazoRep, holgura);
+const necManual = huecoMinimoManual(a.lado, b.lado, S);
+const nec = Math.max(necPlegado, necManual);
 if (sep < nec) {
-alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> gap ${sep} mm < ${Math.round(nec)} mm required (${t('alert.brazoOnyx')}: ${brazoRep} mm).<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.colision')}</span></div>`);
+const motivo = necManual >= necPlegado
+? `${t('alert.minManual')} ${aInv && bInv ? 'B' : 'C'}min = ${Math.round(necManual)} mm`
+: `${t('alert.brazoOnyx')}: ${brazoRep} mm`;
+alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> ${sep} mm < ${Math.round(nec)} mm (${motivo}).<br><span style="font-size:0.85em; opacity:0.9;">${t(necManual >= necPlegado ? 'alert.bajoManual' : 'alert.colision')}</span></div>`);
 a.conflict = true;
 b.conflict = true;
 }
@@ -758,6 +791,19 @@ if (b.cota < 0 || b.cota > L) alerts.push(`<div><b>⚠ P${b.n}</b> ${t('alert.fu
 }
 
 let warns = [];
+// Línea mínima y A mínima del manual (A = del extremo del perfil sin tapa al centro del
+// soporte brazo, mín. 70 mm → cota ≥ 90 contando la tapa de 20).
+if (L > 0 && S > 0 && LADOS_MANUAL[n]) {
+const lm = LADOS_MANUAL[n];
+let lineaMin = 2 * TAPA + 2 * 70;
+for (let i = 0; i < lm.length - 1; i++) lineaMin += huecoMinimoManual(lm[i], lm[i + 1], S);
+lineaMin = Math.round(lineaMin);
+if (L < lineaMin) alerts.push(`<div><b>⚠ ${t('alert.lineaMin')}:</b> ${L} mm < ${lineaMin} mm (S=${S}, ${n} ${t('form.' + n + 'brazos').replace(/^\d+\s*/, '')}).</div>`);
+}
+if (L > 0 && brazos.length) {
+const aIzq = brazos[0].cota - TAPA, aDer = L - brazos[brazos.length - 1].cota - TAPA;
+if (aIzq < 70 || aDer < 70) alerts.push(`<div><b>⚠ ${t('alert.aMin')}</b> (A izq = ${aIzq} mm · A der = ${aDer} mm).</div>`);
+}
 const lineaMax = LINEA_MAX_POR_BRAZOS[n];
 if (lineaMax && L > lineaMax) alerts.push(`<div><b>⚠ ${t('alert.lineaMax')} ${n} ${t('form.' + n + 'brazos').replace(/^\d+\s*/, '')}:</b> ${L} mm > ${lineaMax} mm.</div>`);
 if (partido) warns.push(`<div><b>ℹ L=${L} mm > 7000:</b> ${t('alert.partido')}<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.union')} ${Math.round(L / 2)} mm.</span></div>`);
@@ -1115,11 +1161,8 @@ alert(currentLang === 'es' ? 'Error al generar el PDF.' : 'Error generating the 
 };
 
 // ===== Sugerir soportes brazo =====
-// Hueco mínimo entre dos soportes contiguos a y b (a la izquierda de b): el mismo criterio
-// que la detección de colisión de render(). Un brazo Izq pliega hacia la derecha (ocupa el
-// hueco con su brazo), uno Der hacia la izquierda.
-const huecoNecesario = (ladoA, ladoB, R, holgura) =>
-(ladoA === 'izq' ? R : 0) + (ladoB === 'der' ? R : 0) + holgura;
+// Usa huecoNecesario() (mínimo del manual o plegado, el mayor): el mismo criterio que los
+// avisos de render(), así una sugerencia nunca sale marcada en rojo.
 
 // Reparte el espacio entre P1 y el último de forma lo más equidistante posible sin bajar
 // de ningún hueco mínimo: cada hueco = max(mínimo, t), con t tal que la suma cuadre
@@ -1147,14 +1190,17 @@ const n = +refs.numBrazos.value || 0;
 if (L <= 0 || S <= 0 || n < 2) { alert(t('sug.faltanDatos')); return; }
 const lados = [];
 for (let i = 1; i <= n; i++) lados.push(document.getElementById('lado' + i)?.value || '');
+// Extremos siempre Izq / Der; los centrales, los que haya elegido el usuario o, si están
+// vacíos, los del manual (3 brazos: P2 Izq; 4 brazos: P2 Izq, P3 Der).
 lados[0] = 'izq';
 lados[n - 1] = 'der';
+for (let i = 1; i < n - 1; i++) if (!lados[i]) lados[i] = (LADOS_MANUAL[n] || [])[i] || '';
 if (lados.some(l => !l)) { alert(t('sug.faltaLado')); return; }
 
 const R = getBrazoPlegadoReal(S);
 const holgura = +refs.holgura.value || 0;
 const minimos = [];
-for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], R, holgura));
+for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, holgura));
 const total = L - 2 * DIST_EXTREMO_BRAZO;
 const sumaMin = minimos.reduce((a, b) => a + b, 0);
 if (sumaMin > total) {
