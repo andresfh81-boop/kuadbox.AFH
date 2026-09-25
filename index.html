@@ -302,6 +302,8 @@ es: {
 'plan.titulo': 'Plano Técnico Pendiente',
 'plan.desc': 'Introduce los parámetros de línea, salida y brazos para generar el esquema.',
 'alert.colision': 'Riesgo de colisión durante el plegado.',
+'alert.brazoOnyx': 'brazo Onyx plegado',
+'alert.lineaMax': 'Línea máxima superada con',
 'alert.fuera': 'está fuera de la línea principal',
 'alert.partido': 'El toldo debe fabricarse en DOS MITADES.',
 'alert.union': 'Unión de cofre al centro:',
@@ -372,6 +374,8 @@ en: {
 'plan.titulo': 'Technical Drawing Pending',
 'plan.desc': 'Enter width, projection and arm data to generate the drawing template.',
 'alert.colision': 'Collision risk during folding.',
+'alert.brazoOnyx': 'folded Onyx arm',
+'alert.lineaMax': 'Maximum width exceeded with',
 'alert.fuera': 'is outside the main width line',
 'alert.partido': 'The awning must be manufactured in TWO HALVES.',
 'alert.union': 'Cassette joining at center:',
@@ -455,6 +459,27 @@ const TERMINAL_OFFSET = 230;
 // la marca va al borde del soporte (±27) para que el propio soporte no la tape.
 // El terminal se marca al centro, sin desplazar, desde el extremo de su lado.
 const TAPA = 20;
+// Brazo plegado: KÜADBOX lleva los mismos brazos Onyx que MODULBOX-400 (confirmado por
+// Andrés, 25-sep-2026), así que se usa la misma tabla (salida -> brazo plegado) + 100 mm.
+const brazoPlegadoMap = {
+1500: 722, 1750: 847, 2000: 972, 2250: 1097, 2500: 1222, 2750: 1347,
+3000: 1472, 3250: 1597, 3500: 1722, 3750: 1847, 4000: 1972
+};
+const getBrazoPlegadoReal = (salida) => {
+if (brazoPlegadoMap[salida] !== undefined) return brazoPlegadoMap[salida] + 100;
+const keys = Object.keys(brazoPlegadoMap).map(Number).sort((a, b) => a - b);
+if (salida <= keys[0]) return brazoPlegadoMap[keys[0]] + 100;
+if (salida >= keys[keys.length - 1]) return brazoPlegadoMap[keys[keys.length - 1]] + 100;
+for (let i = 0; i < keys.length - 1; i++) {
+if (salida >= keys[i] && salida <= keys[i + 1]) {
+const f = (salida - keys[i]) / (keys[i + 1] - keys[i]);
+return Math.round(brazoPlegadoMap[keys[i]] + f * (brazoPlegadoMap[keys[i + 1]] - brazoPlegadoMap[keys[i]])) + 100;
+}
+}
+return Math.round(salida / 2) + 100;
+};
+// Línea máxima según nº de brazos (manual de fabricación KÜADBOX-400, apdo. 2.3).
+const LINEA_MAX_POR_BRAZOS = { 2: 6000, 3: 9000, 4: 12000 };
 const MITAD_SOPORTE = 27;
 
 const escapeHtml = (str) => String(str).replace(/[&<>"']/g, ch => ({
@@ -634,7 +659,7 @@ const pedido = escapeHtml(refs.pedido.value || '—');
 const cliente = escapeHtml(refs.cliente.value || '—');
 const ladoMotor = refs.ladoMotor.value;
 const holgura = +refs.holgura.value || 0;
-const brazoRep = S / 2;
+const brazoRep = S > 0 ? getBrazoPlegadoReal(S) : 0;
 const partido = L > L_PARTIDO;
 
 let brazos = [];
@@ -706,7 +731,7 @@ nec = holgura;
 tipo = currentLang === 'es' ? 'divergentes' : 'diverging';
 }
 if (sep < nec) {
-alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> gap ${sep} mm < ${Math.round(nec)} mm required.<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.colision')}</span></div>`);
+alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> gap ${sep} mm < ${Math.round(nec)} mm required (${t('alert.brazoOnyx')}: ${brazoRep} mm).<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.colision')}</span></div>`);
 a.conflict = true;
 b.conflict = true;
 }
@@ -717,6 +742,8 @@ if (b.cota < 0 || b.cota > L) alerts.push(`<div><b>⚠ P${b.n}</b> ${t('alert.fu
 }
 
 let warns = [];
+const lineaMax = LINEA_MAX_POR_BRAZOS[n];
+if (lineaMax && L > lineaMax) alerts.push(`<div><b>⚠ ${t('alert.lineaMax')} ${n} ${t('form.' + n + 'brazos').replace(/^\d+\s*/, '')}:</b> ${L} mm > ${lineaMax} mm.</div>`);
 if (partido) warns.push(`<div><b>ℹ L=${L} mm > 7000:</b> ${t('alert.partido')}<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.union')} ${Math.round(L / 2)} mm.</span></div>`);
 
 refs.alertOut.innerHTML =
