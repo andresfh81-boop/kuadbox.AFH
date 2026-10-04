@@ -1076,6 +1076,16 @@ btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
 render();
 };
 
+// El primer brazo siempre es izquierdo y el último derecho; solo los interiores eligen mano.
+const fijarLadosExtremos = () => {
+const n = +refs.numBrazos.value || 0;
+if (n < 2) return;
+const primero = document.getElementById('lado1');
+const ultimo = document.getElementById('lado' + n);
+if (primero) primero.value = 'izq';
+if (ultimo) ultimo.value = 'der';
+};
+
 const buildBrazosUI = () => {
 const v = refs.numBrazos.value;
 refs.brazosContainer.innerHTML = '';
@@ -1091,7 +1101,7 @@ for (let i = 1; i <= n; i++) {
 html += `
 <div class="brazo-item animate-render" style="animation-delay: ${i * 0.05}s">
 <label>${t('brazo.label')} ${i}</label>
-<select id="lado${i}" class="brazo-input">
+<select id="lado${i}" class="brazo-input"${i === 1 || i === n ? ' disabled' : ''}>
 <option value="">${t('brazo.select')}</option>
 <option value="izq">${t('brazo.izq')}</option>
 <option value="der">${t('brazo.der')}</option>
@@ -1100,6 +1110,7 @@ html += `
 </div>`;
 }
 refs.brazosContainer.innerHTML = html;
+fijarLadosExtremos();
 
 document.querySelectorAll('.brazo-input').forEach(el => {
 el.addEventListener('input', render);
@@ -1117,6 +1128,7 @@ const cotaEl = document.getElementById(`cota${i}`);
 if (ladoEl) ladoEl.value = val.lado;
 if (cotaEl) cotaEl.value = val.cota;
 });
+fijarLadosExtremos();
 document.querySelectorAll('.brazo-input').forEach(el => {
 el.addEventListener('input', render);
 });
