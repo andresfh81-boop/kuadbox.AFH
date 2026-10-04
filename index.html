@@ -104,8 +104,8 @@ svg.plano-main { width: 100%; height: auto; display: block; }
 /* Vista Cliente / Taller: los elementos .solo-taller solo se ven (y se imprimen) con
    body.view-taller; los .solo-cliente, al revés. Sirve igual para SVG y para HTML. */
 body:not(.view-taller) .solo-taller, body.view-taller .solo-cliente { display: none !important; }
-.vista-toggle { display: flex; gap: 8px; margin-right: auto; }
-.view-toggle-btn { margin-top: 0; width: auto; padding: 6px 14px; font-size: 0.85rem; background: #e5e7eb; color: #374151; border: 1px solid var(--border-color); }
+.btn-group.vista-toggle { flex-direction: row; }
+.view-toggle-btn { margin-top: 0; background: #e5e7eb; color: #374151; border: 1px solid var(--border-color); }
 .view-toggle-btn:hover { background: #d1d5db; }
 .view-toggle-btn.active, .view-toggle-btn.active:hover { background: #1f2937; color: #fff; }
 .taller-banner { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; font-weight: 600; margin-bottom: 10px; }
@@ -229,6 +229,11 @@ body { background: #fff; }
 <div id="brazosContainer"></div>
 <button id="btnSugerirBrazos" class="secondary" type="button" data-i18n="sug.btn">📐 Sugerir soportes brazo</button>
 
+<div class="btn-group vista-toggle">
+<button id="btnVerCliente" class="view-toggle-btn active" type="button" data-i18n="vista.cliente">👤 Cliente</button>
+<button id="btnVerTaller" class="view-toggle-btn" type="button" data-i18n="vista.taller">🔧 Taller</button>
+</div>
+
 <div class="btn-group">
 <button id="btnPrint" data-i18n="form.imprimir">🖨 Imprimir (Cliente)</button>
 <button id="btnPrintTaller" class="secondary" data-i18n="form.imprimirTaller">🖨 Imprimir (Taller)</button>
@@ -240,10 +245,6 @@ body { background: #fff; }
 <div class="panel plan">
 <div id="alertOut"></div>
 <div class="plano-toolbar no-print">
-<div class="vista-toggle">
-<button id="btnVerCliente" class="view-toggle-btn active" type="button" data-i18n="vista.cliente">👤 Cliente</button>
-<button id="btnVerTaller" class="view-toggle-btn" type="button" data-i18n="vista.taller">🔧 Taller</button>
-</div>
 <button id="btnAmpliarPlano" class="btn-zoom-plano" type="button" data-i18n="plan.ampliar">🔍 Ampliar plano</button>
 </div>
 <div id="planoOut">
