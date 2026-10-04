@@ -37,7 +37,7 @@ header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
 header span { font-size: 0.85rem; opacity: 0.9; display: block; margin-top: 2px;}
 
 .lang-selector { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-.lang-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; }
+.lang-btn { margin-top: 0; width: auto; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; }
 .lang-btn.active { background: rgba(255,255,255,0.25); border-color: #fff; }
 .lang-btn:hover { background: rgba(255,255,255,0.2); }
 
@@ -140,7 +140,8 @@ svg.plano-main { cursor: zoom-in; }
 .panel.form { max-width: 100%; }
 .plan-meta { text-align: left; }
 .btn-group { flex-direction: column; }
-.lang-selector { margin-left: 0; }
+header { flex-wrap: wrap; }
+.lang-selector { margin-left: 0; flex-wrap: wrap; }
 }
 
 @media print {
@@ -176,6 +177,10 @@ body { background: #fff; }
 <div class="lang-selector">
 <button class="lang-btn active" data-lang="es">ES</button>
 <button class="lang-btn" data-lang="en">EN</button>
+<button class="lang-btn" data-lang="fr">FR</button>
+<button class="lang-btn" data-lang="de">DE</button>
+<button class="lang-btn" data-lang="it">IT</button>
+<button class="lang-btn" data-lang="pt">PT</button>
 </div>
 </header>
 
@@ -345,6 +350,25 @@ es: {
 'presup.sinPedido': 'Presupuesto leído ({n} campos), pero no salió el Nº de pedido: escríbelo a mano.',
 'presup.vacio': 'No se reconoció ningún dato del presupuesto.',
 'presup.err': 'No se pudo leer el presupuesto.',
+"confirm.reducirBrazos": "Vas a reducir el número de brazos. Se perderán los datos de los brazos eliminados. ¿Continuar?",
+"tipo.enfrentados": "enfrentados → hueco DOBLE",
+"tipo.unBrazo": "un brazo en el hueco",
+"tipo.divergentes": "divergentes",
+"plan.unionTxt": "PLACA UNIÓN COFRE",
+"plan.auxiliar": "AUXILIAR",
+"lado.letraIzq": "I",
+"lado.letraDer": "D",
+"plan.brazo": "brazo",
+"plan.brazos": "brazos",
+"plan.2mitades": "2 MITADES",
+"plan.pedido": "Pedido",
+"plan.cliente": "Cliente",
+"locale": "es-ES",
+"err.sinPlano": "Primero genera el plano.",
+"err.pngModulo": "No se pudo cargar el módulo de exportación PNG. Puedes usar \"Imprimir / PDF\".",
+"err.png": "Error al exportar la imagen.",
+"err.pdfModulo": "No se pudo cargar el módulo de generación de PDF. Puedes usar \"Imprimir plano\" y elegir \"Guardar como PDF\" en el diálogo de impresión.",
+"err.pdf": "Error al generar el PDF.",
 },
 en: {
 'header.title': 'Plates Configurator — KÜADBOX-400',
@@ -426,13 +450,432 @@ en: {
 'presup.sinPedido': 'Quote read ({n} fields), but the order number was not found: type it in.',
 'presup.vacio': 'No data recognised from the quote.',
 'presup.err': 'Could not read the quote.',
+"confirm.reducirBrazos": "You are reducing the number of arms. Data for the removed arms will be lost. Continue?",
+"tipo.enfrentados": "facing → DOUBLE gap",
+"tipo.unBrazo": "one arm in gap",
+"tipo.divergentes": "diverging",
+"plan.unionTxt": "CASSETTE JOINING PLATE",
+"plan.auxiliar": "AUXILIARY",
+"lado.letraIzq": "L",
+"lado.letraDer": "R",
+"plan.brazo": "arm",
+"plan.brazos": "arms",
+"plan.2mitades": "2 HALVES",
+"plan.pedido": "Order",
+"plan.cliente": "Customer",
+"locale": "en-GB",
+"err.sinPlano": "Generate the drawing first.",
+"err.pngModulo": "The PNG export module could not be loaded. You can use \"Print / PDF\".",
+"err.png": "Error exporting image.",
+"err.pdfModulo": "The PDF generation module could not be loaded. You can use \"Print drawing\" and choose \"Save as PDF\" in the print dialog.",
+"err.pdf": "Error generating the PDF.",
+},
+fr: {
+"header.title": "Configurateur de platines — KÜADBOX-400",
+"header.subtitle": "LLAZA WORLD · Aux. A>200 · Auxiliaire si écart>4500 · 2 moitiés si L>7000",
+"form.pedido": "N° de commande",
+"form.cliente": "Client",
+"form.linea": "Largeur L (mm)",
+"form.salida": "Projection P (mm)",
+"form.ladoMotor": "Côté moteur",
+"form.izquierdo": "Gauche",
+"form.derecho": "Droite",
+"form.holgura": "Jeu de sécurité (mm)",
+"form.numBrazos": "Nombre de bras (2 à 4)",
+"form.elegir": "— Choisir —",
+"form.2brazos": "2 bras",
+"form.3brazos": "3 bras",
+"form.4brazos": "4 bras",
+"form.imprimir": "🖨 Imprimer (Client)",
+"form.imprimirTaller": "🖨 Imprimer (Atelier)",
+"vista.cliente": "👤 Client",
+"vista.taller": "🔧 Atelier",
+"taller.banner": "🔧 COPIE ATELIER · Cotes sur profil SANS embout (−20 mm) · Support de bras : repère au BORD (±27 mm) · Terminal : au CENTRE",
+"taller.leyenda": "Atelier : origine à l'extrémité du profil sans embout",
+"taller.desdeIzq": "depuis extrémité GAUCHE",
+"taller.desdeDer": "depuis extrémité DROITE",
+"taller.bordeIzq": "bord gauche",
+"taller.bordeDer": "bord droit",
+"taller.colSoporte": "Support atelier (mm, au bord, sans embout)",
+"taller.colTerminal": "Terminal atelier (mm, au centre, sans embout)",
+"form.generarPdf": "📄 Générer PDF",
+"form.exportar": "⬇ Exporter PNG",
+"brazo.label": "Bras",
+"brazo.select": "— Côté —",
+"brazo.izq": "Gauche (bande rouge) → plie à droite",
+"brazo.der": "Droite (bande verte) → plie à gauche",
+"brazo.cota": "Coordonnée en mm",
+"plan.placeholder": "Saisissez la largeur, la projection et les bras pour générer le plan.",
+"plan.titulo": "Plan technique en attente",
+"plan.desc": "Saisissez la largeur, la projection et les bras pour générer le schéma.",
+"alert.colision": "Risque de collision lors du repliage.",
+"alert.brazoOnyx": "bras Onyx replié",
+"alert.minManual": "minimum du manuel Küadbox",
+"alert.bajoManual": "En dessous de l'écart minimal du manuel de fabrication.",
+"alert.lineaMin": "Largeur inférieure au minimum du manuel",
+"alert.aMin": "Support de bras à moins de A = 70 mm de l'extrémité du profil (minimum du manuel)",
+"sug.btn": "📐 Suggérer supports de bras",
+"sug.faltanDatos": "Saisissez la largeur, la projection et le nombre de bras avant de suggérer.",
+"sug.faltaLado": "Choisissez d'abord le côté (G/D) des bras centraux. P1 et le dernier se règlent seuls (G et D).",
+"sug.noCabe": "Les écarts minimaux du manuel ne sont pas respectés même avec les extrémités à 90 mm (A = 70). Largeur minimale : {min} mm (actuelle {L} mm).",
+"sug.confirmar": "Les cotes des bras déjà saisies vont être remplacées. Continuer ?",
+"alert.lineaMax": "Largeur maximale dépassée avec",
+"alert.fuera": "est hors de la ligne principale",
+"alert.partido": "Le store doit être fabriqué en DEUX MOITIÉS.",
+"alert.union": "Jonction du coffre au centre :",
+"plan.motor": "MOTEUR",
+"plan.punta": "EXTRÉMITÉ",
+"plan.unidad": "UNITÉ : MILLIMÈTRES",
+"plan.leyenda.soporte": "Support de bras",
+"plan.leyenda.aux": "Aux. (A>200)",
+"plan.leyenda.patin": "Auxiliaire (écart>4500)",
+"plan.leyenda.union": "Plaque de jonction coffre",
+"plan.leyenda.cotas": "Cotes en mm au centre · Origine : côté gauche visuel",
+"plan.terminalCorto": "Term.",
+"plan.tablaTerminales": "Calcul des terminaux de bras",
+"plan.colBrazo": "Bras",
+"plan.colLado": "Côté",
+"plan.colSoporte": "Cote support (mm)",
+"plan.colTerminal": "Cote terminal (mm)",
+"plan.generado": "Généré",
+"install.msg": "Installez cette application sur votre mobile pour l'utiliser hors ligne.",
+"install.btn": "Installer",
+"offline.msg": "Hors ligne — l'application continue de fonctionner avec les données enregistrées sur cet appareil.",
+"plan.ampliar": "🔍 Agrandir le plan",
+"plan.ampliarClick": "Cliquez pour agrandir / réduire",
+"presup.btn": "📤 Importer un devis (photo/PDF)",
+"presup.leyendo": "⏳ Lecture du devis…",
+"presup.debug": "🔍 Voir le texte lu (OCR)",
+"presup.ok": "Devis lu : {n} champs remplis. Vérifiez-les avant de continuer.",
+"presup.sinPedido": "Devis lu ({n} champs), mais le n° de commande est introuvable : saisissez-le.",
+"presup.vacio": "Aucune donnée reconnue dans le devis.",
+"presup.err": "Impossible de lire le devis.",
+"confirm.reducirBrazos": "Vous allez réduire le nombre de bras. Les données des bras supprimés seront perdues. Continuer ?",
+"tipo.enfrentados": "face à face → écart DOUBLE",
+"tipo.unBrazo": "un bras dans l'écart",
+"tipo.divergentes": "divergents",
+"plan.unionTxt": "PLAQUE DE JONCTION COFFRE",
+"plan.auxiliar": "AUXILIAIRE",
+"lado.letraIzq": "G",
+"lado.letraDer": "D",
+"plan.brazo": "bras",
+"plan.brazos": "bras",
+"plan.2mitades": "2 MOITIÉS",
+"plan.pedido": "Commande",
+"plan.cliente": "Client",
+"locale": "fr-FR",
+"err.sinPlano": "Générez d'abord le plan.",
+"err.pngModulo": "Impossible de charger le module d'export PNG. Vous pouvez utiliser « Imprimer / PDF ».",
+"err.png": "Erreur lors de l'export de l'image.",
+"err.pdfModulo": "Impossible de charger le module PDF. Vous pouvez utiliser « Imprimer » et choisir « Enregistrer au format PDF » dans la boîte d'impression.",
+"err.pdf": "Erreur lors de la génération du PDF.",
+},
+de: {
+"header.title": "Plattenkonfigurator — KÜADBOX-400",
+"header.subtitle": "LLAZA WORLD · Hilfspl. A>200 · Zwischenstütze bei Abst.>4500 · 2 Hälften bei L>7000",
+"form.pedido": "Bestellnr.",
+"form.cliente": "Kunde",
+"form.linea": "Strecke L (mm)",
+"form.salida": "Ausgang S (mm)",
+"form.ladoMotor": "Motorseite",
+"form.izquierdo": "Links",
+"form.derecho": "Rechts",
+"form.holgura": "Sicherheitsspiel (mm)",
+"form.numBrazos": "Anzahl der Arme (2–4)",
+"form.elegir": "— Wählen —",
+"form.2brazos": "2 Arme",
+"form.3brazos": "3 Arme",
+"form.4brazos": "4 Arme",
+"form.imprimir": "🖨 Drucken (Kunde)",
+"form.imprimirTaller": "🖨 Drucken (Werkstatt)",
+"vista.cliente": "👤 Kunde",
+"vista.taller": "🔧 Werkstatt",
+"taller.banner": "🔧 WERKSTATTKOPIE · Maße am Profil OHNE Endkappe (−20 mm) · Armstütze: Markierung an der KANTE (±27 mm) · Endstück: MITTE",
+"taller.leyenda": "Werkstatt: Ursprung am Profilende ohne Kappe",
+"taller.desdeIzq": "ab LINKEM Ende",
+"taller.desdeDer": "ab RECHTEM Ende",
+"taller.bordeIzq": "linke Kante",
+"taller.bordeDer": "rechte Kante",
+"taller.colSoporte": "Stütze Werkstatt (mm, Kante, ohne Kappe)",
+"taller.colTerminal": "Endstück Werkstatt (mm, Mitte, ohne Kappe)",
+"form.generarPdf": "📄 PDF erstellen",
+"form.exportar": "⬇ PNG exportieren",
+"brazo.label": "Arm",
+"brazo.select": "— Seite —",
+"brazo.izq": "Links (rotes Band) → faltet nach rechts",
+"brazo.der": "Rechts (grünes Band) → faltet nach links",
+"brazo.cota": "Koordinate in mm",
+"plan.placeholder": "Geben Sie Strecke, Ausgang und Arme ein, um den Plan zu erstellen.",
+"plan.titulo": "Technischer Plan ausstehend",
+"plan.desc": "Geben Sie Strecke, Ausgang und Arme ein, um das Schema zu erstellen.",
+"alert.colision": "Kollisionsgefahr beim Einfahren.",
+"alert.brazoOnyx": "eingefahrener Onyx-Arm",
+"alert.minManual": "Minimum laut Küadbox-Handbuch",
+"alert.bajoManual": "Unter dem Mindestabstand laut Fertigungshandbuch.",
+"alert.lineaMin": "Strecke unter dem Minimum laut Handbuch",
+"alert.aMin": "Armstütze näher als A = 70 mm am Profilende (Minimum laut Handbuch)",
+"sug.btn": "📐 Armstützen vorschlagen",
+"sug.faltanDatos": "Geben Sie Strecke, Ausgang und Anzahl der Arme ein, bevor Sie vorschlagen.",
+"sug.faltaLado": "Wählen Sie zuerst die Seite (L/R) der mittleren Arme. P1 und der letzte werden automatisch gesetzt (L und R).",
+"sug.noCabe": "Die Mindestabstände laut Handbuch werden selbst mit den Enden bei 90 mm (A = 70) nicht eingehalten. Mindeststrecke: {min} mm (aktuell {L} mm).",
+"sug.confirmar": "Die bereits eingegebenen Armpositionen werden ersetzt. Fortfahren?",
+"alert.lineaMax": "Maximale Strecke überschritten mit",
+"alert.fuera": "liegt außerhalb der Hauptstrecke",
+"alert.partido": "Die Markise muss in ZWEI HÄLFTEN gefertigt werden.",
+"alert.union": "Kassettenverbindung in der Mitte:",
+"plan.motor": "MOTOR",
+"plan.punta": "ENDE",
+"plan.unidad": "EINHEIT: MILLIMETER",
+"plan.leyenda.soporte": "Armstütze",
+"plan.leyenda.aux": "Hilfspl. (A>200)",
+"plan.leyenda.patin": "Zwischenstütze (Abst.>4500)",
+"plan.leyenda.union": "Kassetten-Verbindungsplatte",
+"plan.leyenda.cotas": "Maße in mm zur Mitte · Ursprung: linke Sichtseite",
+"plan.terminalCorto": "Endst.",
+"plan.tablaTerminales": "Berechnung der Arm-Endstücke",
+"plan.colBrazo": "Arm",
+"plan.colLado": "Seite",
+"plan.colSoporte": "Position Stütze (mm)",
+"plan.colTerminal": "Position Endstück (mm)",
+"plan.generado": "Erstellt",
+"install.msg": "Installieren Sie diese App auf Ihrem Handy, um sie offline zu nutzen.",
+"install.btn": "Installieren",
+"offline.msg": "Offline — die App funktioniert weiterhin mit den auf diesem Gerät gespeicherten Daten.",
+"plan.ampliar": "🔍 Plan vergrößern",
+"plan.ampliarClick": "Klicken zum Vergrößern / Verkleinern",
+"presup.btn": "📤 Angebot hochladen (Foto/PDF)",
+"presup.leyendo": "⏳ Angebot wird gelesen…",
+"presup.debug": "🔍 Gelesenen Text anzeigen (OCR)",
+"presup.ok": "Angebot gelesen: {n} Felder ausgefüllt. Bitte vor dem Fortfahren prüfen.",
+"presup.sinPedido": "Angebot gelesen ({n} Felder), aber die Bestellnummer fehlt: bitte eintippen.",
+"presup.vacio": "Keine Daten im Angebot erkannt.",
+"presup.err": "Angebot konnte nicht gelesen werden.",
+"confirm.reducirBrazos": "Sie reduzieren die Anzahl der Arme. Die Daten der entfernten Arme gehen verloren. Fortfahren?",
+"tipo.enfrentados": "gegenüber → DOPPELTER Abstand",
+"tipo.unBrazo": "ein Arm im Abstand",
+"tipo.divergentes": "auseinanderlaufend",
+"plan.unionTxt": "KASSETTEN-VERBINDUNGSPLATTE",
+"plan.auxiliar": "HILFSPLATTE",
+"lado.letraIzq": "L",
+"lado.letraDer": "R",
+"plan.brazo": "Arm",
+"plan.brazos": "Arme",
+"plan.2mitades": "2 HÄLFTEN",
+"plan.pedido": "Bestellung",
+"plan.cliente": "Kunde",
+"locale": "de-DE",
+"err.sinPlano": "Erstellen Sie zuerst den Plan.",
+"err.pngModulo": "Das PNG-Exportmodul konnte nicht geladen werden. Sie können „Drucken / PDF“ verwenden.",
+"err.png": "Fehler beim Exportieren des Bildes.",
+"err.pdfModulo": "Das PDF-Modul konnte nicht geladen werden. Sie können „Drucken“ verwenden und im Druckdialog „Als PDF speichern“ wählen.",
+"err.pdf": "Fehler beim Erstellen des PDF.",
+},
+it: {
+"header.title": "Configuratore piastre — KÜADBOX-400",
+"header.subtitle": "LLAZA WORLD · Aus. A>200 · Ausiliaria se dist.>4500 · 2 metà se L>7000",
+"form.pedido": "N. ordine",
+"form.cliente": "Cliente",
+"form.linea": "Lunghezza L (mm)",
+"form.salida": "Sporgenza S (mm)",
+"form.ladoMotor": "Lato motore",
+"form.izquierdo": "Sinistro",
+"form.derecho": "Destro",
+"form.holgura": "Gioco di sicurezza (mm)",
+"form.numBrazos": "Numero di bracci (2–4)",
+"form.elegir": "— Scegli —",
+"form.2brazos": "2 bracci",
+"form.3brazos": "3 bracci",
+"form.4brazos": "4 bracci",
+"form.imprimir": "🖨 Stampa (Cliente)",
+"form.imprimirTaller": "🖨 Stampa (Officina)",
+"vista.cliente": "👤 Cliente",
+"vista.taller": "🔧 Officina",
+"taller.banner": "🔧 COPIA OFFICINA · Quote sul profilo SENZA tappo (−20 mm) · Supporto braccio: segno sul BORDO (±27 mm) · Terminale: al CENTRO",
+"taller.leyenda": "Officina: origine all'estremità del profilo senza tappo",
+"taller.desdeIzq": "da estremità SINISTRA",
+"taller.desdeDer": "da estremità DESTRA",
+"taller.bordeIzq": "bordo sinistro",
+"taller.bordeDer": "bordo destro",
+"taller.colSoporte": "Supporto officina (mm, al bordo, senza tappo)",
+"taller.colTerminal": "Terminale officina (mm, al centro, senza tappo)",
+"form.generarPdf": "📄 Genera PDF",
+"form.exportar": "⬇ Esporta PNG",
+"brazo.label": "Braccio",
+"brazo.select": "— Lato —",
+"brazo.izq": "Sinistra (banda rossa) → piega a destra",
+"brazo.der": "Destra (banda verde) → piega a sinistra",
+"brazo.cota": "Coordinata in mm",
+"plan.placeholder": "Inserisci lunghezza, sporgenza e bracci per generare il disegno.",
+"plan.titulo": "Disegno tecnico in attesa",
+"plan.desc": "Inserisci lunghezza, sporgenza e bracci per generare lo schema.",
+"alert.colision": "Rischio di collisione durante la chiusura.",
+"alert.brazoOnyx": "braccio Onyx chiuso",
+"alert.minManual": "minimo del manuale Küadbox",
+"alert.bajoManual": "Al di sotto della distanza minima del manuale di fabbricazione.",
+"alert.lineaMin": "Lunghezza inferiore al minimo del manuale",
+"alert.aMin": "Supporto braccio a meno di A = 70 mm dall'estremità del profilo (minimo del manuale)",
+"sug.btn": "📐 Suggerisci supporti braccio",
+"sug.faltanDatos": "Inserisci lunghezza, sporgenza e numero di bracci prima di suggerire.",
+"sug.faltaLado": "Scegli prima il lato (S/D) dei bracci centrali. P1 e l'ultimo si impostano da soli (S e D).",
+"sug.noCabe": "Le distanze minime del manuale non sono rispettate nemmeno con le estremità a 90 mm (A = 70). Lunghezza minima: {min} mm (attuale {L} mm).",
+"sug.confirmar": "Le quote dei bracci già inserite verranno sostituite. Continuare?",
+"alert.lineaMax": "Lunghezza massima superata con",
+"alert.fuera": "è fuori dalla linea principale",
+"alert.partido": "La tenda deve essere fabbricata in DUE METÀ.",
+"alert.union": "Giunzione cassonetto al centro:",
+"plan.motor": "MOTORE",
+"plan.punta": "PUNTA",
+"plan.unidad": "UNITÀ: MILLIMETRI",
+"plan.leyenda.soporte": "Supporto braccio",
+"plan.leyenda.aux": "Aus. (A>200)",
+"plan.leyenda.patin": "Ausiliaria (dist.>4500)",
+"plan.leyenda.union": "Piastra giunzione cassonetto",
+"plan.leyenda.cotas": "Quote in mm al centro · Origine: lato sinistro visivo",
+"plan.terminalCorto": "Term.",
+"plan.tablaTerminales": "Calcolo terminali braccio",
+"plan.colBrazo": "Braccio",
+"plan.colLado": "Lato",
+"plan.colSoporte": "Quota supporto (mm)",
+"plan.colTerminal": "Quota terminale (mm)",
+"plan.generado": "Generato",
+"install.msg": "Installa questa app sul tuo cellulare per usarla offline.",
+"install.btn": "Installa",
+"offline.msg": "Offline — l'app continua a funzionare con i dati salvati sul dispositivo.",
+"plan.ampliar": "🔍 Ingrandisci disegno",
+"plan.ampliarClick": "Clicca per ingrandire / ridurre",
+"presup.btn": "📤 Carica preventivo (foto/PDF)",
+"presup.leyendo": "⏳ Lettura preventivo…",
+"presup.debug": "🔍 Vedi testo letto (OCR)",
+"presup.ok": "Preventivo letto: {n} campi compilati. Controllali prima di continuare.",
+"presup.sinPedido": "Preventivo letto ({n} campi), ma il n. ordine non è stato trovato: scrivilo a mano.",
+"presup.vacio": "Nessun dato riconosciuto nel preventivo.",
+"presup.err": "Impossibile leggere il preventivo.",
+"confirm.reducirBrazos": "Stai riducendo il numero di bracci. I dati dei bracci eliminati andranno persi. Continuare?",
+"tipo.enfrentados": "contrapposti → spazio DOPPIO",
+"tipo.unBrazo": "un braccio nello spazio",
+"tipo.divergentes": "divergenti",
+"plan.unionTxt": "PIASTRA GIUNZIONE CASSONETTO",
+"plan.auxiliar": "AUSILIARIA",
+"lado.letraIzq": "S",
+"lado.letraDer": "D",
+"plan.brazo": "braccio",
+"plan.brazos": "bracci",
+"plan.2mitades": "2 METÀ",
+"plan.pedido": "Ordine",
+"plan.cliente": "Cliente",
+"locale": "it-IT",
+"err.sinPlano": "Genera prima il disegno.",
+"err.pngModulo": "Impossibile caricare il modulo di esportazione PNG. Puoi usare \"Stampa / PDF\".",
+"err.png": "Errore durante l'esportazione dell'immagine.",
+"err.pdfModulo": "Impossibile caricare il modulo PDF. Puoi usare \"Stampa\" e scegliere \"Salva come PDF\" nella finestra di stampa.",
+"err.pdf": "Errore durante la generazione del PDF.",
+},
+pt: {
+"header.title": "Configurador de placas — KÜADBOX-400",
+"header.subtitle": "LLAZA WORLD · Aux. A>200 · Auxiliar se sep.>4500 · 2 metades se L>7000",
+"form.pedido": "N.º encomenda",
+"form.cliente": "Cliente",
+"form.linea": "Largura L (mm)",
+"form.salida": "Projeção S (mm)",
+"form.ladoMotor": "Lado do motor",
+"form.izquierdo": "Esquerdo",
+"form.derecho": "Direito",
+"form.holgura": "Folga de segurança (mm)",
+"form.numBrazos": "Número de braços (2–4)",
+"form.elegir": "— Escolher —",
+"form.2brazos": "2 braços",
+"form.3brazos": "3 braços",
+"form.4brazos": "4 braços",
+"form.imprimir": "🖨 Imprimir (Cliente)",
+"form.imprimirTaller": "🖨 Imprimir (Oficina)",
+"vista.cliente": "👤 Cliente",
+"vista.taller": "🔧 Oficina",
+"taller.banner": "🔧 CÓPIA OFICINA · Cotas no perfil SEM tampa (−20 mm) · Suporte de braço: marca no BORDO (±27 mm) · Terminal: ao CENTRO",
+"taller.leyenda": "Oficina: origem na extremidade do perfil sem tampa",
+"taller.desdeIzq": "desde extremidade ESQ.",
+"taller.desdeDer": "desde extremidade DIR.",
+"taller.bordeIzq": "bordo esq.",
+"taller.bordeDer": "bordo dir.",
+"taller.colSoporte": "Suporte oficina (mm, no bordo, sem tampa)",
+"taller.colTerminal": "Terminal oficina (mm, ao centro, sem tampa)",
+"form.generarPdf": "📄 Gerar PDF",
+"form.exportar": "⬇ Exportar PNG",
+"brazo.label": "Braço",
+"brazo.select": "— Lado —",
+"brazo.izq": "Esquerda (faixa vermelha) → dobra para a direita",
+"brazo.der": "Direita (faixa verde) → dobra para a esquerda",
+"brazo.cota": "Coordenada em mm",
+"plan.placeholder": "Introduza largura, projeção e braços para gerar o desenho.",
+"plan.titulo": "Desenho técnico pendente",
+"plan.desc": "Introduza largura, projeção e braços para gerar o esquema.",
+"alert.colision": "Risco de colisão ao recolher.",
+"alert.brazoOnyx": "braço Onyx recolhido",
+"alert.minManual": "mínimo do manual Küadbox",
+"alert.bajoManual": "Abaixo da separação mínima do manual de fabrico.",
+"alert.lineaMin": "Largura abaixo do mínimo do manual",
+"alert.aMin": "Suporte de braço a menos de A = 70 mm da extremidade do perfil (mínimo do manual)",
+"sug.btn": "📐 Sugerir suportes de braço",
+"sug.faltanDatos": "Introduza largura, projeção e número de braços antes de sugerir.",
+"sug.faltaLado": "Escolha primeiro o lado (E/D) dos braços centrais. P1 e o último ficam automáticos (E e D).",
+"sug.noCabe": "As separações mínimas do manual não se cumprem nem com as extremidades a 90 mm (A = 70). Largura mínima: {min} mm (atual {L} mm).",
+"sug.confirmar": "As cotas dos braços já introduzidas vão ser substituídas. Continuar?",
+"alert.lineaMax": "Largura máxima ultrapassada com",
+"alert.fuera": "está fora da linha principal",
+"alert.partido": "O toldo deve ser fabricado em DUAS METADES.",
+"alert.union": "União do cofre ao centro:",
+"plan.motor": "MOTOR",
+"plan.punta": "PONTA",
+"plan.unidad": "UNIDADE: MILÍMETROS",
+"plan.leyenda.soporte": "Suporte de braço",
+"plan.leyenda.aux": "Aux. (A>200)",
+"plan.leyenda.patin": "Auxiliar (sep.>4500)",
+"plan.leyenda.union": "Placa de união do cofre",
+"plan.leyenda.cotas": "Cotas em mm ao centro · Origem: lado esquerdo visual",
+"plan.terminalCorto": "Term.",
+"plan.tablaTerminales": "Cálculo dos terminais de braço",
+"plan.colBrazo": "Braço",
+"plan.colLado": "Lado",
+"plan.colSoporte": "Cota suporte (mm)",
+"plan.colTerminal": "Cota terminal (mm)",
+"plan.generado": "Gerado",
+"install.msg": "Instale esta aplicação no seu telemóvel para a usar sem ligação.",
+"install.btn": "Instalar",
+"offline.msg": "Sem ligação — a aplicação continua a funcionar com os dados guardados neste dispositivo.",
+"plan.ampliar": "🔍 Ampliar desenho",
+"plan.ampliarClick": "Clique para ampliar / reduzir",
+"presup.btn": "📤 Carregar orçamento (foto/PDF)",
+"presup.leyendo": "⏳ A ler o orçamento…",
+"presup.debug": "🔍 Ver texto lido (OCR)",
+"presup.ok": "Orçamento lido: {n} campos preenchidos. Verifique-os antes de continuar.",
+"presup.sinPedido": "Orçamento lido ({n} campos), mas o n.º de encomenda não apareceu: escreva-o à mão.",
+"presup.vacio": "Nenhum dado reconhecido no orçamento.",
+"presup.err": "Não foi possível ler o orçamento.",
+"confirm.reducirBrazos": "Vai reduzir o número de braços. Os dados dos braços eliminados serão perdidos. Continuar?",
+"tipo.enfrentados": "frente a frente → vão DUPLO",
+"tipo.unBrazo": "um braço no vão",
+"tipo.divergentes": "divergentes",
+"plan.unionTxt": "PLACA DE UNIÃO DO COFRE",
+"plan.auxiliar": "AUXILIAR",
+"lado.letraIzq": "E",
+"lado.letraDer": "D",
+"plan.brazo": "braço",
+"plan.brazos": "braços",
+"plan.2mitades": "2 METADES",
+"plan.pedido": "Encomenda",
+"plan.cliente": "Cliente",
+"locale": "pt-PT",
+"err.sinPlano": "Gere primeiro o desenho.",
+"err.pngModulo": "Não foi possível carregar o módulo de exportação PNG. Pode usar \"Imprimir / PDF\".",
+"err.png": "Erro ao exportar a imagem.",
+"err.pdfModulo": "Não foi possível carregar o módulo de PDF. Pode usar \"Imprimir\" e escolher \"Guardar como PDF\" na janela de impressão.",
+"err.pdf": "Erro ao gerar o PDF.",
 }
 };
 
 let currentLang = 'es';
 
 function t(key) {
-return i18n[currentLang][key] || key;
+return i18n[currentLang][key] || i18n.es[key] || key;
 }
 
 function setLanguage(lang) {
@@ -587,9 +1030,7 @@ if (newN < existing) {
 const hasData = Array.from({ length: existing }, (_, idx) => idx + 1)
 .some(i => document.getElementById('cota' + i)?.value);
 if (hasData) {
-const msg = currentLang === 'es'
-? 'Vas a reducir el número de brazos. Se perderán los datos de los brazos eliminados. ¿Continuar?'
-: 'You are reducing the number of arms. Data for the removed arms will be lost. Continue?';
+const msg = t('confirm.reducirBrazos');
 if (!confirm(msg)) {
 e.target.value = existing;
 return;
@@ -783,11 +1224,11 @@ const aInv = a.lado === 'izq';
 const bInv = b.lado === 'der';
 let tipo;
 if (aInv && bInv) {
-tipo = currentLang === 'es' ? 'enfrentados → hueco DOBLE' : 'facing → DOUBLE gap';
+tipo = t('tipo.enfrentados');
 } else if (aInv || bInv) {
-tipo = currentLang === 'es' ? 'un brazo en el hueco' : 'one arm in gap';
+tipo = t('tipo.unBrazo');
 } else {
-tipo = currentLang === 'es' ? 'divergentes' : 'diverging';
+tipo = t('tipo.divergentes');
 }
 const necPlegado = huecoPlegado(a.lado, b.lado, brazoRep, 0);
 const necManual = huecoMinimoManual(a.lado, b.lado, S);
@@ -932,7 +1373,7 @@ bgLines += `<circle cx="${x}" cy="${yBar}" r="3.5" fill="#fff" stroke="#6b7280" 
 }
 
 if (el.type === 'union') {
-const unionText = currentLang === 'es' ? 'PLACA UNIÓN COFRE' : 'CASSETTE JOINING PLATE';
+const unionText = t('plan.unionTxt');
 const uColor = '#e69500';
 fgShapes += `
 <rect x="${x - 24}" y="${yB - 55}" width="48" height="74" rx="3" fill="#ffffff" stroke="${uColor}" stroke-width="2" filter="url(#shadow)"/>
@@ -973,13 +1414,13 @@ fgShapes += `
 <rect x="${x - 4}" y="${yB - 34}" width="8" height="12" rx="4" fill="#064e3b" />
 <rect x="${x - 4}" y="${yB - 10}" width="8" height="12" rx="4" fill="#064e3b" />`;
 fgTexts += `
-<text x="${x}" y="${yB - 56}" font-size="10" fill="#059669" text-anchor="middle" font-weight="600" ${txtMask}>${currentLang === 'es' ? 'AUXILIAR' : 'AUXILIARY'}</text>
+<text x="${x}" y="${yB - 56}" font-size="10" fill="#059669" text-anchor="middle" font-weight="600" ${txtMask}>${t('plan.auxiliar')}</text>
 <text x="${x}" y="${yB + 72}" font-size="12" font-weight="bold" fill="#059669" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>`;
 }
 else if (el.type === 'brazo') {
 const b = el.data;
 const color = b.lado === 'der' ? '#10b981' : (b.lado === 'izq' ? '#ef4444' : '#9ca3af');
-const letra = b.lado === 'der' ? (currentLang === 'es' ? 'D' : 'R') : (b.lado === 'izq' ? (currentLang === 'es' ? 'I' : 'L') : '?');
+const letra = b.lado === 'der' ? t('lado.letraDer') : (b.lado === 'izq' ? t('lado.letraIzq') : '?');
 const stroke = b.conflict ? '#ef4444' : '#1f2937';
 const sw = b.conflict ? 3 : 2;
 
@@ -1051,9 +1492,9 @@ refs.planoOut.innerHTML = `
 <text x="86" y="42" font-size="34" font-weight="bold" fill="#333" font-family="Arial">LLAZA</text>
 </svg>
 <div class="plan-meta">
-<span class="no-print"><b>KÜADBOX-400</b> · </span>L=<b>${Ltxt}</b> mm · S=<b>${S || '—'}</b> mm · <b>${n || '—'}</b> ${n === 1 ? (currentLang === 'es' ? 'brazo' : 'arm') : (currentLang === 'es' ? 'brazos' : 'arms')} <span class="no-print">${partido ? '<span style="color:#c0102e;font-weight:bold;">· (' + (currentLang === 'es' ? '2 MITADES' : '2 HALVES') + ')</span>' : ''}</span><br>
-<span>${currentLang === 'es' ? 'Pedido' : 'Order'}: <b>${pedido}</b> · ${currentLang === 'es' ? 'Cliente' : 'Customer'}: <b>${cliente}</b></span><br>
-<span class="no-print">${t('plan.generado')}: <b>${new Date().toLocaleString(currentLang === 'es' ? 'es-ES' : 'en-GB')}</b></span>
+<span class="no-print"><b>KÜADBOX-400</b> · </span>L=<b>${Ltxt}</b> mm · S=<b>${S || '—'}</b> mm · <b>${n || '—'}</b> ${n === 1 ? t('plan.brazo') : t('plan.brazos')} <span class="no-print">${partido ? '<span style="color:#c0102e;font-weight:bold;">· (' + t('plan.2mitades') + ')</span>' : ''}</span><br>
+<span>${t('plan.pedido')}: <b>${pedido}</b> · ${t('plan.cliente')}: <b>${cliente}</b></span><br>
+<span class="no-print">${t('plan.generado')}: <b>${new Date().toLocaleString(t('locale'))}</b></span>
 </div>
 </div>
 
@@ -1121,13 +1562,11 @@ setVistaTaller(previa);
 const exportPNG = () => {
 const element = document.getElementById('planoContainer');
 if (!element) {
-alert(currentLang === 'es' ? 'Primero genera el plano.' : 'Generate the drawing first.');
+alert(t('err.sinPlano'));
 return;
 }
 if (typeof html2canvas === 'undefined') {
-alert(currentLang === 'es'
-? 'No se pudo cargar el módulo de exportación PNG. Puedes usar "Imprimir / PDF".'
-: 'The PNG export module could not be loaded. You can use "Print / PDF".');
+alert(t('err.pngModulo'));
 return;
 }
 html2canvas(element, {
@@ -1141,20 +1580,18 @@ link.href = canvas.toDataURL('image/png');
 link.click();
 }).catch(err => {
 console.error(err);
-alert(currentLang === 'es' ? 'Error al exportar la imagen.' : 'Error exporting image.');
+alert(t('err.png'));
 });
 };
 
 const exportPDF = () => {
 const element = document.getElementById('planoContainer');
 if (!element) {
-alert(currentLang === 'es' ? 'Primero genera el plano.' : 'Generate the drawing first.');
+alert(t('err.sinPlano'));
 return;
 }
 if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-alert(currentLang === 'es'
-? 'No se pudo cargar el módulo de generación de PDF. Puedes usar "Imprimir plano" y elegir "Guardar como PDF" en el diálogo de impresión.'
-: 'The PDF generation module could not be loaded. You can use "Print drawing" and choose "Save as PDF" in the print dialog.');
+alert(t('err.pdfModulo'));
 return;
 }
 html2canvas(element, {
@@ -1173,7 +1610,7 @@ pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
 pdf.save(`KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}.pdf`);
 }).catch(err => {
 console.error(err);
-alert(currentLang === 'es' ? 'Error al generar el PDF.' : 'Error generating the PDF.');
+alert(t('err.pdf'));
 });
 };
 
