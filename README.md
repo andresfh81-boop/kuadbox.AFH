@@ -23,4 +23,10 @@ git push -u origin main
 
 ## Actualizar la app
 
-Cada vez que cambies `index.html`, sube los cambios (`git add -A && git commit -m "..." && git push`) y sube en 1 el número de `CACHE_NAME` en `sw.js` (p. ej. `kuadbox-v2`) para que los móviles descarguen la versión nueva.
+Cada vez que cambies `index.html`, sube los cambios (`git add -A && git commit -m "..." && git push`).
+Con conexión la app carga siempre la versión publicada (si internet tarda más de 4 s, abre la copia
+guardada), así que el cambio llega al abrirla, sin hacer nada más.
+
+Conviene seguir subiendo en 1 el número de `CACHE_NAME` en `sw.js` (p. ej. `kuadbox-v15`): así se renueva
+también la copia sin conexión y, si alguien tiene la app abierta, le sale el aviso «Hay una versión
+nueva» con el botón «Actualizar».

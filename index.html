@@ -187,6 +187,10 @@ body { background: #fff; }
 <div class="wrap">
 <div class="panel form no-print">
 <div id="offlineBanner" class="offline-banner" data-i18n="offline.msg">Sin conexión — la app sigue funcionando con los datos guardados en el dispositivo.</div>
+<div id="updateBanner" class="install-banner">
+<span id="updateMsg" style="flex:1;">Hay una versión nueva de la app.</span>
+<button id="btnUpdate" type="button">Actualizar</button>
+</div>
 <div id="installBanner" class="install-banner">
 <span data-i18n="install.msg" style="flex:1;">Instala esta app en tu móvil para usarla sin conexión.</span>
 <button id="btnInstall" data-i18n="install.btn">Instalar</button>
@@ -2010,8 +2014,31 @@ document.addEventListener('DOMContentLoaded', App.init);
 // --- PWA: instalación y estado offline ---
 if ('serviceWorker' in navigator) {
 window.addEventListener('load', () => {
-navigator.serviceWorker.register('sw.js').catch(err => console.error('SW error:', err));
+navigator.serviceWorker.register('sw.js').then(reg => {
+// Busca versión nueva al volver a la app y cada 30 min (por si se deja abierta días).
+const buscar = () => reg.update().catch(() => {});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') buscar(); });
+setInterval(buscar, 30 * 60 * 1000);
+}).catch(err => console.error('SW error:', err));
 });
+// Si llega una versión nueva con la app abierta, avisa en vez de recargar (no se pierde lo que haya escrito).
+if (navigator.serviceWorker.controller) {
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+const lang = typeof currentLang === 'string' ? currentLang : 'es';
+const txt = {
+es: ['Hay una versión nueva de la app.', 'Actualizar'],
+en: ['A new version of the app is available.', 'Update'],
+fr: ['Une nouvelle version de l\'application est disponible.', 'Mettre à jour'],
+de: ['Eine neue Version der App ist verfügbar.', 'Aktualisieren'],
+it: ['È disponibile una nuova versione dell\'app.', 'Aggiorna'],
+pt: ['Há uma nova versão da app.', 'Atualizar']
+}[lang] || ['Hay una versión nueva de la app.', 'Actualizar'];
+document.getElementById('updateMsg').textContent = txt[0];
+document.getElementById('btnUpdate').textContent = txt[1];
+document.getElementById('updateBanner').classList.add('show');
+});
+}
+document.getElementById('btnUpdate').addEventListener('click', () => location.reload());
 }
 
 let deferredPrompt = null;
