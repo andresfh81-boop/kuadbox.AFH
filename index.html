@@ -220,7 +220,20 @@ body { background: #fff; }
 
 <div class="row">
 <div><label data-i18n="form.linea" for="linea">Línea L (mm)</label><input id="linea" type="number" min="0" placeholder="0" inputmode="numeric"></div>
-<div><label data-i18n="form.salida" for="salida">Salida S (mm)</label><input id="salida" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+<div><label data-i18n="form.salida" for="salida">Salida S (mm)</label><select id="salida">
+<!-- Salidas de brazo del manual (1,50 a 4,00 m), como en Modulbox. -->
+<option value="1500">1,50 MTS (1500 mm)</option>
+<option value="1750">1,75 MTS (1750 mm)</option>
+<option value="2000" selected>2,00 MTS (2000 mm)</option>
+<option value="2250">2,25 MTS (2250 mm)</option>
+<option value="2500">2,50 MTS (2500 mm)</option>
+<option value="2750">2,75 MTS (2750 mm)</option>
+<option value="3000">3,00 MTS (3000 mm)</option>
+<option value="3250">3,25 MTS (3250 mm)</option>
+<option value="3500">3,50 MTS (3500 mm)</option>
+<option value="3750">3,75 MTS (3750 mm)</option>
+<option value="4000">4,00 MTS (4000 mm)</option>
+</select></div>
 </div>
 
 <div class="row">
@@ -1306,6 +1319,8 @@ const init = () => {
 ['linea', 'salida', 'ladoMotor', 'holgura', 'pedido', 'cliente'].forEach(id => {
 refs[id].addEventListener('input', render);
 });
+// La salida es un desplegable: también se recalcula con «change» (algunos navegadores no envían «input»).
+refs.salida.addEventListener('change', render);
 
 refs.numBrazos.addEventListener('change', (e) => {
 const newN = +e.target.value || 0;
@@ -2624,12 +2639,12 @@ if (cli) out.cliente = cli;
 const lin = grab(/LINEA\s*TOTAL[:\s]*([0-9]{3,5})\s*MM/) || grab(/LINEA[^0-9]{0,10}([0-9]{3,5})\s*MM/);
 if (lin) out.linea = lin;
 
-// Salida: "Medida de brazos 3,00 m" -> 3000 mm (campo libre en KÜADBOX).
+// Salida: "Medida de brazos 3,00 m" -> 3000 mm, ajustada a la medida más cercana del desplegable (1500–4000, cada 250).
 const salM = U.match(/(?:MEDIDA\s*DE\s*BRAZOS|MODELO\s*Y\s*MEDIDA)[\s\S]{0,60}?(\d{1,2})\s*[.,]\s*(\d{1,2})\s*M(?![A-LN-Z])/)
 || U.match(/\bBRAZOS[\s\S]{0,40}?(\d{1,2})\s*[.,]\s*(\d{1,2})\s*M(?![A-LN-Z])/);
 if (salM) {
 const mm = Math.round(parseFloat(salM[1] + '.' + salM[2]) * 1000);
-if (mm >= 1000 && mm <= 5000) out.salida = String(mm);
+if (mm >= 1000 && mm <= 5000) out.salida = String(Math.min(4000, Math.max(1500, Math.round(mm / 250) * 250)));
 }
 
 const nb = grab(/N[UO]?MERO\s*DE\s*BRAZOS[:\s]*([234])/) || grab(/\b([234])\s*UN\b/);
