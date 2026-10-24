@@ -415,7 +415,7 @@ es: {
 'plan.colBrazo': 'Brazo',
 'plan.colLado': 'Lado',
 'plan.colSoporte': 'Cota soporte (mm)',
-'plan.colTerminal': 'Cota terminal (mm)',
+'plan.colTerminal': 'Cota terminal (mm, al centro, desde el extremo de su lado)',
 'plan.generado': 'Generado',
 'install.msg': 'Instala esta app en tu móvil para usarla sin conexión.',
 'install.btn': 'Instalar',
@@ -556,7 +556,7 @@ en: {
 'plan.colBrazo': 'Arm',
 'plan.colLado': 'Side',
 'plan.colSoporte': 'Support position (mm)',
-'plan.colTerminal': 'Terminal position (mm)',
+'plan.colTerminal': 'Terminal position (mm, center, from the end on its side)',
 'plan.generado': 'Generated',
 'install.msg': 'Install this app on your phone to use it offline.',
 'install.btn': 'Install',
@@ -697,7 +697,7 @@ fr: {
 "plan.colBrazo": "Bras",
 "plan.colLado": "Côté",
 "plan.colSoporte": "Cote support (mm)",
-"plan.colTerminal": "Cote terminal (mm)",
+"plan.colTerminal": "Cote terminal (mm, au centre, depuis l’extrémité de son côté)",
 "plan.generado": "Généré",
 "install.msg": "Installez cette application sur votre mobile pour l'utiliser hors ligne.",
 "install.btn": "Installer",
@@ -838,7 +838,7 @@ de: {
 "plan.colBrazo": "Arm",
 "plan.colLado": "Seite",
 "plan.colSoporte": "Position Stütze (mm)",
-"plan.colTerminal": "Position Endstück (mm)",
+"plan.colTerminal": "Position Endstück (mm, Mitte, ab dem Ende seiner Seite)",
 "plan.generado": "Erstellt",
 "install.msg": "Installieren Sie diese App auf Ihrem Handy, um sie offline zu nutzen.",
 "install.btn": "Installieren",
@@ -979,7 +979,7 @@ it: {
 "plan.colBrazo": "Braccio",
 "plan.colLado": "Lato",
 "plan.colSoporte": "Quota supporto (mm)",
-"plan.colTerminal": "Quota terminale (mm)",
+"plan.colTerminal": "Quota terminale (mm, al centro, dall’estremità del suo lato)",
 "plan.generado": "Generato",
 "install.msg": "Installa questa app sul tuo cellulare per usarla offline.",
 "install.btn": "Installa",
@@ -1120,7 +1120,7 @@ pt: {
 "plan.colBrazo": "Braço",
 "plan.colLado": "Lado",
 "plan.colSoporte": "Cota suporte (mm)",
-"plan.colTerminal": "Cota terminal (mm)",
+"plan.colTerminal": "Cota terminal (mm, ao centro, desde a extremidade do seu lado)",
 "plan.generado": "Gerado",
 "install.msg": "Instale esta aplicação no seu telemóvel para a usar sem ligação.",
 "install.btn": "Instalar",
@@ -1781,7 +1781,7 @@ bandas += `
 const anc = b.lado === 'izq' ? 'start' : 'end', xTxt = xTerm + (b.lado === 'izq' ? -3 : 3);
 textosTerminal += `
 <text x="${xTxt}" y="${yBar - 24}" font-size="10" font-weight="bold" fill="#7c3aed" text-anchor="${anc}" ${txtMask}><tspan class="solo-cliente">${t('plan.terminalCorto')} ${b.terminalCota} mm</tspan><tspan class="solo-taller">${t('plan.terminalCorto')} ${b.terminalTaller} mm</tspan></text>
-<text class="solo-taller" x="${xTxt}" y="${yBar - 12}" font-size="9" fill="#7c3aed" text-anchor="${anc}" ${txtMask}>${t(b.lado === 'izq' ? 'taller.desdeIzq' : 'taller.desdeDer')}</text>`;
+<text x="${xTxt}" y="${yBar - 12}" font-size="9" fill="#7c3aed" text-anchor="${anc}" ${txtMask}>${t(b.lado === 'izq' ? 'taller.desdeIzq' : 'taller.desdeDer')}</text>`;
 }
 });
 
@@ -1992,22 +1992,24 @@ const patinRx = (x, letra) => `
 // Terminal visto de frente: la pletina con los dos tornillos rojos va hacia el extremo y la
 // horquilla (con su tuerca abajo) hacia el centro, como en la pág. 28 del manual.
 const terminalRx = (x, izq) => {
-const dir = izq ? 1 : -1, xb = x + dir * 21, x0 = Math.min(x - dir * 22, x + dir * 14);
+// La pletina va centrada en la cota del terminal (x) y la horquilla, pegada, hacia el centro.
+const dir = izq ? 1 : -1, xb = x + dir * 25;
 return `
-<rect x="${x0}" y="${yM - 30}" width="36" height="18" rx="4" fill="#f8fafc" stroke="#5b21b6" stroke-width="1.5"/>
+<rect x="${x - 18}" y="${yM - 30}" width="36" height="18" rx="4" fill="#f8fafc" stroke="#5b21b6" stroke-width="1.5"/>
 <path d="M${xb - 7},${yM - 26} h14 v40 a4,4 0 0 1 -4,4 h-6 a4,4 0 0 1 -4,-4 z" fill="#eef2f7" stroke="#334155" stroke-width="1.3"/>
 <circle cx="${xb}" cy="${yM - 8}" r="3.2" fill="#fff" stroke="#334155"/>
 <path d="${hex(xb, yM + 26, 6.5)}" fill="#cbd5e1" stroke="#334155"/><circle cx="${xb}" cy="${yM + 26}" r="2.5" fill="none" stroke="#334155"/>
-<circle cx="${x - dir * 13}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x - dir * 13, yM - 21, 2.4)}" fill="#fff"/>
-<circle cx="${x + dir * 5}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x + dir * 5, yM - 21, 2.4)}" fill="#fff"/>
-<text x="${x - dir * 4}" y="${yM - 18}" font-size="8" font-weight="bold" fill="#1f2937" text-anchor="middle">${izq ? 'L' : 'R'}</text>`;
+<circle cx="${x - 9}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x - 9, yM - 21, 2.4)}" fill="#fff"/>
+<circle cx="${x + 9}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x + 9, yM - 21, 2.4)}" fill="#fff"/>
+<text x="${x}" y="${yM - 18}" font-size="8" font-weight="bold" fill="#1f2937" text-anchor="middle">${izq ? 'L' : 'R'}</text>`;
 };
 let rx = '', marcas = '';
 // Cota con número y, debajo, de dónde se mide (cliente: desde 0; taller: sin tapa).
 // Si en esa fila ya hay una cota a menos de 130 px (p. ej. los dos codos enfrentados), baja a la siguiente.
 const ocupadas = [];
 let filaMax = 2;
-const marca = (mm, col, nom, cli, tall, sub, fila) => {
+// subSiempre: el texto de debajo («desde extremo …») sale también en Cliente (terminales).
+const marca = (mm, col, nom, cli, tall, sub, fila, subSiempre = false) => {
 const x = X(mm);
 while ((ocupadas[fila] || []).some(px => Math.abs(px - x) < 130)) fila++;
 (ocupadas[fila] = ocupadas[fila] || []).push(x);
@@ -2016,7 +2018,7 @@ const yy = yC + 18 + fila * 32;
 marcas += `<line x1="${x}" y1="${yB + 3}" x2="${x}" y2="${yy - 2}" stroke="${col}" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>
 <line x1="${x}" y1="${yC - 4}" x2="${x}" y2="${yC + 4}" stroke="${col}" stroke-width="2"/>
 <text x="${x}" y="${yy + 8}" font-size="11" font-weight="bold" fill="${col}" text-anchor="middle" ${txtMask}>${nom} <tspan class="solo-cliente">${cli}</tspan><tspan class="solo-taller">${tall}</tspan></text>
-<text class="solo-taller" x="${x}" y="${yy + 19}" font-size="9" fill="${col}" text-anchor="middle" ${txtMask}>${sub}</text>`;
+<text${subSiempre ? '' : ' class="solo-taller"'} x="${x}" y="${yy + 19}" font-size="9" fill="${col}" text-anchor="middle" ${txtMask}>${sub}</text>`;
 };
 brazos.filter(b => b.lado).forEach(b => {
 const izq = b.lado === 'izq', dir = izq ? 1 : -1;
@@ -2026,7 +2028,8 @@ const desdeTxt = t(izq ? 'taller.desdeIzq' : 'taller.desdeDer');
 const desde = v => izq ? v - TAPA : L - v - TAPA;
 rx += patinSoporteRx(X(b.cota)) + patinRx(X(cCodo), 'C') + terminalRx(X(cTerm), izq);
 marca(b.cota, '#c0102e', `S${b.n}`, b.cota, desde(b.cota), desdeTxt, 0);
-marca(cTerm, '#5b21b6', `T${b.n}`, Math.round(cTerm), b.terminalTaller, desdeTxt, 1);
+// Como en la tabla: desde el extremo del lado del brazo (Cliente con tapa, Taller sin tapa), al centro.
+marca(cTerm, '#5b21b6', `T${b.n}`, b.terminalCota, b.terminalTaller, desdeTxt, 1, true);
 marca(cCodo, '#475569', `C${b.n}`, cCodo, desde(cCodo), desdeTxt + ' ' + t('nv.aprox'), 2);
 });
 patines.forEach(p => {
