@@ -2041,13 +2041,13 @@ barraRx = `
 <svg class="plano-main" viewBox="0 0 ${viewBoxWidth} ${hLeyenda + 40}" xmlns="http://www.w3.org/2000/svg" style="margin-top:12px;border:1px solid var(--border-color);border-radius:12px;background:#fff;">
 <rect x="14" y="14" width="340" height="24" rx="4" fill="#f3f4f6" stroke="#d1d5db"/>
 <text x="184" y="30" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" letter-spacing="1">${t('nv.barraTit')}</text>
-<rect x="${X(0)}" y="${yT}" width="${L * scale}" height="${yB - yT}" fill="rgba(148,163,184,.10)" stroke="rgba(31,41,55,.55)" stroke-width="1.2"/>
-<line x1="${X(0)}" y1="${yT + 8}" x2="${X(L)}" y2="${yT + 8}" stroke="rgba(31,41,55,.3)"/>
-<line x1="${X(0)}" y1="${yT + 12}" x2="${X(L)}" y2="${yT + 12}" stroke="rgba(31,41,55,.2)"/>
-<line x1="${X(0)}" y1="${yB - 12}" x2="${X(L)}" y2="${yB - 12}" stroke="rgba(31,41,55,.2)"/>
-<line x1="${X(0)}" y1="${yB - 8}" x2="${X(L)}" y2="${yB - 8}" stroke="rgba(31,41,55,.3)"/>
-<rect x="${X(0)}" y="${yT - 2}" width="${tapaPx}" height="${yB - yT + 4}" fill="rgba(55,65,81,.45)"/>
-<rect x="${X(L) - tapaPx}" y="${yT - 2}" width="${tapaPx}" height="${yB - yT + 4}" fill="rgba(55,65,81,.45)"/>
+<rect x="${X(0)}" y="${yT}" width="${L * scale}" height="${yB - yT}" fill="rgba(148,163,184,.10)" stroke="rgba(31,41,55,.85)" stroke-width="1.4"/>
+<line x1="${X(0)}" y1="${yT + 8}" x2="${X(L)}" y2="${yT + 8}" stroke="rgba(31,41,55,.6)"/>
+<line x1="${X(0)}" y1="${yT + 12}" x2="${X(L)}" y2="${yT + 12}" stroke="rgba(31,41,55,.45)"/>
+<line x1="${X(0)}" y1="${yB - 12}" x2="${X(L)}" y2="${yB - 12}" stroke="rgba(31,41,55,.45)"/>
+<line x1="${X(0)}" y1="${yB - 8}" x2="${X(L)}" y2="${yB - 8}" stroke="rgba(31,41,55,.6)"/>
+<rect x="${X(0)}" y="${yT - 2}" width="${tapaPx}" height="${yB - yT + 4}" fill="rgba(55,65,81,.7)"/>
+<rect x="${X(L) - tapaPx}" y="${yT - 2}" width="${tapaPx}" height="${yB - yT + 4}" fill="rgba(55,65,81,.7)"/>
 <text x="${X(0) - 10}" y="${yM + 4}" font-size="12" font-weight="bold" fill="#c0102e" text-anchor="end">${t('lado.letraIzq')}</text>
 <text x="${X(L) + 10}" y="${yM + 4}" font-size="12" font-weight="bold" fill="#c0102e">${t('lado.letraDer')}</text>
 ${rx}
