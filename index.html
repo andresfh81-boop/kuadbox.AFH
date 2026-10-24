@@ -2069,6 +2069,29 @@ ${marcas}
 </svg>`;
 }
 
+// Siluetas de la leyenda: las mismas piezas del plano, en miniatura (centradas en cx).
+const PIEZA_LEYENDA = {
+brazo: { k: 0.22, cy: -18, svg: `<rect x="-24" y="-55" width="48" height="74" rx="3" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+<rect x="-24" y="-55" width="48" height="8" rx="2" fill="#f1f5f9" stroke="#1f2937"/><rect x="-24" y="-14" width="48" height="7" fill="#f8fafc" stroke="#cbd5e1"/>
+<path d="M-24,10 h48 v7 a2,2 0 0 1 -2,2 h-44 a2,2 0 0 1 -2,-2 z" fill="#e2e8f0" stroke="#1f2937" stroke-width="2"/>
+<rect x="-15" y="-37" width="10" height="6" rx="3" fill="#1e293b"/><rect x="5" y="-37" width="10" height="6" rx="3" fill="#1e293b"/>
+<rect x="-15" y="-1" width="10" height="6" rx="3" fill="#1e293b"/><rect x="5" y="-1" width="10" height="6" rx="3" fill="#1e293b"/>
+<rect x="-16" y="3" width="32" height="7" rx="3" fill="#94a3b8" stroke="#475569"/>` },
+aux: { k: 0.26, cy: -19, svg: `<rect x="-14" y="-48" width="28" height="56" rx="3" fill="#eff6ff" stroke="#3b82f6" stroke-width="3"/>
+<rect x="-14" y="-48" width="28" height="6" rx="2" fill="#bfdbfe" stroke="#3b82f6"/><path d="M-14,2 h28 v6 a2,2 0 0 1 -2,2 h-24 a2,2 0 0 1 -2,-2 z" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+<rect x="-4" y="-34" width="8" height="12" rx="4" fill="#1e3a8a"/><rect x="-4" y="-10" width="8" height="12" rx="4" fill="#1e3a8a"/>` },
+patin: { k: 0.26, cy: -19, svg: `<rect x="-14" y="-48" width="28" height="56" rx="3" fill="#ecfdf5" stroke="#10b981" stroke-width="3"/>
+<rect x="-14" y="-48" width="28" height="6" rx="2" fill="#a7f3d0" stroke="#10b981"/><path d="M-14,2 h28 v6 a2,2 0 0 1 -2,2 h-24 a2,2 0 0 1 -2,-2 z" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+<rect x="-4" y="-34" width="8" height="12" rx="4" fill="#064e3b"/><rect x="-4" y="-10" width="8" height="12" rx="4" fill="#064e3b"/>` },
+union: { k: 0.22, cy: -18, svg: `<rect x="-24" y="-55" width="48" height="74" rx="3" fill="#fff" stroke="#e69500" stroke-width="3"/>
+<rect x="-24" y="-55" width="48" height="8" rx="2" fill="#fff5e6" stroke="#e69500"/><rect x="-24" y="-14" width="48" height="7" fill="#fffaf0" stroke="#f3d19e"/>
+<path d="M-24,10 h48 v7 a2,2 0 0 1 -2,2 h-44 a2,2 0 0 1 -2,-2 z" fill="#fdeacc" stroke="#e69500" stroke-width="2"/>
+<rect x="-15" y="-37" width="10" height="6" rx="3" fill="#7a4a00"/><rect x="5" y="-37" width="10" height="6" rx="3" fill="#7a4a00"/>
+<rect x="-15" y="-1" width="10" height="6" rx="3" fill="#7a4a00"/><rect x="5" y="-1" width="10" height="6" rx="3" fill="#7a4a00"/>
+<rect x="-16" y="3" width="32" height="7" rx="3" fill="#e0b374" stroke="#a97c3f"/>` },
+};
+const iconoLeyenda = (tipo, cx, cy) => { const p = PIEZA_LEYENDA[tipo]; return `<g transform="translate(${cx}, ${cy - p.cy * p.k}) scale(${p.k})">${p.svg}</g>`; };
+
 let terminalTableHtml = '';
 const brazosConLado = brazos.filter(b => b.lado);
 if (brazosConLado.length) {
@@ -2140,10 +2163,10 @@ ${fgTexts}
 ${textosTerminal}
 
 <g transform="translate(0, -5)">
-<rect x="${marginLeft}" y="${610}" width="14" height="14" rx="3" fill="#fff" stroke="#1f2937" stroke-width="2"/><text x="${marginLeft + 22}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.soporte')}</text>
-<rect x="${marginLeft + 130}" y="${610}" width="14" height="14" rx="3" fill="#eef6ff" stroke="#3b82f6" stroke-width="2"/><text x="${marginLeft + 152}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.aux')}</text>
-<rect x="${marginLeft + 250}" y="${610}" width="14" height="14" rx="3" fill="#e6fff0" stroke="#10b981" stroke-width="2"/><text x="${marginLeft + 272}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.patin')}</text>
-<rect x="${marginLeft + 390}" y="${610}" width="14" height="14" rx="3" fill="#fff5e6" stroke="#e69000" stroke-width="2"/><text x="${marginLeft + 412}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.union')}</text>
+${iconoLeyenda('brazo', marginLeft + 7, 615)}<text x="${marginLeft + 22}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.soporte')}</text>
+${iconoLeyenda('aux', marginLeft + 137, 615)}<text x="${marginLeft + 152}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.aux')}</text>
+${iconoLeyenda('patin', marginLeft + 257, 615)}<text x="${marginLeft + 272}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.patin')}</text>
+${iconoLeyenda('union', marginLeft + 397, 615)}<text x="${marginLeft + 412}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.union')}</text>
 ${soloPlacas ? '' : `<g class="solo-taller"><image href="${PIEZAS_KUADBOX.lira}" x="${marginLeft - 2}" y="${627}" width="18" height="18"/><text x="${marginLeft + 22}" y="${640}" font-size="12" fill="#4b5563">${t('nv.leyLira')}</text></g>`}
 <text x="${viewBoxWidth - marginRight}" y="${640}" font-size="12" font-weight="bold" fill="#6b7280" text-anchor="end"><tspan class="solo-cliente">${t('plan.leyenda.cotas')}</tspan><tspan class="solo-taller">${t('taller.leyenda')}</tspan></text>
 </g>
