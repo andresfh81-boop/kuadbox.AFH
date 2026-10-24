@@ -126,6 +126,16 @@ button.presup:disabled { opacity: .7; cursor: wait; transform: none; }
 .btn-zoom-plano { margin-top: 0; width: auto; padding: 6px 14px; font-size: 0.85rem; background: #6b7280; }
 .btn-zoom-plano:hover { background: #4b5563; }
 svg.plano-main { cursor: zoom-in; }
+/* Lupa (igual que en Modulbox): al mover el ratón sobre el plano, muestra una copia ampliada del
+   mismo SVG centrada en el cursor. Solo con ratón; en táctil se sigue usando el clic para ampliar. */
+.plano-lens {
+display: none; position: absolute; width: 180px; height: 180px; border-radius: 50%;
+overflow: hidden; pointer-events: none; z-index: 10; background: #fff;
+border: 3px solid #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.12);
+}
+.plano-lens.active { display: block; }
+.plano-lens-inner { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.plano-lens-inner svg { display: block; max-width: none !important; max-height: none !important; margin: 0 !important; }
 .plano-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.92); z-index: 2000; overflow: auto; }
 .plano-modal-overlay.active { display: block; }
 .plano-modal-close { position: fixed; top: 16px; right: 16px; z-index: 2001; width: 44px; height: 44px; border-radius: 50%; margin-top: 0; padding: 0; background: #fff; color: #111827; border: none; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.35); }
@@ -234,13 +244,36 @@ body { background: #fff; }
 <option value="3" data-i18n="form.3brazos">3 brazos</option>
 <option value="4" data-i18n="form.4brazos">4 brazos</option>
 </select>
+<div id="lineasInfo" style="font-size:0.85rem; color:var(--text-muted); margin:6px 0 4px; line-height:1.5;"></div>
 
 <div id="brazosContainer"></div>
 <button id="btnSugerirBrazos" class="secondary" type="button" data-i18n="sug.btn">📐 Sugerir soportes brazo</button>
+<div id="repartoInfo" style="font-size:0.85rem; color:var(--text-muted); margin:6px 0 4px; line-height:1.5;"></div>
+
+<!-- Soportes lira (como en Modulbox): Nº vacío = el sugerido; cotas vacías = equidistantes; con cotas, mandan esas. -->
+<div class="row">
+<div><label for="numLiras" data-i18n="nv.liraNum">🏠 Nº soportes lira</label><input id="numLiras" type="number" min="0" placeholder="Sugerido" inputmode="numeric"></div>
+<div></div>
+</div>
+<label for="cotasLiras" data-i18n="nv.liraCotas">📍 Cotas soportes lira (mm) — vacío = equidistantes</label>
+<textarea id="cotasLiras" rows="2" placeholder="Automático: equidistantes"></textarea>
+<button id="btnEditarLiras" class="secondary" type="button" style="margin-top:8px;" data-i18n="nv.editar">✏️ Editar cotas</button>
+
+<!-- Patín intermedio (20033007 + placa 20033006): Nº vacío = automático (B/2 si B > 4500), 0 = ninguno; cotas escritas = mandan esas. -->
+<div class="row" style="margin-top:12px;">
+<div><label for="numPatines" data-i18n="nv.patinNum">🟩 Nº patines intermedios</label><input id="numPatines" type="number" min="0" placeholder="Sugerido" inputmode="numeric"></div>
+<div></div>
+</div>
+<label for="cotasPatines" data-i18n="nv.patinCotas">📍 Cotas patín intermedio (mm) — vacío = automático (B/2 si B &gt; 4500)</label>
+<textarea id="cotasPatines" rows="2" placeholder="Automático"></textarea>
+<button id="btnEditarPatines" class="secondary" type="button" style="margin-top:8px;" data-i18n="nv.editar">✏️ Editar cotas</button>
 
 <div class="btn-group vista-toggle">
 <button id="btnVerCliente" class="view-toggle-btn active" type="button" data-i18n="vista.cliente">👤 Cliente</button>
 <button id="btnVerTaller" class="view-toggle-btn" type="button" data-i18n="vista.taller">🔧 Taller</button>
+</div>
+<div class="btn-group vista-toggle">
+<button id="btnSoloPlacas" class="view-toggle-btn" type="button" data-i18n="nv.soloPlacas" title="Plano solo con las placas, como hasta ahora (sin perfil cofre ni barra de carga)">📄 Solo placas</button>
 </div>
 
 <div class="btn-group">
@@ -271,12 +304,54 @@ Introduce los parámetros de línea, salida y brazos para generar el plano.
 
 <script src="vendor/html2canvas.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
+<script src="piezas-kuadbox.js"></script>
 <script>
 // Translation dictionary - Incorporando el inglés técnico oficial de los manuales LLAZA WORLD
 const i18n = {
 es: {
 'header.title': 'Configurador de Placas — KÜADBOX-400',
 'header.subtitle': 'LLAZA WORLD · Aux. A>200 · Auxiliar si sep.>4500 · 2 mitades si L>7000',
+"nv.soloPlacas": "📄 Solo placas",
+"nv.soloPlacasTit": "Plano solo con las placas, como hasta ahora (sin perfil cofre ni barra de carga)",
+"nv.liraNum": "🏠 Nº soportes lira",
+"nv.liraCotas": "📍 Cotas soportes lira (mm) — vacío = equidistantes",
+"nv.patinNum": "🟩 Nº patines intermedios",
+"nv.patinCotas": "📍 Cotas patín intermedio (mm) — vacío = automático (B/2 si B > 4500)",
+"nv.editar": "✏️ Editar cotas",
+"nv.sugerido": "Sugerido",
+"nv.auto": "Automático",
+"nv.autoEquid": "Automático: equidistantes",
+"nv.confirm": "Se sustituirán las cotas escritas por el reparto automático. ¿Continuar?",
+"nv.lineaCon": "📏 Línea con S = {S} y {n} brazos",
+"nv.minima": "mínima",
+"nv.recomendada": "recomendada",
+"nv.noAlcanza": "(no se alcanza)",
+"nv.maxima": "máxima",
+"nv.tabla": "Tabla de líneas del manual",
+"nv.salida": "Salida",
+"nv.brazos": "brazos",
+"nv.min": "mín.",
+"nv.recom": "recom.",
+"nv.maxFila": "Máxima",
+"nv.warnRec": "<b>ℹ L = {L} mm por debajo de la recomendada ({rec} mm):</b> cabe, pero los terminales no quedarán equidistantes (manual págs. 12 y 15).",
+"nv.salidaFuera": "<b>⚠ Salida {S} mm fuera del manual:</b> de 1500 a 4000 mm.",
+"nv.unionEncima": "<b>⚠ Unión de cofres ({c} mm)</b> encima de {lista}: mueve el soporte o la unión.",
+"nv.patinInt": "patín intermedio",
+"nv.reparto": "📐 Reparto",
+"nv.entre": "manual: entre 70 y {a}",
+"nv.media": ", la mayor que cabe; se usa la media, {m}",
+"nv.huecos": "huecos",
+"nv.termCada": "Terminales cada",
+"nv.equi": "(terminales equidistantes según el manual)",
+"nv.col70": "La línea no llega a la recomendada: como en la columna «70*» del manual, A = 70 (mínima), B a su mínimo y el resto para C.",
+"nv.soporteLira": "Soporte lira",
+"nv.leyLira": "Soporte lira 20033003 (cota taller sin tapa)",
+"nv.barraTit": "BARRA DE CARGA · VISTA DE FRENTE (RAYOS X)",
+"nv.leyU": "Patín en U (C codo · I intermedio)",
+"nv.leyS": "Patín del soporte brazo (S), manual pág. 28",
+"nv.leyT": "Terminal (T)",
+"nv.leyI": "Soporte / patín intermedio 20033007",
+"nv.aprox": "(aprox.)",
 'form.pedido': 'Nº Pedido',
 'form.cliente': 'Cliente',
 'form.linea': 'Línea L (mm)',
@@ -377,6 +452,47 @@ es: {
 en: {
 'header.title': 'Plates Configurator — KÜADBOX-400',
 'header.subtitle': 'LLAZA WORLD · Aux. A>200 · Intermediate support if sep.>4500 · 2 halves if L>7000',
+"nv.soloPlacas": "📄 Plates only",
+"nv.soloPlacasTit": "Plan with the plates only, as before (no cassette profile or front profile)",
+"nv.liraNum": "🏠 No. of lyre brackets",
+"nv.liraCotas": "📍 Lyre bracket positions (mm) — empty = evenly spaced",
+"nv.patinNum": "🟩 No. of intermediate brackets",
+"nv.patinCotas": "📍 Intermediate bracket positions (mm) — empty = automatic (B/2 if B > 4500)",
+"nv.editar": "✏️ Edit positions",
+"nv.sugerido": "Suggested",
+"nv.auto": "Automatic",
+"nv.autoEquid": "Automatic: evenly spaced",
+"nv.confirm": "The positions entered will be replaced by the automatic layout. Continue?",
+"nv.lineaCon": "📏 Width with S = {S} and {n} arms",
+"nv.minima": "minimum",
+"nv.recomendada": "recommended",
+"nv.noAlcanza": "(not reachable)",
+"nv.maxima": "maximum",
+"nv.tabla": "Manual width chart",
+"nv.salida": "Projection",
+"nv.brazos": "arms",
+"nv.min": "min.",
+"nv.recom": "rec.",
+"nv.maxFila": "Maximum",
+"nv.warnRec": "<b>ℹ L = {L} mm below the recommended width ({rec} mm):</b> it fits, but the front rail connectors will not be evenly spaced (manual pp. 12 and 15).",
+"nv.salidaFuera": "<b>⚠ Projection {S} mm outside the manual:</b> from 1500 to 4000 mm.",
+"nv.unionEncima": "<b>⚠ Cassette joint ({c} mm)</b> on top of {lista}: move the bracket or the joint.",
+"nv.patinInt": "intermediate bracket",
+"nv.reparto": "📐 Layout",
+"nv.entre": "manual: between 70 and {a}",
+"nv.media": ", the largest that fits; the average is used, {m}",
+"nv.huecos": "gaps",
+"nv.termCada": "Connectors every",
+"nv.equi": "(connectors evenly spaced as per the manual)",
+"nv.col70": "The width is below the recommended one: as in the manual “70*” column, A = 70 (minimum), B at its minimum and the rest for C.",
+"nv.soporteLira": "Lyre bracket",
+"nv.leyLira": "Lyre bracket 20033003 (workshop dim. without cap)",
+"nv.barraTit": "FRONT PROFILE · FRONT VIEW (X-RAY)",
+"nv.leyU": "U slider (C elbow · I intermediate)",
+"nv.leyS": "Arm bracket slider (S), manual p. 28",
+"nv.leyT": "Connector (T)",
+"nv.leyI": "Intermediate bracket 20033007",
+"nv.aprox": "(approx.)",
 'form.pedido': 'Order No.',
 'form.cliente': 'Customer',
 'form.linea': 'Width L (mm)',
@@ -477,6 +593,47 @@ en: {
 fr: {
 "header.title": "Configurateur de platines — KÜADBOX-400",
 "header.subtitle": "LLAZA WORLD · Aux. A>200 · Auxiliaire si écart>4500 · 2 moitiés si L>7000",
+"nv.soloPlacas": "📄 Plaques seules",
+"nv.soloPlacasTit": "Plan avec les plaques seules, comme avant (sans profilé coffre ni barre de charge)",
+"nv.liraNum": "🏠 Nº supports lyre",
+"nv.liraCotas": "📍 Cotes supports lyre (mm) — vide = équidistants",
+"nv.patinNum": "🟩 Nº supports intermédiaires",
+"nv.patinCotas": "📍 Cotes support intermédiaire (mm) — vide = automatique (B/2 si B > 4500)",
+"nv.editar": "✏️ Modifier les cotes",
+"nv.sugerido": "Suggéré",
+"nv.auto": "Automatique",
+"nv.autoEquid": "Automatique : équidistants",
+"nv.confirm": "Les cotes saisies seront remplacées par la répartition automatique. Continuer ?",
+"nv.lineaCon": "📏 Largeur avec S = {S} et {n} bras",
+"nv.minima": "minimale",
+"nv.recomendada": "recommandée",
+"nv.noAlcanza": "(non atteignable)",
+"nv.maxima": "maximale",
+"nv.tabla": "Tableau des largeurs du manuel",
+"nv.salida": "Avancée",
+"nv.brazos": "bras",
+"nv.min": "min.",
+"nv.recom": "rec.",
+"nv.maxFila": "Maximale",
+"nv.warnRec": "<b>ℹ L = {L} mm en dessous de la largeur recommandée ({rec} mm) :</b> cela rentre, mais les embouts ne seront pas équidistants (manuel p. 12 et 15).",
+"nv.salidaFuera": "<b>⚠ Avancée {S} mm hors manuel :</b> de 1500 à 4000 mm.",
+"nv.unionEncima": "<b>⚠ Jonction de coffres ({c} mm)</b> sur {lista} : déplacez le support ou la jonction.",
+"nv.patinInt": "support intermédiaire",
+"nv.reparto": "📐 Répartition",
+"nv.entre": "manuel : entre 70 et {a}",
+"nv.media": ", la plus grande possible ; on utilise la moyenne, {m}",
+"nv.huecos": "écarts",
+"nv.termCada": "Embouts tous les",
+"nv.equi": "(embouts équidistants selon le manuel)",
+"nv.col70": "La largeur n’atteint pas la recommandée : comme dans la colonne « 70* » du manuel, A = 70 (minimum), B à son minimum et le reste pour C.",
+"nv.soporteLira": "Support lyre",
+"nv.leyLira": "Support lyre 20033003 (cote atelier sans embout)",
+"nv.barraTit": "BARRE DE CHARGE · VUE DE FACE (RAYONS X)",
+"nv.leyU": "Patin en U (C coude · I intermédiaire)",
+"nv.leyS": "Patin du support de bras (S), manuel p. 28",
+"nv.leyT": "Embout (T)",
+"nv.leyI": "Support intermédiaire 20033007",
+"nv.aprox": "(approx.)",
 "form.pedido": "N° de commande",
 "form.cliente": "Client",
 "form.linea": "Largeur L (mm)",
@@ -577,6 +734,47 @@ fr: {
 de: {
 "header.title": "Plattenkonfigurator — KÜADBOX-400",
 "header.subtitle": "LLAZA WORLD · Hilfspl. A>200 · Zwischenstütze bei Abst.>4500 · 2 Hälften bei L>7000",
+"nv.soloPlacas": "📄 Nur Platten",
+"nv.soloPlacasTit": "Plan nur mit den Platten, wie bisher (ohne Kassettenprofil und Ausfallprofil)",
+"nv.liraNum": "🏠 Anz. Lyra-Stützen",
+"nv.liraCotas": "📍 Positionen Lyra-Stützen (mm) — leer = gleichmäßig",
+"nv.patinNum": "🟩 Anz. Zwischenstützen",
+"nv.patinCotas": "📍 Positionen Zwischenstütze (mm) — leer = automatisch (B/2 wenn B > 4500)",
+"nv.editar": "✏️ Positionen bearbeiten",
+"nv.sugerido": "Vorschlag",
+"nv.auto": "Automatisch",
+"nv.autoEquid": "Automatisch: gleichmäßig verteilt",
+"nv.confirm": "Die eingegebenen Positionen werden durch die automatische Verteilung ersetzt. Fortfahren?",
+"nv.lineaCon": "📏 Breite mit S = {S} und {n} Armen",
+"nv.minima": "Minimum",
+"nv.recomendada": "empfohlen",
+"nv.noAlcanza": "(nicht erreichbar)",
+"nv.maxima": "Maximum",
+"nv.tabla": "Breitentabelle des Handbuchs",
+"nv.salida": "Ausfall",
+"nv.brazos": "Arme",
+"nv.min": "min.",
+"nv.recom": "empf.",
+"nv.maxFila": "Maximum",
+"nv.warnRec": "<b>ℹ L = {L} mm unter der empfohlenen Breite ({rec} mm):</b> passt, aber die Endstücke sind nicht gleichmäßig verteilt (Handbuch S. 12 und 15).",
+"nv.salidaFuera": "<b>⚠ Ausfall {S} mm außerhalb des Handbuchs:</b> 1500 bis 4000 mm.",
+"nv.unionEncima": "<b>⚠ Kassettenverbindung ({c} mm)</b> über {lista}: Halter oder Verbindung verschieben.",
+"nv.patinInt": "Zwischenstütze",
+"nv.reparto": "📐 Verteilung",
+"nv.entre": "Handbuch: zwischen 70 und {a}",
+"nv.media": ", die größte mögliche; es wird der Mittelwert verwendet, {m}",
+"nv.huecos": "Abstände",
+"nv.termCada": "Endstücke alle",
+"nv.equi": "(Endstücke gleichmäßig laut Handbuch)",
+"nv.col70": "Die Breite erreicht die empfohlene nicht: wie in Spalte „70*“ des Handbuchs, A = 70 (Minimum), B auf Minimum und der Rest für C.",
+"nv.soporteLira": "Lyra-Stütze",
+"nv.leyLira": "Lyra-Stütze 20033003 (Werkstattmaß ohne Kappe)",
+"nv.barraTit": "AUSFALLPROFIL · VORDERANSICHT (RÖNTGEN)",
+"nv.leyU": "U-Gleiter (C Ellbogen · I Zwischenstütze)",
+"nv.leyS": "Armhalter-Gleiter (S), Handbuch S. 28",
+"nv.leyT": "Endstück (T)",
+"nv.leyI": "Zwischenstütze 20033007",
+"nv.aprox": "(ca.)",
 "form.pedido": "Bestellnr.",
 "form.cliente": "Kunde",
 "form.linea": "Strecke L (mm)",
@@ -677,6 +875,47 @@ de: {
 it: {
 "header.title": "Configuratore piastre — KÜADBOX-400",
 "header.subtitle": "LLAZA WORLD · Aus. A>200 · Ausiliaria se dist.>4500 · 2 metà se L>7000",
+"nv.soloPlacas": "📄 Solo piastre",
+"nv.soloPlacasTit": "Piano solo con le piastre, come prima (senza profilo cassonetto né barra di carico)",
+"nv.liraNum": "🏠 N. supporti lira",
+"nv.liraCotas": "📍 Quote supporti lira (mm) — vuoto = equidistanti",
+"nv.patinNum": "🟩 N. supporti intermedi",
+"nv.patinCotas": "📍 Quote supporto intermedio (mm) — vuoto = automatico (B/2 se B > 4500)",
+"nv.editar": "✏️ Modifica quote",
+"nv.sugerido": "Suggerito",
+"nv.auto": "Automatico",
+"nv.autoEquid": "Automatico: equidistanti",
+"nv.confirm": "Le quote inserite saranno sostituite dalla distribuzione automatica. Continuare?",
+"nv.lineaCon": "📏 Larghezza con S = {S} e {n} bracci",
+"nv.minima": "minima",
+"nv.recomendada": "consigliata",
+"nv.noAlcanza": "(non raggiungibile)",
+"nv.maxima": "massima",
+"nv.tabla": "Tabella larghezze del manuale",
+"nv.salida": "Sporgenza",
+"nv.brazos": "bracci",
+"nv.min": "min.",
+"nv.recom": "cons.",
+"nv.maxFila": "Massima",
+"nv.warnRec": "<b>ℹ L = {L} mm sotto la larghezza consigliata ({rec} mm):</b> ci sta, ma i terminali non saranno equidistanti (manuale pp. 12 e 15).",
+"nv.salidaFuera": "<b>⚠ Sporgenza {S} mm fuori manuale:</b> da 1500 a 4000 mm.",
+"nv.unionEncima": "<b>⚠ Giunzione cassonetti ({c} mm)</b> sopra {lista}: sposta il supporto o la giunzione.",
+"nv.patinInt": "supporto intermedio",
+"nv.reparto": "📐 Distribuzione",
+"nv.entre": "manuale: tra 70 e {a}",
+"nv.media": ", la più grande possibile; si usa la media, {m}",
+"nv.huecos": "distanze",
+"nv.termCada": "Terminali ogni",
+"nv.equi": "(terminali equidistanti secondo il manuale)",
+"nv.col70": "La larghezza non arriva alla consigliata: come nella colonna «70*» del manuale, A = 70 (minimo), B al minimo e il resto a C.",
+"nv.soporteLira": "Supporto lira",
+"nv.leyLira": "Supporto lira 20033003 (quota officina senza tappo)",
+"nv.barraTit": "BARRA DI CARICO · VISTA FRONTALE (RAGGI X)",
+"nv.leyU": "Pattino a U (C gomito · I intermedio)",
+"nv.leyS": "Pattino del supporto braccio (S), manuale p. 28",
+"nv.leyT": "Terminale (T)",
+"nv.leyI": "Supporto intermedio 20033007",
+"nv.aprox": "(appross.)",
 "form.pedido": "N. ordine",
 "form.cliente": "Cliente",
 "form.linea": "Lunghezza L (mm)",
@@ -777,6 +1016,47 @@ it: {
 pt: {
 "header.title": "Configurador de placas — KÜADBOX-400",
 "header.subtitle": "LLAZA WORLD · Aux. A>200 · Auxiliar se sep.>4500 · 2 metades se L>7000",
+"nv.soloPlacas": "📄 Só placas",
+"nv.soloPlacasTit": "Plano só com as placas, como até agora (sem perfil cofre nem barra de carga)",
+"nv.liraNum": "🏠 Nº suportes lira",
+"nv.liraCotas": "📍 Cotas suportes lira (mm) — vazio = equidistantes",
+"nv.patinNum": "🟩 Nº suportes intermédios",
+"nv.patinCotas": "📍 Cotas suporte intermédio (mm) — vazio = automático (B/2 se B > 4500)",
+"nv.editar": "✏️ Editar cotas",
+"nv.sugerido": "Sugerido",
+"nv.auto": "Automático",
+"nv.autoEquid": "Automático: equidistantes",
+"nv.confirm": "As cotas introduzidas serão substituídas pela distribuição automática. Continuar?",
+"nv.lineaCon": "📏 Largura com S = {S} e {n} braços",
+"nv.minima": "mínima",
+"nv.recomendada": "recomendada",
+"nv.noAlcanza": "(não se alcança)",
+"nv.maxima": "máxima",
+"nv.tabla": "Tabela de larguras do manual",
+"nv.salida": "Avanço",
+"nv.brazos": "braços",
+"nv.min": "mín.",
+"nv.recom": "rec.",
+"nv.maxFila": "Máxima",
+"nv.warnRec": "<b>ℹ L = {L} mm abaixo da largura recomendada ({rec} mm):</b> cabe, mas os terminais não ficarão equidistantes (manual págs. 12 e 15).",
+"nv.salidaFuera": "<b>⚠ Avanço {S} mm fora do manual:</b> de 1500 a 4000 mm.",
+"nv.unionEncima": "<b>⚠ União de cofres ({c} mm)</b> em cima de {lista}: mova o suporte ou a união.",
+"nv.patinInt": "suporte intermédio",
+"nv.reparto": "📐 Distribuição",
+"nv.entre": "manual: entre 70 e {a}",
+"nv.media": ", a maior que cabe; usa-se a média, {m}",
+"nv.huecos": "vãos",
+"nv.termCada": "Terminais a cada",
+"nv.equi": "(terminais equidistantes segundo o manual)",
+"nv.col70": "A largura não chega à recomendada: como na coluna «70*» do manual, A = 70 (mínimo), B no mínimo e o resto para C.",
+"nv.soporteLira": "Suporte lira",
+"nv.leyLira": "Suporte lira 20033003 (cota oficina sem tampa)",
+"nv.barraTit": "BARRA DE CARGA · VISTA DE FRENTE (RAIOS X)",
+"nv.leyU": "Patim em U (C cotovelo · I intermédio)",
+"nv.leyS": "Patim do suporte do braço (S), manual pág. 28",
+"nv.leyT": "Terminal (T)",
+"nv.leyI": "Suporte intermédio 20033007",
+"nv.aprox": "(aprox.)",
 "form.pedido": "N.º encomenda",
 "form.cliente": "Cliente",
 "form.linea": "Largura L (mm)",
@@ -1049,6 +1329,70 @@ refs.btnSugerirBrazos.addEventListener('click', sugerirSoportesBrazo);
 refs.holgura.addEventListener('input', () => { if (recolocarInteriores()) render(); });
 refs.btnVerCliente.addEventListener('click', () => setVistaTaller(false));
 refs.btnVerTaller.addEventListener('click', () => setVistaTaller(true));
+// Lupa sobre el plano (como en Modulbox): círculo que sigue al cursor con una copia del SVG que
+// hay debajo, ampliada LENS_ZOOM veces y desplazada para que el punto del cursor quede en el
+// centro. Vale para el plano y para el dibujo de la barra de carga.
+const LENS_ZOOM = 2.5, LENS_RADIUS = 90;
+let lensOrigen = null;
+refs.planoOut.style.position = 'relative';
+refs.planoOut.addEventListener('mousemove', e => {
+const svg = e.target.closest('svg.plano-main');
+let lens = document.getElementById('planoLens');
+if (!svg || svg.closest('.plano-modal-body')) { if (lens) lens.classList.remove('active'); return; }
+if (!lens || !refs.planoOut.contains(lens)) {
+lens = document.createElement('div');
+lens.className = 'plano-lens'; lens.id = 'planoLens';
+lens.innerHTML = '<div class="plano-lens-inner" id="planoLensInner"></div>';
+refs.planoOut.appendChild(lens);
+lensOrigen = null;
+}
+const inner = lens.firstElementChild;
+if (lensOrigen !== svg) { inner.innerHTML = ''; inner.appendChild(svg.cloneNode(true)); lensOrigen = svg; }
+const lensSvg = inner.firstElementChild;
+const base = refs.planoOut.getBoundingClientRect(), r = svg.getBoundingClientRect();
+lensSvg.style.width = r.width + 'px';
+lensSvg.style.height = r.height + 'px';
+const cx = e.clientX - r.left, cy = e.clientY - r.top;
+lens.style.left = (e.clientX - base.left - LENS_RADIUS) + 'px';
+lens.style.top = (e.clientY - base.top - LENS_RADIUS) + 'px';
+inner.style.transform = `translate(${LENS_RADIUS - cx * LENS_ZOOM}px, ${LENS_RADIUS - cy * LENS_ZOOM}px) scale(${LENS_ZOOM})`;
+lens.classList.add('active');
+});
+refs.planoOut.addEventListener('mouseleave', () => {
+const lens = document.getElementById('planoLens');
+if (lens) lens.classList.remove('active');
+});
+// Soportes lira editables (como en Modulbox). «Editar cotas» copia al campo el reparto
+// automático de ahora (cotas del plano, con tapa) para cambiar solo la que haga falta.
+['numLiras', 'cotasLiras'].forEach(id => document.getElementById(id).addEventListener('input', render));
+document.getElementById('btnEditarLiras').addEventListener('click', () => {
+const campo = document.getElementById('cotasLiras');
+const auto = window.__lirasActuales || [];
+if (!auto.length) return;
+if (campo.value.trim() && !confirm(t('nv.confirm'))) return;
+campo.value = '';
+render();
+campo.value = (window.__lirasActuales || []).join(', ');
+campo.focus();
+render();
+});
+// Patín intermedio editable: igual que las liras.
+['numPatines', 'cotasPatines'].forEach(id => document.getElementById(id).addEventListener('input', render));
+document.getElementById('btnEditarPatines').addEventListener('click', () => {
+const campo = document.getElementById('cotasPatines');
+if (campo.value.trim() && !confirm(t('nv.confirm'))) return;
+campo.value = '';
+render();
+campo.value = (window.__patinesActuales || []).join(', ');
+campo.focus();
+render();
+});
+// «Solo placas»: plano de siempre (raya negra), sin perfil cofre, liras ni barra de carga.
+document.getElementById('btnSoloPlacas').addEventListener('click', e => {
+soloPlacas = !soloPlacas;
+e.currentTarget.classList.toggle('active', soloPlacas);
+render();
+});
 refs.btnPDF.addEventListener('click', exportPDF);
 refs.btnExport.addEventListener('click', exportPNG);
 
@@ -1168,7 +1512,9 @@ input.classList.add('input-success');
 return hasError;
 };
 
+let soloPlacas = false;
 const render = () => {
+document.getElementById('btnSoloPlacas').title = t('nv.soloPlacasTit');
 const L = +refs.linea.value || 0;
 const S = +refs.salida.value || 0;
 const v = refs.numBrazos.value;
@@ -1217,8 +1563,9 @@ aux.push({ cota: L - TAPA - A_AUX_POS });
 }
 }
 
+// La unión de cofres no es un apoyo de la barra de carga: no parte los huecos entre soportes
+// brazo (antes sí, y podía quitar un patín intermedio que hace falta).
 let boundaryPoints = brazos.map(b => b.cota);
-if (partido) boundaryPoints.push(L / 2);
 boundaryPoints = [...new Set(boundaryPoints)].sort((a, b) => a - b);
 
 let patines = [];
@@ -1227,6 +1574,23 @@ const sep = boundaryPoints[i] - boundaryPoints[i - 1];
 if (sep > SEP_PATIN) {
 patines.push({ cota: Math.round((boundaryPoints[i - 1] + boundaryPoints[i]) / 2) });
 }
+}
+// Patín intermedio editable (como los soportes lira): Nº vacío = el automático (B/2 si el
+// hueco pasa de 4500); un número = esos patines, en el centro de los huecos más grandes
+// (0 = ninguno); cotas escritas (las del plano, con tapa) = mandan esas.
+{
+const numEl = document.getElementById('numPatines'), cotasEl = document.getElementById('cotasPatines');
+numEl.placeholder = `${t('nv.sugerido')}: ${patines.length}`;
+cotasEl.placeholder = t('nv.auto');
+const escritas = cotasEl.value.split(/[,;\n\s]+/).map(Number).filter(c => c > 0 && c < L);
+if (escritas.length) patines = [...new Set(escritas.map(Math.round))].sort((a, b) => a - b).map(cota => ({ cota }));
+else if (numEl.value !== '') {
+const k = Math.max(0, Math.round(+numEl.value));
+const huecosB = boundaryPoints.slice(1).map((p, i) => ({ med: Math.round((p + boundaryPoints[i]) / 2), sep: p - boundaryPoints[i] }))
+.sort((a, b) => b.sep - a.sep).slice(0, k);
+patines = huecosB.map(h => ({ cota: h.med })).sort((a, b) => a.cota - b.cota);
+}
+window.__patinesActuales = patines.map(p => p.cota);
 }
 
 let alerts = [];
@@ -1265,6 +1629,59 @@ if (b.cota < 0 || b.cota > L) alerts.push(`<div><b>⚠ P${b.n}</b> ${t('alert.fu
 }
 
 let warns = [];
+// Reparto de los soportes brazo que hay ahora, comparado con el criterio del manual
+// (págs. 10–17): A lo mayor posible hasta L/10 (máx. 700) y, con 3 y 4 brazos, terminales
+// equidistantes (B = C + 602,6).
+{
+const info = document.getElementById('repartoInfo');
+const conLado = brazos.filter(b => b.lado);
+let html = '';
+if (L > 0 && conLado.length === n && n >= 2) {
+const Amax = Math.min(700, Math.floor(L / 10));
+const aI = conLado[0].cota - TAPA, aD = L - conLado[n - 1].cota - TAPA;
+const huecos = conLado.slice(1).map((b, i) => `${conLado[i].lado === conLado[i + 1].lado ? 'C' : (conLado[i].lado === 'izq' ? 'B' : '·')} ${b.cota - conLado[i].cota}`);
+const ok = v => v ? '<span style="color:#059669">✓</span>' : '<span style="color:#b45309">✗</span>';
+const aMaxCabe = esRepartoManual(conLado.map(b => b.lado), n) ? aManual(L, n, conLado.slice(1).map((b, i) => huecoNecesario(conLado[i].lado, b.lado, S, brazoRep, 0)), holgura) : null;
+const aMayor = aMaxCabe !== null ? 2 * aMaxCabe - 70 : null;
+html = `${t('nv.reparto')}: A = ${aI} · ${aD} mm ${ok(Math.min(aI, aD) >= 70 && Math.max(aI, aD) <= Amax)} (${t('nv.entre').replace('{a}', aMayor !== null ? aMayor : Amax)}${aMayor !== null ? t('nv.media').replace('{m}', aMaxCabe) : ''}) · ${t('nv.huecos')} ${huecos.join(' · ')}`;
+if (n > 2 && esRepartoManual(conLado.map(b => b.lado), n)) {
+const ts = conLado.map(b => b.lado === 'izq' ? b.cota + TERMINAL_OFFSET : b.cota - TERMINAL_OFFSET);
+const C = conLado[1].cota - conLado[0].cota, B = conLado[2].cota - conLado[1].cota;
+const equi = Math.abs(B - C - DIF_B_C - holgura) < 5;
+html += `<br>${t('nv.termCada')} ${ts.slice(1).map((v, i) => v - ts[i]).join(' · ')} mm · B = C + 602,6: ${ok(equi)}${equi ? ' ' + t('nv.equi') : ''}`;
+if (!equi && Math.max(aI, aD) <= 70) html += `<br>${t('nv.col70')}`;
+}
+}
+info.innerHTML = html;
+}
+// Líneas del manual (págs. 9, 12, 15 y 20) para la salida y el nº de brazos elegidos:
+// mínima (B mín y C mín, A = 70), recomendada (3 y 4 brazos: terminales equidistantes,
+// C = B mín − 602,6) y máxima (6, 9 y 12 m). Debajo, la tabla completa por salidas.
+const lineasManual = (s, nb) => {
+const bMin = s + 360, cMin = s / 2 + 250, base = 2 * TAPA + 2 * 70;
+return {
+min: Math.round(base + bMin + (nb - 2) * cMin),
+rec: Math.floor(base + bMin + (nb - 2) * (bMin - DIF_B_C)),
+max: LINEA_MAX_POR_BRAZOS[nb]
+};
+};
+{
+const info = document.getElementById('lineasInfo');
+let html = '';
+if (S > 0 && LINEA_MAX_POR_BRAZOS[n]) {
+const lm = lineasManual(S, n);
+const rec = n > 2 ? ` · ${t('nv.recomendada')} ≥ <b>${lm.rec}</b>${lm.rec > lm.max ? ' ' + t('nv.noAlcanza') : ''}` : '';
+html = `${t('nv.lineaCon').replace('{S}', S).replace('{n}', n)}: ${t('nv.minima')} <b>${lm.min}</b>${rec} · ${t('nv.maxima')} <b>${lm.max}</b> mm`;
+if (L > 0 && n > 2 && L >= lm.min && L < lm.rec) warns.push(`<div>${t('nv.warnRec').replace('{L}', L).replace('{rec}', lm.rec)}</div>`);
+}
+const filas = [1500, 2000, 2500, 3000, 3500, 4000].map(s => `<tr><td>${s}</td>${[2, 3, 4].map(nb => { const lm = lineasManual(s, nb); return `<td>${lm.min}${nb > 2 ? ` / ${lm.rec}` : ''}</td>`; }).join('')}</tr>`).join('');
+const abierta = info.querySelector('details')?.open ? ' open' : '';
+html += `<details style="margin-top:4px;"${abierta}><summary style="cursor:pointer;">${t('nv.tabla')}</summary>
+<table style="font-size:0.8rem; margin-top:4px; border-collapse:collapse;" border="1" cellpadding="3">
+<tr><th>${t('nv.salida')}</th><th>2 ${t('nv.brazos')}<br>${t('nv.min')}</th><th>3 ${t('nv.brazos')}<br>${t('nv.min')} / ${t('nv.recom')}</th><th>4 ${t('nv.brazos')}<br>${t('nv.min')} / ${t('nv.recom')}</th></tr>${filas}
+<tr><th>${t('nv.maxFila')}</th><td>6000</td><td>9000</td><td>12000</td></tr></table></details>`;
+info.innerHTML = html;
+}
 // Línea mínima y A mínima del manual (A = del extremo del perfil sin tapa al centro del
 // soporte brazo, mín. 70 mm → cota ≥ 90 contando la tapa de 20).
 if (L > 0 && S > 0 && LADOS_MANUAL[n]) {
@@ -1280,6 +1697,15 @@ if (aIzq < 70 || aDer < 70) alerts.push(`<div><b>⚠ ${t('alert.aMin')}</b> (A i
 }
 const lineaMax = LINEA_MAX_POR_BRAZOS[n];
 if (lineaMax && L > lineaMax) alerts.push(`<div><b>⚠ ${t('alert.lineaMax')} ${n} ${t('form.' + n + 'brazos').replace(/^\d+\s*/, '')}:</b> ${L} mm > ${lineaMax} mm.</div>`);
+// Salida del manual: de 1,50 a 4,00 m (págs. 6 y 9–17).
+if (S > 0 && (S < 1500 || S > 4000)) alerts.push(`<div>${t('nv.salidaFuera').replace('{S}', S)}</div>`);
+// La unión de cofres solo puede estorbar a un soporte (brazo o patín intermedio) que caiga
+// encima: se avisa si hay uno a menos de 60 mm del centro.
+if (partido) {
+const choca = [...brazos.map(b => ({ c: b.cota, nom: 'P' + b.n })), ...patines.map(p => ({ c: p.cota, nom: t('nv.patinInt') }))]
+.filter(s => Math.abs(s.c - L / 2) < 60);
+if (choca.length) alerts.push(`<div>${t('nv.unionEncima').replace('{c}', Math.round(L / 2)).replace('{lista}', choca.map(s => `${s.nom} (${s.c} mm)`).join(', '))}</div>`);
+}
 if (partido) warns.push(`<div><b>ℹ L=${L} mm > 7000:</b> ${t('alert.partido')}<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.union')} ${Math.round(L / 2)} mm.</span></div>`);
 
 refs.alertOut.innerHTML =
@@ -1313,7 +1739,7 @@ viewBoxWidth = marginLeft + L * scale + marginRight;
 }
 
 const yBar = 320;
-let bandas = '', bgLines = '', fgShapes = '', fgTexts = '', cotaLines = '';
+let bandas = '', bgLines = '', fgShapes = '', fgTexts = '', cotaLines = '', textosTerminal = '';
 const txtMask = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"';
 
 if (L > 0) {
@@ -1324,11 +1750,16 @@ const x1 = marginLeft + a.cota * scale;
 const x2 = marginLeft + b.cota * scale;
 const midX = (x1 + x2) / 2;
 const yCota = yBar - 80;
+// Si la placa de unión (L/2) cae en medio del hueco, su rótulo y la «U» taparían el
+// número: se pone a la derecha de la unión.
+const xUnion = marginLeft + (L / 2) * scale;
+const apartar = partido && Math.abs(xUnion - midX) < 70;
+const xTxt = apartar ? xUnion + 62 : midX, ancla = apartar ? 'start' : 'middle';
 cotaLines += `
 <line x1="${x1}" y1="${yCota}" x2="${x2}" y2="${yCota}" stroke="#6b7280" stroke-width="1" stroke-dasharray="3"/>
 <line x1="${x1}" y1="${yCota - 4}" x2="${x1}" y2="${yCota + 4}" stroke="#6b7280" stroke-width="1"/>
 <line x1="${x2}" y1="${yCota - 4}" x2="${x2}" y2="${yCota + 4}" stroke="#6b7280" stroke-width="1"/>
-<text x="${midX}" y="${yCota - 8}" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" ${txtMask}>${b.cota - a.cota} mm</text>
+<text x="${xTxt}" y="${yCota - 8}" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="${ancla}" ${txtMask}>${b.cota - a.cota} mm</text>
 `;
 }
 
@@ -1345,9 +1776,12 @@ const xTerm = marginLeft + (b.lado === 'izq' ? b.terminalCota : L - b.terminalCo
 bandas += `
 <rect x="${Math.min(x, x2)}" y="${yBar - 8}" width="${Math.abs(x2 - x)}" height="16" fill="${col}"/>
 <path d="M${x2} ${yBar} l${dir * -10} -6 l0 12 z" fill="${b.conflict ? '#ef4444' : '#3b82f6'}" opacity=".7"/>
-<circle cx="${xTerm}" cy="${yBar}" r="4" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
-<text x="${xTerm}" y="${yBar - 24}" font-size="10" font-weight="bold" fill="#7c3aed" text-anchor="middle" ${txtMask}><tspan class="solo-cliente">${t('plan.terminalCorto')} ${b.terminalCota} mm</tspan><tspan class="solo-taller">${t('plan.terminalCorto')} ${b.terminalTaller} mm</tspan></text>
-<text class="solo-taller" x="${xTerm}" y="${yBar - 12}" font-size="9" fill="#7c3aed" text-anchor="middle" ${txtMask}>${t(b.lado === 'izq' ? 'taller.desdeIzq' : 'taller.desdeDer')}</text>`;
+<circle cx="${xTerm}" cy="${yBar}" r="4" fill="#fff" stroke="#7c3aed" stroke-width="2"/>`;
+// La cota del terminal va en la capa de arriba y hacia el centro, para que el soporte no la tape.
+const anc = b.lado === 'izq' ? 'start' : 'end', xTxt = xTerm + (b.lado === 'izq' ? -3 : 3);
+textosTerminal += `
+<text x="${xTxt}" y="${yBar - 24}" font-size="10" font-weight="bold" fill="#7c3aed" text-anchor="${anc}" ${txtMask}><tspan class="solo-cliente">${t('plan.terminalCorto')} ${b.terminalCota} mm</tspan><tspan class="solo-taller">${t('plan.terminalCorto')} ${b.terminalTaller} mm</tspan></text>
+<text class="solo-taller" x="${xTxt}" y="${yBar - 12}" font-size="9" fill="#7c3aed" text-anchor="${anc}" ${txtMask}>${t(b.lado === 'izq' ? 'taller.desdeIzq' : 'taller.desdeDer')}</text>`;
 }
 });
 
@@ -1382,6 +1816,9 @@ const x = el.x;
 const dyMap = [0, -150, 150, -300, 300];
 const dy = dyMap[el.lane] || 0;
 const yB = yBar + dy;
+// Pieza subida de fila (porque coincide con otra): su cota va encima, no debajo, para que la
+// pieza de la fila de abajo no la tape.
+const yCota = dy < 0 ? yB - 126 : yB + 80;
 
 if (dy !== 0) {
 bgLines += `<line x1="${x}" y1="${yB}" x2="${x}" y2="${yBar}" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4"/>`;
@@ -1409,7 +1846,7 @@ fgShapes += `
 fgTexts += `
 <text x="${x}" y="${yB - 68}" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">U</text>
 <text x="${x}" y="${yB - 94}" font-size="10" font-weight="600" fill="#4b5563" text-anchor="middle" ${txtMask}>${unionText}</text>
-<text x="${x}" y="${yB + 80}" font-size="14" font-weight="bold" fill="${uColor}" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="10" font-weight="normal">mm</tspan></text>`;
+<text x="${x}" y="${yCota}" font-size="14" font-weight="bold" fill="${uColor}" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="10" font-weight="normal">mm</tspan></text>`;
 }
 else if (el.type === 'aux') {
 fgShapes += `
@@ -1420,7 +1857,7 @@ fgShapes += `
 <rect x="${x - 4}" y="${yB - 10}" width="8" height="12" rx="4" fill="#1e3a8a" />`;
 fgTexts += `
 <text x="${x}" y="${yB - 56}" font-size="10" fill="#2563eb" text-anchor="middle" font-weight="600" ${txtMask}>AUX</text>
-<text x="${x}" y="${yB + 72}" font-size="12" font-weight="bold" fill="#2563eb" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>`;
+<text x="${el.data.cota < L / 2 ? x + 14 : x - 14}" y="${dy < 0 ? yCota : yB + 72}" font-size="12" font-weight="bold" fill="#2563eb" text-anchor="${el.data.cota < L / 2 ? 'end' : 'start'}" ${txtMask}>${el.data.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>`;
 }
 else if (el.type === 'patin') {
 fgShapes += `
@@ -1431,7 +1868,7 @@ fgShapes += `
 <rect x="${x - 4}" y="${yB - 10}" width="8" height="12" rx="4" fill="#064e3b" />`;
 fgTexts += `
 <text x="${x}" y="${yB - 56}" font-size="10" fill="#059669" text-anchor="middle" font-weight="600" ${txtMask}>${t('plan.auxiliar')}</text>
-<text x="${x}" y="${yB + 72}" font-size="12" font-weight="bold" fill="#059669" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>`;
+<text x="${x}" y="${dy < 0 ? yCota : yB + 72}" font-size="12" font-weight="bold" fill="#059669" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>`;
 }
 else if (el.type === 'brazo') {
 const b = el.data;
@@ -1465,9 +1902,9 @@ fgTexts += `
 ${warnIcon}
 <text x="${x}" y="${yB - 68}" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">${letra}</text>
 <text x="${x}" y="${yB - 94}" font-size="12" font-weight="600" fill="#4b5563" text-anchor="middle" ${txtMask}>P${b.n}</text>
-<text class="solo-cliente" x="${x}" y="${yB + 80}" font-size="14" font-weight="bold" fill="#c0102e" text-anchor="middle" ${txtMask}>${b.cota} <tspan font-size="10" font-weight="normal">mm</tspan></text>
-${b.lado ? `<text class="solo-taller" x="${x}" y="${yB + 80}" font-size="14" font-weight="bold" fill="#c2410c" text-anchor="middle" ${txtMask}>${b.soporteTaller} <tspan font-size="10" font-weight="normal">mm</tspan></text>
-<text class="solo-taller" x="${x}" y="${yB + 94}" font-size="9" fill="#c2410c" text-anchor="middle" ${txtMask}>${t(b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')}</text>` : `<text class="solo-taller" x="${x}" y="${yB + 80}" font-size="12" fill="#9ca3af" text-anchor="middle" ${txtMask}>— ${t('brazo.select')}</text>`}`;
+<text class="solo-cliente" x="${x}" y="${yCota}" font-size="14" font-weight="bold" fill="#c0102e" text-anchor="middle" ${txtMask}>${b.cota} <tspan font-size="10" font-weight="normal">mm</tspan></text>
+${b.lado ? `<text class="solo-taller" x="${x}" y="${yCota}" font-size="14" font-weight="bold" fill="#c2410c" text-anchor="middle" ${txtMask}>${b.soporteTaller} <tspan font-size="10" font-weight="normal">mm</tspan></text>
+<text class="solo-taller" x="${x}" y="${yCota + 14}" font-size="9" fill="#c2410c" text-anchor="middle" ${txtMask}>${t(b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')}</text>` : `<text class="solo-taller" x="${x}" y="${yCota}" font-size="12" fill="#9ca3af" text-anchor="middle" ${txtMask}>— ${t('brazo.select')}</text>`}`;
 }
 });
 }
@@ -1475,6 +1912,158 @@ ${b.lado ? `<text class="solo-taller" x="${x}" y="${yB + 80}" font-size="14" fon
 const motorTxt = ladoMotor === 'izq' ? `◄ ${t('plan.motor')}` : `◄ ${t('plan.punta')}`;
 const puntaTxt = ladoMotor === 'izq' ? `${t('plan.punta')} ►` : `${t('plan.motor')} ►`;
 const Ltxt = L > 0 ? L : '—';
+
+// Perfil cofre en silueta (en lugar de la raya negra): cuerpo de aluminio con las tapas en los extremos.
+const xIni = marginLeft, xFin = viewBoxWidth - marginRight;
+const tapaPx = Math.max(6, TAPA * scale);
+// Soportes lira (20033003), solo Taller: el perfil cofre (L − 2 tapas) se parte en huecos
+// iguales de 1 m como mucho (tablas «Nº mín 20033003» del manual), y al menos 2 liras; con
+// unión de cofres cada mitad va aparte y la unión hace de lira.
+// Como en Modulbox, el Nº y las cotas se pueden cambiar: Nº vacío = el sugerido; cotas
+// escritas (las del plano: desde 0, al centro, con tapa) = mandan esas.
+let lirasCofre = [];
+const numLirasEl = document.getElementById('numLiras'), cotasLirasEl = document.getElementById('cotasLiras');
+if (L > 0) {
+const perfil = L - 2 * TAPA, tramo = partido ? perfil / 2 : perfil;
+const huecosTramo = Math.max(partido ? 2 : 3, Math.ceil(tramo / 1000));
+const sugerido = partido ? 2 * (huecosTramo - 1) : huecosTramo - 1;
+numLirasEl.placeholder = `${t('nv.sugerido')}: ${sugerido}`;
+cotasLirasEl.placeholder = t('nv.autoEquid');
+const escritas = cotasLirasEl.value.split(/[,;\n\s]+/).map(Number).filter(c => c > 0 && c < L);
+let cotas;
+if (escritas.length) cotas = escritas;
+else {
+const num = numLirasEl.value !== '' ? Math.max(0, Math.round(+numLirasEl.value)) : sugerido;
+// Equidistantes en el perfil; con unión, cada mitad aparte (la unión hace de lira).
+const reparte = (desde, largo, k) => Array.from({ length: k }, (_, i) => desde + (i + 1) * largo / (k + 1));
+cotas = partido
+? [...reparte(TAPA, tramo, Math.ceil(num / 2)), ...reparte(L / 2, tramo, Math.floor(num / 2))]
+: reparte(TAPA, perfil, num);
+}
+lirasCofre = [...new Set(cotas.map(Math.round))].sort((a, b) => a - b).map((cota, i) => ({ n: i + 1, cota }));
+}
+window.__lirasActuales = lirasCofre.map(l => l.cota);
+// Frente del perfil cofre como en el manual (pág. 10): del mismo alto que las placas (soporte brazo
+// de yBar−55 a yBar+19), franja de arriba = cofre, franja de abajo = barra de carga; difuminado.
+const cTop = yBar - 55, cBot = yBar + 19, cH = cBot - cTop;
+const lineaC = (y, w, op) => `<line x1="${xIni + tapaPx}" y1="${y}" x2="${xFin - tapaPx}" y2="${y}" stroke="rgba(31,41,55,${op})" stroke-width="${w}"/>`;
+const cofreSilueta = (L > 0 && !soloPlacas) ? `
+<rect x="${xIni}" y="${cTop}" width="${xFin - xIni}" height="${cH}" fill="rgba(148,163,184,.12)" stroke="rgba(31,41,55,.55)" stroke-width="1.2"/>
+${lineaC(cTop + 3, 0.8, .35)}${lineaC(cTop + 6, 0.8, .35)}
+${lineaC(cTop + cH * 0.46, 2, .5)}${lineaC(cTop + cH * 0.49, 0.8, .4)}
+${lineaC(cTop + cH * 0.57, 0.8, .3)}${lineaC(cBot - 6, 0.8, .35)}${lineaC(cBot - 3, 0.8, .35)}
+<rect x="${xIni}" y="${cTop - 2}" width="${tapaPx}" height="${cH + 4}" fill="rgba(55,65,81,.45)"/>
+<rect x="${xFin - tapaPx}" y="${cTop - 2}" width="${tapaPx}" height="${cH + 4}" fill="rgba(55,65,81,.45)"/>
+<g class="solo-taller">${lirasCofre.map(l => {
+const xl = marginLeft + l.cota * scale;
+return `
+<image href="${PIEZAS_KUADBOX.lira}" x="${xl - 15}" y="${cTop + 2}" width="30" height="31" opacity=".9"/>
+<line x1="${xl}" y1="${cTop + 34}" x2="${xl}" y2="${cBot + 4}" stroke="#c026d3" stroke-width="1" stroke-dasharray="2 2"/>
+<text x="${xl}" y="${cBot + 13}" font-size="8" fill="#c026d3" text-anchor="middle" ${txtMask}>${t('nv.soporteLira')}</text>
+<text x="${xl}" y="${cBot + 27}" font-size="10" font-weight="bold" fill="#c026d3" text-anchor="middle" ${txtMask}>${l.cota - TAPA}</text>`;
+}).join('')}</g>` : '';
+
+// Barra de carga vista de frente (desde fuera del toldo) "con rayos X": el perfil se ve
+// difuminado y deja ver lo que lleva dentro: patines en U (soporte S, codo C), patín
+// intermedio (dibujo 0..11..5 del manual) y terminales (pletina + horquilla, manual pág. 28).
+let barraRx = '';
+if (L > 0 && !soloPlacas && brazos.some(b => b.lado)) {
+const X = mm => marginLeft + mm * scale;
+const yT = 60, yB = 150, yM = (yT + yB) / 2, yC = yB + 30;
+const hex = (cx, cy, r) => `M${[0, 1, 2, 3, 4, 5].map(i => `${(cx + r * Math.cos(Math.PI / 3 * i)).toFixed(1)},${(cy + r * Math.sin(Math.PI / 3 * i)).toFixed(1)}`).join(' L')} Z`;
+// Patín en U (manual pág. 5 y 28): pletina que abraza la barra por dentro; asoma en rojo
+// por el labio de arriba y el de abajo y se une por detrás (tira roja). Es donde empuja el
+// soporte brazo (S) o el codo (C) al cerrar.
+// Patín del soporte brazo (manual pág. 28, «Colocar los patines del soporte brazo»): calcado
+// del dibujo, en negro, sin el tornillo ni la arandela. El soporte empuja aquí al cerrar.
+const patinSoporteRx = x => `
+<g transform="translate(${x - 26}, ${yM - 15}) scale(0.075)">
+<path d="M35,120 C40,85 60,75 90,72 L330,40 L368,30 C380,55 395,70 420,76 L600,76 L612,90 L615,125 L640,132 L652,160 L660,290 L590,338 L300,382 L265,340 L238,302 L150,268 C95,230 50,180 35,120 Z" fill="#111827" stroke="#000" stroke-width="8"/>
+<path d="M368,30 C320,50 315,120 360,170 L505,255 L575,335" fill="none" stroke="#6b7280" stroke-width="8"/>
+<ellipse cx="330" cy="268" rx="105" ry="32" transform="rotate(22 330 268)" fill="#fff" stroke="#000" stroke-width="8"/>
+</g>
+<text x="${x}" y="${yT + 22}" font-size="10" font-weight="bold" fill="#111827" text-anchor="middle">S</text>`;
+const patinRx = (x, letra) => `
+<path d="M${x - 5},${yT + 7} h10 v${yB - yT - 14} h-10 z" fill="#e11d48" fill-opacity=".3" stroke="#9f1239" stroke-width=".8" stroke-dasharray="3 2"/>
+<path d="M${x - 14},${yT + 1} h22 l6,8 h-22 z" fill="#e11d48" stroke="#9f1239" stroke-width="1"/>
+<path d="M${x - 14},${yB - 1} h22 l6,-8 h-22 z" fill="#e11d48" stroke="#9f1239" stroke-width="1"/>
+<circle cx="${x}" cy="${yM}" r="8" fill="#fff" stroke="#9f1239" stroke-width="1.3"/>
+<text x="${x}" y="${yM + 3.5}" font-size="10" font-weight="bold" fill="#9f1239" text-anchor="middle">${letra}</text>`;
+// Terminal visto de frente: la pletina con los dos tornillos rojos va hacia el extremo y la
+// horquilla (con su tuerca abajo) hacia el centro, como en la pág. 28 del manual.
+const terminalRx = (x, izq) => {
+const dir = izq ? 1 : -1, xb = x + dir * 21, x0 = Math.min(x - dir * 22, x + dir * 14);
+return `
+<rect x="${x0}" y="${yM - 30}" width="36" height="18" rx="4" fill="#f8fafc" stroke="#5b21b6" stroke-width="1.5"/>
+<path d="M${xb - 7},${yM - 26} h14 v40 a4,4 0 0 1 -4,4 h-6 a4,4 0 0 1 -4,-4 z" fill="#eef2f7" stroke="#334155" stroke-width="1.3"/>
+<circle cx="${xb}" cy="${yM - 8}" r="3.2" fill="#fff" stroke="#334155"/>
+<path d="${hex(xb, yM + 26, 6.5)}" fill="#cbd5e1" stroke="#334155"/><circle cx="${xb}" cy="${yM + 26}" r="2.5" fill="none" stroke="#334155"/>
+<circle cx="${x - dir * 13}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x - dir * 13, yM - 21, 2.4)}" fill="#fff"/>
+<circle cx="${x + dir * 5}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x + dir * 5, yM - 21, 2.4)}" fill="#fff"/>
+<text x="${x - dir * 4}" y="${yM - 18}" font-size="8" font-weight="bold" fill="#1f2937" text-anchor="middle">${izq ? 'L' : 'R'}</text>`;
+};
+let rx = '', marcas = '';
+// Cota con número y, debajo, de dónde se mide (cliente: desde 0; taller: sin tapa).
+// Si en esa fila ya hay una cota a menos de 130 px (p. ej. los dos codos enfrentados), baja a la siguiente.
+const ocupadas = [];
+let filaMax = 2;
+const marca = (mm, col, nom, cli, tall, sub, fila) => {
+const x = X(mm);
+while ((ocupadas[fila] || []).some(px => Math.abs(px - x) < 130)) fila++;
+(ocupadas[fila] = ocupadas[fila] || []).push(x);
+filaMax = Math.max(filaMax, fila);
+const yy = yC + 18 + fila * 32;
+marcas += `<line x1="${x}" y1="${yB + 3}" x2="${x}" y2="${yy - 2}" stroke="${col}" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>
+<line x1="${x}" y1="${yC - 4}" x2="${x}" y2="${yC + 4}" stroke="${col}" stroke-width="2"/>
+<text x="${x}" y="${yy + 8}" font-size="11" font-weight="bold" fill="${col}" text-anchor="middle" ${txtMask}>${nom} <tspan class="solo-cliente">${cli}</tspan><tspan class="solo-taller">${tall}</tspan></text>
+<text class="solo-taller" x="${x}" y="${yy + 19}" font-size="9" fill="${col}" text-anchor="middle" ${txtMask}>${sub}</text>`;
+};
+brazos.filter(b => b.lado).forEach(b => {
+const izq = b.lado === 'izq', dir = izq ? 1 : -1;
+const cTerm = izq ? b.terminalCota : L - b.terminalCota;
+const cCodo = Math.round(b.cota + dir * brazoRep);
+const desdeTxt = t(izq ? 'taller.desdeIzq' : 'taller.desdeDer');
+const desde = v => izq ? v - TAPA : L - v - TAPA;
+rx += patinSoporteRx(X(b.cota)) + patinRx(X(cCodo), 'C') + terminalRx(X(cTerm), izq);
+marca(b.cota, '#c0102e', `S${b.n}`, b.cota, desde(b.cota), desdeTxt, 0);
+marca(cTerm, '#5b21b6', `T${b.n}`, Math.round(cTerm), b.terminalTaller, desdeTxt, 1);
+marca(cCodo, '#475569', `C${b.n}`, cCodo, desde(cCodo), desdeTxt + ' ' + t('nv.aprox'), 2);
+});
+patines.forEach(p => {
+const xi = X(p.cota);
+// Soporte intermedio (dibujo 0..11..5 del manual) encima de su patín, oscurecido para que se vea.
+rx += patinRx(xi, 'I') + `<rect x="${xi - 30}" y="${yM - 33}" width="60" height="66" rx="8" fill="#ecfdf5" fill-opacity=".9" stroke="#059669" stroke-width="1.5"/>
+<image href="${PIEZAS_KUADBOX.patin}" x="${xi - 28}" y="${yM - 30}" width="56" height="60" style="filter: contrast(3) brightness(.55)"/>`;
+marca(p.cota, '#059669', 'I', p.cota, p.cota - TAPA, t('taller.desdeIzq'), 0);
+});
+const hLeyenda = yC + 18 + (filaMax + 1) * 32 + 14;
+barraRx = `
+<svg class="plano-main" viewBox="0 0 ${viewBoxWidth} ${hLeyenda + 40}" xmlns="http://www.w3.org/2000/svg" style="margin-top:12px;border:1px solid var(--border-color);border-radius:12px;background:#fff;">
+<rect x="14" y="14" width="340" height="24" rx="4" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="184" y="30" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" letter-spacing="1">${t('nv.barraTit')}</text>
+<rect x="${X(0)}" y="${yT}" width="${L * scale}" height="${yB - yT}" fill="rgba(148,163,184,.10)" stroke="rgba(31,41,55,.55)" stroke-width="1.2"/>
+<line x1="${X(0)}" y1="${yT + 8}" x2="${X(L)}" y2="${yT + 8}" stroke="rgba(31,41,55,.3)"/>
+<line x1="${X(0)}" y1="${yT + 12}" x2="${X(L)}" y2="${yT + 12}" stroke="rgba(31,41,55,.2)"/>
+<line x1="${X(0)}" y1="${yB - 12}" x2="${X(L)}" y2="${yB - 12}" stroke="rgba(31,41,55,.2)"/>
+<line x1="${X(0)}" y1="${yB - 8}" x2="${X(L)}" y2="${yB - 8}" stroke="rgba(31,41,55,.3)"/>
+<rect x="${X(0)}" y="${yT - 2}" width="${tapaPx}" height="${yB - yT + 4}" fill="rgba(55,65,81,.45)"/>
+<rect x="${X(L) - tapaPx}" y="${yT - 2}" width="${tapaPx}" height="${yB - yT + 4}" fill="rgba(55,65,81,.45)"/>
+<text x="${X(0) - 10}" y="${yM + 4}" font-size="12" font-weight="bold" fill="#c0102e" text-anchor="end">${t('lado.letraIzq')}</text>
+<text x="${X(L) + 10}" y="${yM + 4}" font-size="12" font-weight="bold" fill="#c0102e">${t('lado.letraDer')}</text>
+${rx}
+<line x1="${X(0)}" y1="${yC}" x2="${X(L)}" y2="${yC}" stroke="#9ca3af" stroke-width="1.5"/>
+<line x1="${X(0)}" y1="${yC - 6}" x2="${X(0)}" y2="${yC + 6}" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="${X(L)}" y1="${yC - 6}" x2="${X(L)}" y2="${yC + 6}" stroke="#6b7280" stroke-width="1.5"/>
+<text x="${X(0) - 8}" y="${yC + 4}" font-size="11" font-weight="bold" fill="#6b7280" text-anchor="end">0</text>
+<text x="${X(L) + 8}" y="${yC + 4}" font-size="11" font-weight="bold" fill="#6b7280">${L}</text>
+${marcas}
+<g font-size="11" fill="#4b5563" transform="translate(0, ${hLeyenda})">
+<path d="M${X(0)},0 h12 l4,6 h-12 z" fill="#e11d48" stroke="#9f1239"/><text x="${X(0) + 22}" y="7">${t('nv.leyU')}</text>
+<g transform="translate(${X(0) - 3}, 13) scale(0.03)"><path d="M35,120 C40,85 60,75 90,72 L330,40 L368,30 C380,55 395,70 420,76 L600,76 L612,90 L615,125 L640,132 L652,160 L660,290 L590,338 L300,382 L265,340 L238,302 L150,268 C95,230 50,180 35,120 Z" fill="#111827"/></g><text x="${X(0) + 22}" y="25">${t('nv.leyS')}</text>
+<rect x="${X(0) + 280}" y="-3" width="16" height="10" rx="2" fill="#f8fafc" stroke="#5b21b6" stroke-width="1.5"/><text x="${X(0) + 302}" y="7">${t('nv.leyT')}</text>
+<image href="${PIEZAS_KUADBOX.patin}" x="${X(0) + 384}" y="-7" width="18" height="18" style="filter: contrast(3) brightness(.55)"/><text x="${X(0) + 406}" y="7">${t('nv.leyI')}</text></g>
+</svg>`;
+}
 
 let terminalTableHtml = '';
 const brazosConLado = brazos.filter(b => b.lado);
@@ -1525,14 +2114,14 @@ refs.planoOut.innerHTML = `
 </defs>
 <rect width="100%" height="100%" fill="url(#grid)" />
 
-<rect x="14" y="14" width="160" height="24" rx="4" fill="#f3f4f6" stroke="#d1d5db" stroke-width="1" />
-<text x="94" y="30" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" letter-spacing="1">${t('plan.unidad')}</text>
+<rect x="14" y="4" width="160" height="22" rx="4" fill="#f3f4f6" stroke="#d1d5db" stroke-width="1" />
+<text x="94" y="19" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" letter-spacing="1">${t('plan.unidad')}</text>
 
+${cofreSilueta}
 ${bandas}
-
-<line x1="${marginLeft}" y1="${yBar}" x2="${viewBoxWidth - marginRight}" y2="${yBar}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>
+${soloPlacas ? `<line x1="${marginLeft}" y1="${yBar}" x2="${viewBoxWidth - marginRight}" y2="${yBar}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>
 <line x1="${marginLeft}" y1="${yBar - 16}" x2="${marginLeft}" y2="${yBar + 16}" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>
-<line x1="${viewBoxWidth - marginRight}" y1="${yBar - 16}" x2="${viewBoxWidth - marginRight}" y2="${yBar + 16}" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>
+<line x1="${viewBoxWidth - marginRight}" y1="${yBar - 16}" x2="${viewBoxWidth - marginRight}" y2="${yBar + 16}" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>` : ''}
 
 <text x="${marginLeft - 14}" y="${yBar + 4}" font-size="13" font-weight="bold" fill="#c0102e" text-anchor="end">${motorTxt}</text>
 <text x="${viewBoxWidth - marginRight + 14}" y="${yBar + 4}" font-size="13" font-weight="bold" fill="#c0102e" text-anchor="start">${puntaTxt}</text>
@@ -1544,15 +2133,18 @@ ${cotaLines}
 ${bgLines}
 ${fgShapes}
 ${fgTexts}
+${textosTerminal}
 
 <g transform="translate(0, -5)">
 <rect x="${marginLeft}" y="${610}" width="14" height="14" rx="3" fill="#fff" stroke="#1f2937" stroke-width="2"/><text x="${marginLeft + 22}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.soporte')}</text>
 <rect x="${marginLeft + 130}" y="${610}" width="14" height="14" rx="3" fill="#eef6ff" stroke="#3b82f6" stroke-width="2"/><text x="${marginLeft + 152}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.aux')}</text>
 <rect x="${marginLeft + 250}" y="${610}" width="14" height="14" rx="3" fill="#e6fff0" stroke="#10b981" stroke-width="2"/><text x="${marginLeft + 272}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.patin')}</text>
 <rect x="${marginLeft + 390}" y="${610}" width="14" height="14" rx="3" fill="#fff5e6" stroke="#e69000" stroke-width="2"/><text x="${marginLeft + 412}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.union')}</text>
-<text x="${viewBoxWidth - marginRight}" y="${620}" font-size="12" font-weight="bold" fill="#6b7280" text-anchor="end"><tspan class="solo-cliente">${t('plan.leyenda.cotas')}</tspan><tspan class="solo-taller">${t('taller.leyenda')}</tspan></text>
+${soloPlacas ? '' : `<g class="solo-taller"><image href="${PIEZAS_KUADBOX.lira}" x="${marginLeft - 2}" y="${627}" width="18" height="18"/><text x="${marginLeft + 22}" y="${640}" font-size="12" fill="#4b5563">${t('nv.leyLira')}</text></g>`}
+<text x="${viewBoxWidth - marginRight}" y="${640}" font-size="12" font-weight="bold" fill="#6b7280" text-anchor="end"><tspan class="solo-cliente">${t('plan.leyenda.cotas')}</tspan><tspan class="solo-taller">${t('taller.leyenda')}</tspan></text>
 </g>
 </svg>
+${barraRx}
 ${terminalTableHtml}
 </div>`;
 };
@@ -1676,6 +2268,45 @@ idxOtros.forEach((i, k) => { huecos[i] = otros[k]; });
 return huecos;
 };
 
+// Reparto del manual KÜADBOX-400 REV 2.2 (págs. 10–17), solo con los lados del manual
+// (I-D, I-I-D, I-I-D-D). Con 3 y 4 brazos pide los terminales equidistantes, lo que da
+// B = C + 602,6 (C = hueco entre brazos del mismo lado, B = hueco entre enfrentados). La
+// holgura se suma al hueco B. `total` = del primer al último soporte brazo; devuelve los
+// huecos, o null si alguno no llega a su mínimo.
+const DIF_B_C = 602.6;
+const esRepartoManual = (lados, n) => LADOS_MANUAL[n] && lados.every((l, i) => l === LADOS_MANUAL[n][i]);
+const huecosManual = (total, n, minimos, holgura) => {
+if (n === 2) return total >= minimos[0] ? [total] : null;
+const C = (total - DIF_B_C - holgura) / (n - 1), B = C + DIF_B_C + holgura;
+const huecos = n === 3 ? [C, B] : [C, B, C];
+return huecos.every((h, i) => h >= minimos[i]) ? huecos : null;
+};
+// A (del extremo del perfil sin tapa al centro del soporte brazo): lo mayor posible hasta
+// Amax = L/10 con un máximo de 700 («valores máximos siempre que sea posible», pág. 11),
+// siempre que los huecos lleguen a su mínimo. Devuelve null si no llega ni con A = 70.
+const aManual = (L, n, minimos, holgura) => {
+const Amax = Math.min(700, L / 10);
+let Aajuste;
+if (n === 2) Aajuste = (L - 2 * TAPA - minimos[0] - holgura) / 2;
+else {
+const minC = minimos[0], minB = minimos[1];
+const C = Math.max(minC, minB - DIF_B_C - holgura);
+Aajuste = (L - 2 * TAPA - (n - 1) * C - DIF_B_C - holgura) / 2;
+}
+const A = Math.floor(Math.min(Amax, Aajuste));
+if (A < 70) return null;
+// Criterio de Andrés (24/10/2026): la media entre la A mínima (70) y la mayor que cabe…
+const media = Math.floor((70 + A) / 2);
+// …pero si así B pasa de 4500 (haría falta patín intermedio) y subiendo A hasta la mayor
+// que cabe deja de pasar, se sube A lo justo.
+const T = SEP_PATIN, total = (a) => L - 2 * (TAPA + a);
+const Bcon = (a) => n === 2 ? total(a) : (total(a) - DIF_B_C - holgura) / (n - 1) + DIF_B_C + holgura;
+if (Bcon(media) <= T) return media;
+const aJusto = n === 2 ? Math.ceil((L - 2 * TAPA - T) / 2)
+: Math.ceil((L - 2 * TAPA - ((n - 1) * (T - DIF_B_C - holgura) + DIF_B_C + holgura)) / 2);
+return aJusto <= A ? Math.max(media, aJusto) : media;
+};
+
 const recolocarInteriores = () => {
 const L = +refs.linea.value || 0;
 const S = +refs.salida.value || 0;
@@ -1695,9 +2326,13 @@ const minimos = [];
 for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, 0));
 const total = c[n - 1] - c[0];
 if (minimos.reduce((a, m) => a + Math.ceil(m), 0) > total) return false;
-const huecos = repartoConHolgura(total, lados, minimos, holgura);
+// Como «Sugerir»: terminales equidistantes; si no cabe, B a su mínimo y el resto para C.
+const bMinimo = minimos[1] + holgura, cResto = (total - bMinimo) / (n - 2);
+const huecos = (esRepartoManual(lados, n) && (huecosManual(total, n, minimos, holgura)
+|| (cResto >= minimos[0] ? (n === 3 ? [cResto, bMinimo] : [cResto, bMinimo, cResto]) : null)))
+|| repartoConHolgura(total, lados, minimos, holgura);
 let pos = c[0];
-for (let i = 1; i < n - 1; i++) { pos += huecos[i - 1]; document.getElementById('cota' + (i + 1)).value = pos; }
+for (let i = 1; i < n - 1; i++) { pos += huecos[i - 1]; document.getElementById('cota' + (i + 1)).value = Math.round(pos); }
 return true;
 };
 
@@ -1722,6 +2357,24 @@ for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 
 const sumaMin = minimos.reduce((a, b) => a + Math.ceil(b), 0);
 let enfrentados = 0;
 for (let i = 0; i < n - 1; i++) if (esEnfrentado(lados[i], lados[i + 1])) enfrentados++;
+let cotas;
+// Con los lados del manual: A lo mayor posible (hasta L/10, máx. 700) y terminales
+// equidistantes. Si no cabe así, o los lados son otros, el reparto de antes.
+let A = esRepartoManual(lados, n) ? aManual(L, n, minimos, holgura) : null;
+let huecosM = A !== null ? huecosManual(L - 2 * (TAPA + A), n, minimos, holgura) : null;
+// Línea por debajo de la recomendada (columna «70*» de las tablas): A = 70 (A mín.), B a su
+// mínimo (+ holgura) y el resto para C. Los terminales no quedan equidistantes, pero es lo
+// más parecido que permite el manual.
+if (!huecosM && esRepartoManual(lados, n) && n > 2) {
+const T = L - 2 * (TAPA + 70), B = minimos[1] + holgura, C = (T - B) / (n - 2);
+if (C >= minimos[0]) { A = 70; huecosM = n === 3 ? [C, B] : [C, B, C]; }
+}
+if (huecosM) {
+cotas = [TAPA + A];
+for (let i = 0; i < n - 2; i++) cotas.push(cotas[i] + huecosM[i]);
+cotas.push(L - TAPA - A);
+cotas = cotas.map(Math.round);
+} else {
 // Extremos a 100 mm; si no caben (contando la holgura), se acercan lo justo (mismo valor
 // a ambos lados) sin bajar de 90 (A = 70).
 const dist = Math.max(DIST_EXTREMO_MIN, Math.min(DIST_EXTREMO_BRAZO, Math.floor((L - sumaMin - holgura * enfrentados) / 2)));
@@ -1731,8 +2384,9 @@ alert(t('sug.noCabe').replace('{min}', sumaMin + 2 * DIST_EXTREMO_MIN).replace('
 return;
 }
 const huecos = repartoConHolgura(total, lados, minimos, holgura);
-const cotas = [dist];
+cotas = [dist];
 for (let i = 0; i < n - 1; i++) cotas.push(cotas[i] + huecos[i]);
+}
 
 const hayCotas = lados.some((_, i) => document.getElementById('cota' + (i + 1))?.value);
 if (hayCotas && !confirm(t('sug.confirmar'))) return;

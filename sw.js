@@ -1,8 +1,9 @@
-const CACHE_NAME = 'kuadbox-v14';
+const CACHE_NAME = 'kuadbox-v15';
 const APP_SHELL = [
 './',
 './index.html',
 './manifest.json',
+'./piezas-kuadbox.js',
 './vendor/html2canvas.min.js',
 './vendor/jspdf.umd.min.js',
 './icon-32.png',
