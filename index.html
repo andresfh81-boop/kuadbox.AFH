@@ -1741,20 +1741,6 @@ viewBoxWidth = marginLeft + L * scale + marginRight;
 const yBar = 320;
 let bandas = '', bgLines = '', fgShapes = '', fgTexts = '', cotaLines = '', textosTerminal = '';
 const txtMask = 'paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"';
-// Medidas reales aproximadas (mm), sacadas del dibujo del manual (pág. 10) en proporción al
-// soporte brazo de 54 mm. Sirven para dibujar a escala; cámbialas aquí si en el taller son otras.
-const ANCHO_PIEZA = { brazo: 54, aux: 30, patin: 30, union: 40, terminal: 70, patinSoporte: 60, patinU: 25 };
-// Ancho en el plano: el real a escala, con un mínimo para que quepa el nombre en vertical.
-const anchoPx = mm => Math.max(10, mm * scale);
-// Nombre de la pieza en horizontal, centrado en ella. `filasY` son las alturas posibles
-// (la primera encima de la pieza); si en una fila ya hay un nombre que se pisaría, va a la siguiente.
-const colocaNombre = (ocupado, filasY, x, txt, col, size = 9) => {
-const ancho = txt.length * size * 0.62 + 6;
-let f = 0;
-while (f < filasY.length - 1 && (ocupado[f] || []).some(([a, b]) => x - ancho / 2 < b && x + ancho / 2 > a)) f++;
-(ocupado[f] = ocupado[f] || []).push([x - ancho / 2, x + ancho / 2]);
-return `<text x="${x}" y="${filasY[f]}" font-size="${size}" font-weight="bold" fill="${col}" text-anchor="middle" ${txtMask}>${txt}</text>`;
-};
 
 if (L > 0) {
 for (let i = 0; i < brazos.length - 1; i++) {
@@ -1807,7 +1793,6 @@ brazos.forEach(b => visualElements.push({ x: marginLeft + b.cota * scale, type: 
 
 visualElements.sort((a, b) => a.x - b.x);
 
-if (soloPlacas) {
 let lanes = [];
 visualElements.forEach(el => {
 let placed = false;
@@ -1922,40 +1907,6 @@ ${b.lado ? `<text class="solo-taller" x="${x}" y="${yCota}" font-size="14" font-
 <text class="solo-taller" x="${x}" y="${yCota + 14}" font-size="9" fill="#c2410c" text-anchor="middle" ${txtMask}>${t(b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')}</text>` : `<text class="solo-taller" x="${x}" y="${yCota}" font-size="12" fill="#9ca3af" text-anchor="middle" ${txtMask}>— ${t('brazo.select')}</text>`}`;
 }
 });
-} else {
-// Vista a escala real, como el dibujo del manual (pág. 10): cada placa con su ancho real,
-// rayada y del alto del perfil cofre, con el nombre en vertical dentro. Las cotas van en
-// filas para no pisarse (sin subir piezas de fila).
-const COLOR = { brazo: '#1f2937', aux: '#2563eb', patin: '#059669', union: '#e69500' };
-const yTop = yBar - 55, alto = 74;
-const filas = [];
-const nombresPlano = [];
-const filaCota = x => { let f = 0; while ((filas[f] || []).some(px => Math.abs(px - x) < 62)) f++; (filas[f] = filas[f] || []).push(x); return f; };
-visualElements.forEach(el => {
-const x = el.x, w = anchoPx(ANCHO_PIEZA[el.type]), col = COLOR[el.type];
-const nombre = el.type === 'brazo' ? `P${el.data.n}` : el.type === 'aux' ? 'AUX' : el.type === 'union' ? 'U' : `I${patines.indexOf(el.data) + 1}`;
-const yC = yBar + 70 + filaCota(x) * 34;
-fgShapes += `
-<rect x="${x - w / 2}" y="${yTop}" width="${w}" height="${alto}" fill="#fff" fill-opacity=".85"/>
-<rect x="${x - w / 2}" y="${yTop}" width="${w}" height="${alto}" fill="url(#rayado)" stroke="${el.data.conflict ? '#ef4444' : col}" stroke-width="${el.data.conflict ? 2.5 : 1.5}"/>
-<line x1="${x}" y1="${yTop + alto}" x2="${x}" y2="${yC - 12}" stroke="#9ca3af" stroke-dasharray="3 3" stroke-width="1"/>`;
-fgTexts += el.type === 'brazo' ? `<text x="${x}" y="${yTop - 32}" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" ${txtMask}>${nombre}</text>`
-: colocaNombre(nombresPlano, [yTop - 6, yTop + alto + 12], x, nombre, col, 10);
-if (el.type === 'brazo') {
-const b = el.data;
-const colLado = b.lado === 'der' ? '#10b981' : (b.lado === 'izq' ? '#ef4444' : '#9ca3af');
-const letra = b.lado === 'der' ? t('lado.letraDer') : (b.lado === 'izq' ? t('lado.letraIzq') : '?');
-fgShapes += `<rect x="${x - 11}" y="${yTop - 26}" width="22" height="20" rx="4" fill="${colLado}"/>`;
-fgTexts += `<text x="${x}" y="${yTop - 11}" font-size="13" font-weight="bold" fill="#fff" text-anchor="middle">${letra}</text>
-${b.conflict ? `<text x="${x}" y="${yTop - 32}" font-size="16" text-anchor="middle" fill="#ef4444" ${txtMask}>⚠</text>` : ''}
-<text class="solo-cliente" x="${x}" y="${yC}" font-size="13" font-weight="bold" fill="#c0102e" text-anchor="middle" ${txtMask}>${b.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>
-${b.lado ? `<text class="solo-taller" x="${x}" y="${yC}" font-size="13" font-weight="bold" fill="#c2410c" text-anchor="middle" ${txtMask}>${b.soporteTaller} <tspan font-size="9" font-weight="normal">mm</tspan></text>
-<text class="solo-taller" x="${x}" y="${yC + 15}" font-size="9" fill="#c2410c" text-anchor="middle" ${txtMask}>${t(b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')}</text>` : ''}`;
-} else {
-fgTexts += `<text x="${x}" y="${yC}" font-size="12" font-weight="bold" fill="${col}" text-anchor="middle" ${txtMask}>${el.data.cota} <tspan font-size="9" font-weight="normal">mm</tspan></text>`;
-}
-});
-}
 }
 
 const motorTxt = ladoMotor === 'izq' ? `◄ ${t('plan.motor')}` : `◄ ${t('plan.punta')}`;
@@ -2025,34 +1976,34 @@ const hex = (cx, cy, r) => `M${[0, 1, 2, 3, 4, 5].map(i => `${(cx + r * Math.cos
 // soporte brazo (S) o el codo (C) al cerrar.
 // Patín del soporte brazo (manual pág. 28, «Colocar los patines del soporte brazo»): calcado
 // del dibujo, en negro, sin el tornillo ni la arandela. El soporte empuja aquí al cerrar.
-// Piezas a su ancho real (ANCHO_PIEZA), con el nombre en vertical dentro.
-// Patín del soporte brazo (manual pág. 28): negro.
-const patinSoporteRx = (x, nom) => {
-const w = anchoPx(ANCHO_PIEZA.patinSoporte);
-return `<rect x="${x - w / 2}" y="${yM - 18}" width="${w}" height="36" rx="3" fill="#111827" stroke="#000"/>
-${colocaNombre(nombresBarra, [yT - 5, yB + 13], x, nom, '#111827')}`;
-};
-// Patín en U (codo C, intermedio I): tira roja que abraza la barra y asoma por los dos labios.
-const patinRx = (x, letra) => {
-const w = anchoPx(ANCHO_PIEZA.patinU);
-return `<rect x="${x - w / 2}" y="${yT + 6}" width="${w}" height="${yB - yT - 12}" fill="#e11d48" fill-opacity=".22" stroke="#9f1239" stroke-width=".8" stroke-dasharray="3 2"/>
-<rect x="${x - w / 2 - 2}" y="${yT + 1}" width="${w + 4}" height="7" fill="#e11d48" stroke="#9f1239" stroke-width=".8"/>
-<rect x="${x - w / 2 - 2}" y="${yB - 8}" width="${w + 4}" height="7" fill="#e11d48" stroke="#9f1239" stroke-width=".8"/>
-${colocaNombre(nombresBarra, [yT - 5, yB + 13], x, letra, '#9f1239')}`;
-};
-// Terminal (manual pág. 28): pletina con dos tornillos rojos; la horquilla con su tuerca, pegada
-// hacia el centro. La pletina va centrada en la cota del terminal (x).
+const patinSoporteRx = (x, nom) => `
+<g transform="translate(${x - 26}, ${yM - 15}) scale(0.075)">
+<path d="M35,120 C40,85 60,75 90,72 L330,40 L368,30 C380,55 395,70 420,76 L600,76 L612,90 L615,125 L640,132 L652,160 L660,290 L590,338 L300,382 L265,340 L238,302 L150,268 C95,230 50,180 35,120 Z" fill="#111827" stroke="#000" stroke-width="8"/>
+<path d="M368,30 C320,50 315,120 360,170 L505,255 L575,335" fill="none" stroke="#6b7280" stroke-width="8"/>
+<ellipse cx="330" cy="268" rx="105" ry="32" transform="rotate(22 330 268)" fill="#fff" stroke="#000" stroke-width="8"/>
+</g>
+<text x="${x + 8}" y="${yM + 1}" font-size="9" font-weight="bold" fill="#fff" text-anchor="middle">${nom}</text>`;
+const patinRx = (x, letra, dy = 0) => `
+<path d="M${x - 5},${yT + 7} h10 v${yB - yT - 14} h-10 z" fill="#e11d48" fill-opacity=".3" stroke="#9f1239" stroke-width=".8" stroke-dasharray="3 2"/>
+<path d="M${x - 14},${yT + 1} h22 l6,8 h-22 z" fill="#e11d48" stroke="#9f1239" stroke-width="1"/>
+<path d="M${x - 14},${yB - 1} h22 l6,-8 h-22 z" fill="#e11d48" stroke="#9f1239" stroke-width="1"/>
+<rect x="${x - 4 - 3.5 * letra.length}" y="${yM - 8 + dy}" width="${8 + 7 * letra.length}" height="16" rx="8" fill="#fff" stroke="#9f1239" stroke-width="1.3"/>
+<text x="${x}" y="${yM + 3.5 + dy}" font-size="10" font-weight="bold" fill="#9f1239" text-anchor="middle">${letra}</text>`;
+// Terminal visto de frente: la pletina con los dos tornillos rojos va hacia el extremo y la
+// horquilla (con su tuerca abajo) hacia el centro, como en la pág. 28 del manual.
 const terminalRx = (x, izq, nom) => {
-const w = anchoPx(ANCHO_PIEZA.terminal), dir = izq ? 1 : -1, wb = 6, xb = x + dir * (w / 2 + wb / 2);
-return `<rect x="${x - w / 2}" y="${yM - 30}" width="${w}" height="60" rx="3" fill="#f8fafc" stroke="#5b21b6" stroke-width="1.5"/>
-<rect x="${xb - wb / 2}" y="${yM - 22}" width="${wb}" height="40" rx="2" fill="#eef2f7" stroke="#334155"/>
-<path d="${hex(xb, yM + 24, 4)}" fill="#cbd5e1" stroke="#334155"/>
-<circle cx="${x}" cy="${yM - 22}" r="4" fill="#dc2626" stroke="#7f1d1d"/>
-<circle cx="${x}" cy="${yM + 22}" r="4" fill="#dc2626" stroke="#7f1d1d"/>
-${colocaNombre(nombresBarra, [yT - 5, yB + 13], x, `${nom}·${izq ? 'L' : 'R'}`, '#5b21b6')}`;
+// La pletina va centrada en la cota del terminal (x) y la horquilla, pegada, hacia el centro.
+const dir = izq ? 1 : -1, xb = x + dir * 35;
+return `
+<rect x="${x - 28}" y="${yM - 30}" width="56" height="18" rx="4" fill="#f8fafc" stroke="#5b21b6" stroke-width="1.5"/>
+<path d="M${xb - 7},${yM - 26} h14 v40 a4,4 0 0 1 -4,4 h-6 a4,4 0 0 1 -4,-4 z" fill="#eef2f7" stroke="#334155" stroke-width="1.3"/>
+<circle cx="${xb}" cy="${yM - 8}" r="3.2" fill="#fff" stroke="#334155"/>
+<path d="${hex(xb, yM + 26, 6.5)}" fill="#cbd5e1" stroke="#334155"/><circle cx="${xb}" cy="${yM + 26}" r="2.5" fill="none" stroke="#334155"/>
+<circle cx="${x - 19}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x - 19, yM - 21, 2.4)}" fill="#fff"/>
+<circle cx="${x + 19}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x + 19, yM - 21, 2.4)}" fill="#fff"/>
+<text x="${x}" y="${yM - 17.5}" font-size="9" font-weight="bold" fill="#5b21b6" text-anchor="middle">${nom}·${izq ? 'L' : 'R'}</text>`;
 };
 let rx = '', marcas = '';
-const nombresBarra = [];
 // Cota con número y, debajo, de dónde se mide (cliente: desde 0; taller: sin tapa).
 // Si en esa fila ya hay una cota a menos de 130 px (p. ej. los dos codos enfrentados), baja a la siguiente.
 const ocupadas = [];
@@ -2075,7 +2026,7 @@ const cTerm = izq ? b.terminalCota : L - b.terminalCota;
 const cCodo = Math.round(b.cota + dir * brazoRep);
 const desdeTxt = t(izq ? 'taller.desdeIzq' : 'taller.desdeDer');
 const desde = v => izq ? v - TAPA : L - v - TAPA;
-rx += patinSoporteRx(X(b.cota), `S${b.n}`) + patinRx(X(cCodo), `C${b.n}`) + terminalRx(X(cTerm), izq, `T${b.n}`);
+rx += patinSoporteRx(X(b.cota), `S${b.n}`) + patinRx(X(cCodo), `C${b.n}`, izq ? -12 : 12) + terminalRx(X(cTerm), izq, `T${b.n}`);
 marca(b.cota, '#c0102e', `S${b.n}`, b.cota, desde(b.cota), desdeTxt, 0);
 // Como en la tabla: desde el extremo del lado del brazo (Cliente con tapa, Taller sin tapa), al centro.
 marca(cTerm, '#5b21b6', `T${b.n}`, b.terminalCota, b.terminalTaller, desdeTxt, 1, true);
@@ -2083,12 +2034,10 @@ marca(cCodo, '#475569', `C${b.n}`, cCodo, desde(cCodo), desdeTxt + ' ' + t('nv.a
 });
 patines.forEach((p, k) => {
 const xi = X(p.cota), nomI = `I${k + 1}`;
-// Soporte intermedio (20033007), a su ancho real, con su patín en U; nombre en vertical.
-const wI = anchoPx(ANCHO_PIEZA.patin);
-rx += `<rect x="${xi - wI / 2}" y="${yT + 10}" width="${wI}" height="${yB - yT - 20}" rx="3" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
-<rect x="${xi - wI / 2 - 2}" y="${yT + 1}" width="${wI + 4}" height="7" fill="#e11d48" stroke="#9f1239" stroke-width=".8"/>
-<rect x="${xi - wI / 2 - 2}" y="${yB - 8}" width="${wI + 4}" height="7" fill="#e11d48" stroke="#9f1239" stroke-width=".8"/>
-${colocaNombre(nombresBarra, [yT - 5, yB + 13], xi, nomI, '#059669')}`;
+// Soporte intermedio (dibujo 0..11..5 del manual) encima de su patín, oscurecido para que se vea.
+rx += patinRx(xi, nomI) + `<rect x="${xi - 30}" y="${yM - 33}" width="60" height="66" rx="8" fill="#ecfdf5" fill-opacity=".9" stroke="#059669" stroke-width="1.5"/>
+<image href="${PIEZAS_KUADBOX.patin}" x="${xi - 28}" y="${yM - 30}" width="56" height="60" style="filter: contrast(3) brightness(.55)"/>
+<text x="${xi}" y="${yM + 29}" font-size="10" font-weight="bold" fill="#059669" text-anchor="middle" ${txtMask}>${nomI}</text>`;
 marca(p.cota, '#059669', nomI, p.cota, p.cota - TAPA, t('taller.desdeIzq'), 0);
 });
 const hLeyenda = yC + 18 + (filaMax + 1) * 32 + 14;
@@ -2163,7 +2112,6 @@ refs.planoOut.innerHTML = `
 <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
 <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f9fafb" stroke-width="1"/>
 </pattern>
-<pattern id="rayado" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#64748b" stroke-width="1"/></pattern>
 <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
 <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.12" flood-color="#1f2937"/>
 </filter>
