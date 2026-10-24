@@ -1998,8 +1998,8 @@ const patinRx = (x, letra, dy = 0) => `
 <path d="M${x - 5},${yT + 7} h10 v${yB - yT - 14} h-10 z" fill="#e11d48" fill-opacity=".3" stroke="#9f1239" stroke-width=".8" stroke-dasharray="3 2"/>
 <path d="M${x - 14},${yT + 1} h22 l6,8 h-22 z" fill="#e11d48" stroke="#9f1239" stroke-width="1"/>
 <path d="M${x - 14},${yB - 1} h22 l6,-8 h-22 z" fill="#e11d48" stroke="#9f1239" stroke-width="1"/>
-<rect x="${x - 4 - 3.5 * letra.length}" y="${yM - 8 + dy}" width="${8 + 7 * letra.length}" height="16" rx="8" fill="#fff" stroke="#9f1239" stroke-width="1.3"/>
-<text x="${x}" y="${yM + 3.5 + dy}" font-size="10" font-weight="bold" fill="#9f1239" text-anchor="middle">${letra}</text>`;
+${letra ? `<rect x="${x - 4 - 3.5 * letra.length}" y="${yM - 8 + dy}" width="${8 + 7 * letra.length}" height="16" rx="8" fill="#fff" stroke="#9f1239" stroke-width="1.3"/>
+<text x="${x}" y="${yM + 3.5 + dy}" font-size="10" font-weight="bold" fill="#9f1239" text-anchor="middle">${letra}</text>` : ''}`;
 // Terminal visto de frente: la pletina con los dos tornillos rojos va hacia el extremo y la
 // horquilla (con su tuerca abajo) hacia el centro, como en la pág. 28 del manual.
 const terminalRx = (x, izq, nom) => {
@@ -2046,8 +2046,8 @@ marca(cCodo, '#475569', `C${b.n}`, cCodo, desde(cCodo), desdeTxt + ' ' + t('nv.a
 patines.forEach((p, k) => {
 const xi = X(p.cota), nomI = `I${k + 1}`;
 // Soporte intermedio (dibujo 0..11..5 del manual) encima de su patín, oscurecido para que se vea.
-rx += patinRx(xi, nomI) + `<rect x="${xi - 30}" y="${yM - 33}" width="60" height="66" rx="8" fill="#ecfdf5" fill-opacity=".9" stroke="#059669" stroke-width="1.5"/>
-<image href="${PIEZAS_KUADBOX.patin}" x="${xi - 28}" y="${yM - 30}" width="56" height="60" style="filter: contrast(3) brightness(.55)"/>
+// Sin recuadro: el dibujo va directamente encima de su patín en U (sin etiqueta propia, el nombre va debajo).
+rx += patinRx(xi, '') + `<image href="${PIEZAS_KUADBOX.patin}" x="${xi - 28}" y="${yM - 30}" width="56" height="60" style="filter: contrast(3) brightness(.55)"/>
 <text x="${xi}" y="${yM + 29}" font-size="10" font-weight="bold" fill="#059669" text-anchor="middle" ${txtMask}>${nomI}</text>`;
 marca(p.cota, '#059669', nomI, p.cota, p.cota - TAPA, t('taller.desdeIzq'), 0);
 });
