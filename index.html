@@ -1976,32 +1976,32 @@ const hex = (cx, cy, r) => `M${[0, 1, 2, 3, 4, 5].map(i => `${(cx + r * Math.cos
 // soporte brazo (S) o el codo (C) al cerrar.
 // Patín del soporte brazo (manual pág. 28, «Colocar los patines del soporte brazo»): calcado
 // del dibujo, en negro, sin el tornillo ni la arandela. El soporte empuja aquí al cerrar.
-const patinSoporteRx = x => `
+const patinSoporteRx = (x, nom) => `
 <g transform="translate(${x - 26}, ${yM - 15}) scale(0.075)">
 <path d="M35,120 C40,85 60,75 90,72 L330,40 L368,30 C380,55 395,70 420,76 L600,76 L612,90 L615,125 L640,132 L652,160 L660,290 L590,338 L300,382 L265,340 L238,302 L150,268 C95,230 50,180 35,120 Z" fill="#111827" stroke="#000" stroke-width="8"/>
 <path d="M368,30 C320,50 315,120 360,170 L505,255 L575,335" fill="none" stroke="#6b7280" stroke-width="8"/>
 <ellipse cx="330" cy="268" rx="105" ry="32" transform="rotate(22 330 268)" fill="#fff" stroke="#000" stroke-width="8"/>
 </g>
-<text x="${x}" y="${yT + 22}" font-size="10" font-weight="bold" fill="#111827" text-anchor="middle">S</text>`;
-const patinRx = (x, letra) => `
+<text x="${x + 8}" y="${yM + 1}" font-size="9" font-weight="bold" fill="#fff" text-anchor="middle">${nom}</text>`;
+const patinRx = (x, letra, dy = 0) => `
 <path d="M${x - 5},${yT + 7} h10 v${yB - yT - 14} h-10 z" fill="#e11d48" fill-opacity=".3" stroke="#9f1239" stroke-width=".8" stroke-dasharray="3 2"/>
 <path d="M${x - 14},${yT + 1} h22 l6,8 h-22 z" fill="#e11d48" stroke="#9f1239" stroke-width="1"/>
 <path d="M${x - 14},${yB - 1} h22 l6,-8 h-22 z" fill="#e11d48" stroke="#9f1239" stroke-width="1"/>
-<circle cx="${x}" cy="${yM}" r="8" fill="#fff" stroke="#9f1239" stroke-width="1.3"/>
-<text x="${x}" y="${yM + 3.5}" font-size="10" font-weight="bold" fill="#9f1239" text-anchor="middle">${letra}</text>`;
+<rect x="${x - 4 - 3.5 * letra.length}" y="${yM - 8 + dy}" width="${8 + 7 * letra.length}" height="16" rx="8" fill="#fff" stroke="#9f1239" stroke-width="1.3"/>
+<text x="${x}" y="${yM + 3.5 + dy}" font-size="10" font-weight="bold" fill="#9f1239" text-anchor="middle">${letra}</text>`;
 // Terminal visto de frente: la pletina con los dos tornillos rojos va hacia el extremo y la
 // horquilla (con su tuerca abajo) hacia el centro, como en la pág. 28 del manual.
-const terminalRx = (x, izq) => {
+const terminalRx = (x, izq, nom) => {
 // La pletina va centrada en la cota del terminal (x) y la horquilla, pegada, hacia el centro.
-const dir = izq ? 1 : -1, xb = x + dir * 25;
+const dir = izq ? 1 : -1, xb = x + dir * 35;
 return `
-<rect x="${x - 18}" y="${yM - 30}" width="36" height="18" rx="4" fill="#f8fafc" stroke="#5b21b6" stroke-width="1.5"/>
+<rect x="${x - 28}" y="${yM - 30}" width="56" height="18" rx="4" fill="#f8fafc" stroke="#5b21b6" stroke-width="1.5"/>
 <path d="M${xb - 7},${yM - 26} h14 v40 a4,4 0 0 1 -4,4 h-6 a4,4 0 0 1 -4,-4 z" fill="#eef2f7" stroke="#334155" stroke-width="1.3"/>
 <circle cx="${xb}" cy="${yM - 8}" r="3.2" fill="#fff" stroke="#334155"/>
 <path d="${hex(xb, yM + 26, 6.5)}" fill="#cbd5e1" stroke="#334155"/><circle cx="${xb}" cy="${yM + 26}" r="2.5" fill="none" stroke="#334155"/>
-<circle cx="${x - 9}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x - 9, yM - 21, 2.4)}" fill="#fff"/>
-<circle cx="${x + 9}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x + 9, yM - 21, 2.4)}" fill="#fff"/>
-<text x="${x}" y="${yM - 18}" font-size="8" font-weight="bold" fill="#1f2937" text-anchor="middle">${izq ? 'L' : 'R'}</text>`;
+<circle cx="${x - 19}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x - 19, yM - 21, 2.4)}" fill="#fff"/>
+<circle cx="${x + 19}" cy="${yM - 21}" r="5.5" fill="#dc2626" stroke="#7f1d1d"/><path d="${hex(x + 19, yM - 21, 2.4)}" fill="#fff"/>
+<text x="${x}" y="${yM - 17.5}" font-size="9" font-weight="bold" fill="#5b21b6" text-anchor="middle">${nom}·${izq ? 'L' : 'R'}</text>`;
 };
 let rx = '', marcas = '';
 // Cota con número y, debajo, de dónde se mide (cliente: desde 0; taller: sin tapa).
@@ -2018,7 +2018,7 @@ const yy = yC + 18 + fila * 32;
 marcas += `<line x1="${x}" y1="${yB + 3}" x2="${x}" y2="${yy - 2}" stroke="${col}" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>
 <line x1="${x}" y1="${yC - 4}" x2="${x}" y2="${yC + 4}" stroke="${col}" stroke-width="2"/>
 <text x="${x}" y="${yy + 8}" font-size="11" font-weight="bold" fill="${col}" text-anchor="middle" ${txtMask}>${nom} <tspan class="solo-cliente">${cli}</tspan><tspan class="solo-taller">${tall}</tspan></text>
-<text${subSiempre ? '' : ' class="solo-taller"'} x="${x}" y="${yy + 19}" font-size="9" fill="${col}" text-anchor="middle" ${txtMask}>${sub}</text>`;
+<text${subSiempre ? '' : ' class="solo-taller"'} x="${x}" y="${yy + 21}" font-size="9" fill="${col}" text-anchor="middle" ${txtMask}>${sub}</text>`;
 };
 brazos.filter(b => b.lado).forEach(b => {
 const izq = b.lado === 'izq', dir = izq ? 1 : -1;
@@ -2026,18 +2026,19 @@ const cTerm = izq ? b.terminalCota : L - b.terminalCota;
 const cCodo = Math.round(b.cota + dir * brazoRep);
 const desdeTxt = t(izq ? 'taller.desdeIzq' : 'taller.desdeDer');
 const desde = v => izq ? v - TAPA : L - v - TAPA;
-rx += patinSoporteRx(X(b.cota)) + patinRx(X(cCodo), 'C') + terminalRx(X(cTerm), izq);
+rx += patinSoporteRx(X(b.cota), `S${b.n}`) + patinRx(X(cCodo), `C${b.n}`, izq ? -12 : 12) + terminalRx(X(cTerm), izq, `T${b.n}`);
 marca(b.cota, '#c0102e', `S${b.n}`, b.cota, desde(b.cota), desdeTxt, 0);
 // Como en la tabla: desde el extremo del lado del brazo (Cliente con tapa, Taller sin tapa), al centro.
 marca(cTerm, '#5b21b6', `T${b.n}`, b.terminalCota, b.terminalTaller, desdeTxt, 1, true);
 marca(cCodo, '#475569', `C${b.n}`, cCodo, desde(cCodo), desdeTxt + ' ' + t('nv.aprox'), 2);
 });
-patines.forEach(p => {
-const xi = X(p.cota);
+patines.forEach((p, k) => {
+const xi = X(p.cota), nomI = `I${k + 1}`;
 // Soporte intermedio (dibujo 0..11..5 del manual) encima de su patín, oscurecido para que se vea.
-rx += patinRx(xi, 'I') + `<rect x="${xi - 30}" y="${yM - 33}" width="60" height="66" rx="8" fill="#ecfdf5" fill-opacity=".9" stroke="#059669" stroke-width="1.5"/>
-<image href="${PIEZAS_KUADBOX.patin}" x="${xi - 28}" y="${yM - 30}" width="56" height="60" style="filter: contrast(3) brightness(.55)"/>`;
-marca(p.cota, '#059669', 'I', p.cota, p.cota - TAPA, t('taller.desdeIzq'), 0);
+rx += patinRx(xi, nomI) + `<rect x="${xi - 30}" y="${yM - 33}" width="60" height="66" rx="8" fill="#ecfdf5" fill-opacity=".9" stroke="#059669" stroke-width="1.5"/>
+<image href="${PIEZAS_KUADBOX.patin}" x="${xi - 28}" y="${yM - 30}" width="56" height="60" style="filter: contrast(3) brightness(.55)"/>
+<text x="${xi}" y="${yM + 29}" font-size="10" font-weight="bold" fill="#059669" text-anchor="middle" ${txtMask}>${nomI}</text>`;
+marca(p.cota, '#059669', nomI, p.cota, p.cota - TAPA, t('taller.desdeIzq'), 0);
 });
 const hLeyenda = yC + 18 + (filaMax + 1) * 32 + 14;
 barraRx = `
