@@ -1963,6 +1963,17 @@ return `
 <text x="${xl}" y="${cBot + 27}" font-size="10" font-weight="bold" fill="#c026d3" text-anchor="middle" ${txtMask}>${l.cota - TAPA}</text>`;
 }).join('')}</g>` : '';
 
+// Soporte brazo (manual pág. 21) difuminado encima de cada placa, como las bandas de los
+// brazos; el del manual es el izquierdo y el derecho va en espejo. El centro del cuerpo del
+// soporte (37 % del dibujo) cae en la cota del soporte. No sale en «Solo placas».
+const SB_W = 64, SB_H = 46, SB_CENTRO = 0.37;
+const soportesDifuminados = (L > 0 && !soloPlacas) ? brazos.filter(b => b.lado).map(b => {
+const x = marginLeft + b.cota * scale, y = yBar + 19 - SB_H;
+return b.lado === 'izq'
+? `<image href="${PIEZAS_KUADBOX.soporteBrazo}" x="${x - SB_CENTRO * SB_W}" y="${y}" width="${SB_W}" height="${SB_H}" opacity=".7"/>`
+: `<image href="${PIEZAS_KUADBOX.soporteBrazo}" transform="translate(${x + SB_CENTRO * SB_W}, ${y}) scale(-1, 1)" width="${SB_W}" height="${SB_H}" opacity=".7"/>`;
+}).join('') : '';
+
 // Barra de carga vista de frente (desde fuera del toldo) "con rayos X": el perfil se ve
 // difuminado y deja ver lo que lleva dentro: patines en U (soporte S, codo C), patín
 // intermedio (dibujo 0..11..5 del manual) y terminales (pletina + horquilla, manual pág. 28).
@@ -2159,6 +2170,7 @@ ${soloPlacas ? `<line x1="${marginLeft}" y1="${yBar}" x2="${viewBoxWidth - margi
 ${cotaLines}
 ${bgLines}
 ${fgShapes}
+${soportesDifuminados}
 ${fgTexts}
 ${textosTerminal}
 
