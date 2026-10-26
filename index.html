@@ -407,6 +407,7 @@ es: {
 'alert.bajoManual': 'Por debajo de la separación mínima del manual de fabricación.',
 'alert.lineaMin': 'Línea por debajo de la mínima del manual',
 'alert.aMin': 'Soporte brazo a menos de A = 70 mm del extremo del perfil (mínimo del manual)',
+'alert.aMax': 'Soporte brazo más lejos del extremo del perfil que la A máxima del manual (L/10, máx. 700 mm; pág. 11)',
 'sug.btn': '📐 Sugerir soportes brazo',
 'sug.faltanDatos': 'Introduce línea, salida y número de brazos antes de sugerir.',
 'sug.faltaLado': 'Elige el lado (Izq/Der) de los brazos centrales antes de sugerir. P1 y el último se ponen solos (Izq y Der).',
@@ -549,6 +550,7 @@ en: {
 'alert.bajoManual': 'Below the minimum spacing in the assembly manual.',
 'alert.lineaMin': 'Width below the manual minimum',
 'alert.aMin': 'Arm support closer than A = 70 mm to the profile end (manual minimum)',
+'alert.aMax': 'Arm support farther from the profile end than the manual maximum A (L/10, max. 700 mm; p. 11)',
 'sug.btn': '📐 Suggest arm supports',
 'sug.faltanDatos': 'Enter width, projection and number of arms before suggesting.',
 'sug.faltaLado': 'Choose the side (L/R) of the central arms first. P1 and the last one are set automatically (L and R).',
@@ -691,6 +693,7 @@ fr: {
 "alert.bajoManual": "En dessous de l'écart minimal du manuel de fabrication.",
 "alert.lineaMin": "Largeur inférieure au minimum du manuel",
 "alert.aMin": "Support de bras à moins de A = 70 mm de l'extrémité du profil (minimum du manuel)",
+"alert.aMax": "Support de bras plus loin de l'extrémité du profil que le A maximal du manuel (L/10, max. 700 mm ; p. 11)",
 "sug.btn": "📐 Suggérer supports de bras",
 "sug.faltanDatos": "Saisissez la largeur, la projection et le nombre de bras avant de suggérer.",
 "sug.faltaLado": "Choisissez d'abord le côté (G/D) des bras centraux. P1 et le dernier se règlent seuls (G et D).",
@@ -833,6 +836,7 @@ de: {
 "alert.bajoManual": "Unter dem Mindestabstand laut Fertigungshandbuch.",
 "alert.lineaMin": "Strecke unter dem Minimum laut Handbuch",
 "alert.aMin": "Armstütze näher als A = 70 mm am Profilende (Minimum laut Handbuch)",
+"alert.aMax": "Armstütze weiter vom Profilende entfernt als das maximale A laut Handbuch (L/10, max. 700 mm; S. 11)",
 "sug.btn": "📐 Armstützen vorschlagen",
 "sug.faltanDatos": "Geben Sie Strecke, Ausgang und Anzahl der Arme ein, bevor Sie vorschlagen.",
 "sug.faltaLado": "Wählen Sie zuerst die Seite (L/R) der mittleren Arme. P1 und der letzte werden automatisch gesetzt (L und R).",
@@ -975,6 +979,7 @@ it: {
 "alert.bajoManual": "Al di sotto della distanza minima del manuale di fabbricazione.",
 "alert.lineaMin": "Lunghezza inferiore al minimo del manuale",
 "alert.aMin": "Supporto braccio a meno di A = 70 mm dall'estremità del profilo (minimo del manuale)",
+"alert.aMax": "Supporto braccio più lontano dall'estremità del profilo della A massima del manuale (L/10, max. 700 mm; pag. 11)",
 "sug.btn": "📐 Suggerisci supporti braccio",
 "sug.faltanDatos": "Inserisci lunghezza, sporgenza e numero di bracci prima di suggerire.",
 "sug.faltaLado": "Scegli prima il lato (S/D) dei bracci centrali. P1 e l'ultimo si impostano da soli (S e D).",
@@ -1117,6 +1122,7 @@ pt: {
 "alert.bajoManual": "Abaixo da separação mínima do manual de fabrico.",
 "alert.lineaMin": "Largura abaixo do mínimo do manual",
 "alert.aMin": "Suporte de braço a menos de A = 70 mm da extremidade do perfil (mínimo do manual)",
+"alert.aMax": "Suporte de braço mais longe da extremidade do perfil do que a A máxima do manual (L/10, máx. 700 mm; pág. 11)",
 "sug.btn": "📐 Sugerir suportes de braço",
 "sug.faltanDatos": "Introduza largura, projeção e número de braços antes de sugerir.",
 "sug.faltaLado": "Escolha primeiro o lado (E/D) dos braços centrais. P1 e o último ficam automáticos (E e D).",
@@ -1717,6 +1723,8 @@ if (L < lineaMin) alerts.push(`<div><b>⚠ ${t('alert.lineaMin')}:</b> ${L} mm <
 if (L > 0 && brazos.length) {
 const aIzq = brazos[0].cota - TAPA, aDer = L - brazos[brazos.length - 1].cota - TAPA;
 if (aIzq < 70 || aDer < 70) alerts.push(`<div><b>⚠ ${t('alert.aMin')}</b> (A izq = ${aIzq} mm · A der = ${aDer} mm).</div>`);
+// Amax del manual (pág. 11): L/10 con un máximo de 700 mm. Cotas a mano: solo se avisa.
+if (Math.max(aIzq, aDer) > Math.min(700, L / 10)) alerts.push(`<div><b>⚠ ${t('alert.aMax')}</b> (A izq = ${aIzq} mm · A der = ${aDer} mm · Amax = ${Math.floor(Math.min(700, L / 10))} mm).</div>`);
 }
 const lineaMax = LINEA_MAX_POR_BRAZOS[n];
 if (lineaMax && L > lineaMax) alerts.push(`<div><b>⚠ ${t('alert.lineaMax')} ${n} ${t('form.' + n + 'brazos').replace(/^\d+\s*/, '')}:</b> ${L} mm > ${lineaMax} mm.</div>`);
