@@ -348,7 +348,6 @@ es: {
 "nv.maxFila": "Máxima",
 "nv.warnRec": "<b>ℹ L = {L} mm por debajo de la recomendada ({rec} mm):</b> cabe, pero los terminales no quedarán equidistantes (manual págs. 12 y 15).",
 "nv.salidaFuera": "<b>⚠ Salida {S} mm fuera del manual:</b> de 1500 a 4000 mm.",
-"nv.unionManual": "Unión de dos cofres · manual pág. 35 · se recomienda L1 = L2",
 "nv.unionEncima": "<b>⚠ Unión de cofres ({c} mm)</b> encima de {lista}: mueve el soporte o la unión.",
 "nv.patinInt": "patín intermedio",
 "nv.reparto": "📐 Reparto",
@@ -491,7 +490,6 @@ en: {
 "nv.maxFila": "Maximum",
 "nv.warnRec": "<b>ℹ L = {L} mm below the recommended width ({rec} mm):</b> it fits, but the front rail connectors will not be evenly spaced (manual pp. 12 and 15).",
 "nv.salidaFuera": "<b>⚠ Projection {S} mm outside the manual:</b> from 1500 to 4000 mm.",
-"nv.unionManual": "Joining two cassettes · manual p. 35 · L1 = L2 recommended",
 "nv.unionEncima": "<b>⚠ Cassette joint ({c} mm)</b> on top of {lista}: move the bracket or the joint.",
 "nv.patinInt": "intermediate bracket",
 "nv.reparto": "📐 Layout",
@@ -634,7 +632,6 @@ fr: {
 "nv.maxFila": "Maximale",
 "nv.warnRec": "<b>ℹ L = {L} mm en dessous de la largeur recommandée ({rec} mm) :</b> cela rentre, mais les embouts ne seront pas équidistants (manuel p. 12 et 15).",
 "nv.salidaFuera": "<b>⚠ Avancée {S} mm hors manuel :</b> de 1500 à 4000 mm.",
-"nv.unionManual": "Jonction de deux coffres · manuel p. 35 · L1 = L2 conseillé",
 "nv.unionEncima": "<b>⚠ Jonction de coffres ({c} mm)</b> sur {lista} : déplacez le support ou la jonction.",
 "nv.patinInt": "support intermédiaire",
 "nv.reparto": "📐 Répartition",
@@ -777,7 +774,6 @@ de: {
 "nv.maxFila": "Maximum",
 "nv.warnRec": "<b>ℹ L = {L} mm unter der empfohlenen Breite ({rec} mm):</b> passt, aber die Endstücke sind nicht gleichmäßig verteilt (Handbuch S. 12 und 15).",
 "nv.salidaFuera": "<b>⚠ Ausfall {S} mm außerhalb des Handbuchs:</b> 1500 bis 4000 mm.",
-"nv.unionManual": "Verbindung zweier Kassetten · Handbuch S. 35 · L1 = L2 empfohlen",
 "nv.unionEncima": "<b>⚠ Kassettenverbindung ({c} mm)</b> über {lista}: Halter oder Verbindung verschieben.",
 "nv.patinInt": "Zwischenstütze",
 "nv.reparto": "📐 Verteilung",
@@ -920,7 +916,6 @@ it: {
 "nv.maxFila": "Massima",
 "nv.warnRec": "<b>ℹ L = {L} mm sotto la larghezza consigliata ({rec} mm):</b> ci sta, ma i terminali non saranno equidistanti (manuale pp. 12 e 15).",
 "nv.salidaFuera": "<b>⚠ Sporgenza {S} mm fuori manuale:</b> da 1500 a 4000 mm.",
-"nv.unionManual": "Giunzione di due cassonetti · manuale p. 35 · consigliato L1 = L2",
 "nv.unionEncima": "<b>⚠ Giunzione cassonetti ({c} mm)</b> sopra {lista}: sposta il supporto o la giunzione.",
 "nv.patinInt": "supporto intermedio",
 "nv.reparto": "📐 Distribuzione",
@@ -1063,7 +1058,6 @@ pt: {
 "nv.maxFila": "Máxima",
 "nv.warnRec": "<b>ℹ L = {L} mm abaixo da largura recomendada ({rec} mm):</b> cabe, mas os terminais não ficarão equidistantes (manual págs. 12 e 15).",
 "nv.salidaFuera": "<b>⚠ Avanço {S} mm fora do manual:</b> de 1500 a 4000 mm.",
-"nv.unionManual": "União de dois cofres · manual p. 35 · recomenda-se L1 = L2",
 "nv.unionEncima": "<b>⚠ União de cofres ({c} mm)</b> em cima de {lista}: mova o suporte ou a união.",
 "nv.patinInt": "suporte intermédio",
 "nv.reparto": "📐 Distribuição",
@@ -1444,6 +1438,24 @@ refs.filePresupuesto.addEventListener('change', (e) => {
 const file = e.target.files && e.target.files[0];
 e.target.value = '';
 procesarPresupuesto(file);
+});
+// Arrastrar el presupuesto (foto/PDF) a cualquier parte de la app hace lo mismo que «Subir presupuesto».
+const hayArchivo = e => [...(e.dataTransfer?.types || [])].includes('Files');
+let arrastres = 0;
+const capaSoltar = document.createElement('div');
+capaSoltar.style.cssText = 'position:fixed;inset:12px;z-index:9999;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;border:4px dashed #c0102e;border-radius:16px;background:rgba(255,255,255,.88);font:700 26px system-ui,sans-serif;color:#c0102e;pointer-events:none';
+document.body.appendChild(capaSoltar);
+const mostrarCapa = v => { capaSoltar.textContent = refs.btnUploadPresupuesto.textContent; capaSoltar.style.display = v ? 'flex' : 'none'; };
+window.addEventListener('dragenter', e => { if (!hayArchivo(e)) return; e.preventDefault(); arrastres++; mostrarCapa(true); });
+window.addEventListener('dragover', e => { if (hayArchivo(e)) e.preventDefault(); });
+window.addEventListener('dragleave', e => { if (hayArchivo(e) && --arrastres <= 0) { arrastres = 0; mostrarCapa(false); } });
+window.addEventListener('drop', e => {
+  if (!hayArchivo(e)) return;
+  e.preventDefault();
+  arrastres = 0;
+  mostrarCapa(false);
+  const f = [...e.dataTransfer.files].find(x => x.type === 'application/pdf' || x.type.startsWith('image/'));
+  if (f) procesarPresupuesto(f);
 });
 
 document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -1994,11 +2006,11 @@ return `
 <text x="${xl}" y="${cBot + 27}" font-size="10" font-weight="bold" fill="#c026d3" text-anchor="middle" ${txtMask}>${l.cota - TAPA}</text>`;
 }).join('')}</g>` : '';
 
-// L > 7000: la unión de los dos cofres, remarcada en rojo, con L1 y L2 y el dibujo del manual
-// (pág. 35) debajo, donde el plano está libre. Va por detrás de la placa de unión. No sale en «Solo placas».
+// L > 7000: la unión de los dos cofres, remarcada en rojo, con L1 y L2 (sin el dibujo del manual
+// pág. 35: Andrés no lo quiere, 27-oct-2026). Va por detrás de la placa de unión. No sale en «Solo placas».
 const xUnionR = marginLeft + (L / 2) * scale, colUnion = '#c0102e';
 const unionFondo = (partido && !soloPlacas) ? `
-<line x1="${xUnionR}" y1="${cTop - 30}" x2="${xUnionR}" y2="428" stroke="${colUnion}" stroke-width="2" stroke-dasharray="7 4"/>
+<line x1="${xUnionR}" y1="${cTop - 30}" x2="${xUnionR}" y2="416" stroke="${colUnion}" stroke-width="2" stroke-dasharray="7 4"/>
 <rect x="${xUnionR - 5}" y="${cTop - 14}" width="10" height="${cH + 28}" fill="${colUnion}"/>` : '';
 const unionArriba = (partido && !soloPlacas) ? (() => {
 const L1 = Math.round(L / 2), yC = 412, xA = marginLeft, xB = marginLeft + L * scale;
@@ -2007,9 +2019,6 @@ const flecha = (a, b, txt) => `
 <path d="M${a} ${yC} l9 -4.5 v9 z M${b} ${yC} l-9 -4.5 v9 z" fill="${colUnion}"/>
 <text x="${(a + b) / 2}" y="${yC - 7}" font-size="14" font-weight="bold" fill="${colUnion}" text-anchor="middle" ${txtMask}>${txt}</text>`;
 return `
-<rect x="${xUnionR - 146}" y="428" width="292" height="122" rx="5" fill="#fff" stroke="${colUnion}" stroke-width="1.5"/>
-<image href="${PIEZAS_KUADBOX.union}" x="${xUnionR - 141}" y="431" width="282" height="116"/>
-<text x="${xUnionR}" y="566" font-size="11" font-weight="bold" fill="${colUnion}" text-anchor="middle" ${txtMask}>${t('nv.unionManual')}</text>
 ${flecha(xA, xUnionR, `L1 = ${L1} mm`)}${flecha(xUnionR, xB, `L2 = ${L - L1} mm`)}`;
 })() : '';
 
