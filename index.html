@@ -348,6 +348,7 @@ es: {
 "nv.maxFila": "Máxima",
 "nv.warnRec": "<b>ℹ L = {L} mm por debajo de la recomendada ({rec} mm):</b> cabe, pero los terminales no quedarán equidistantes (manual págs. 12 y 15).",
 "nv.salidaFuera": "<b>⚠ Salida {S} mm fuera del manual:</b> de 1500 a 4000 mm.",
+"nv.unionManual": "Unión de dos cofres · manual pág. 35 · se recomienda L1 = L2",
 "nv.unionEncima": "<b>⚠ Unión de cofres ({c} mm)</b> encima de {lista}: mueve el soporte o la unión.",
 "nv.patinInt": "patín intermedio",
 "nv.reparto": "📐 Reparto",
@@ -489,6 +490,7 @@ en: {
 "nv.maxFila": "Maximum",
 "nv.warnRec": "<b>ℹ L = {L} mm below the recommended width ({rec} mm):</b> it fits, but the front rail connectors will not be evenly spaced (manual pp. 12 and 15).",
 "nv.salidaFuera": "<b>⚠ Projection {S} mm outside the manual:</b> from 1500 to 4000 mm.",
+"nv.unionManual": "Joining two cassettes · manual p. 35 · L1 = L2 recommended",
 "nv.unionEncima": "<b>⚠ Cassette joint ({c} mm)</b> on top of {lista}: move the bracket or the joint.",
 "nv.patinInt": "intermediate bracket",
 "nv.reparto": "📐 Layout",
@@ -630,6 +632,7 @@ fr: {
 "nv.maxFila": "Maximale",
 "nv.warnRec": "<b>ℹ L = {L} mm en dessous de la largeur recommandée ({rec} mm) :</b> cela rentre, mais les embouts ne seront pas équidistants (manuel p. 12 et 15).",
 "nv.salidaFuera": "<b>⚠ Avancée {S} mm hors manuel :</b> de 1500 à 4000 mm.",
+"nv.unionManual": "Jonction de deux coffres · manuel p. 35 · L1 = L2 conseillé",
 "nv.unionEncima": "<b>⚠ Jonction de coffres ({c} mm)</b> sur {lista} : déplacez le support ou la jonction.",
 "nv.patinInt": "support intermédiaire",
 "nv.reparto": "📐 Répartition",
@@ -771,6 +774,7 @@ de: {
 "nv.maxFila": "Maximum",
 "nv.warnRec": "<b>ℹ L = {L} mm unter der empfohlenen Breite ({rec} mm):</b> passt, aber die Endstücke sind nicht gleichmäßig verteilt (Handbuch S. 12 und 15).",
 "nv.salidaFuera": "<b>⚠ Ausfall {S} mm außerhalb des Handbuchs:</b> 1500 bis 4000 mm.",
+"nv.unionManual": "Verbindung zweier Kassetten · Handbuch S. 35 · L1 = L2 empfohlen",
 "nv.unionEncima": "<b>⚠ Kassettenverbindung ({c} mm)</b> über {lista}: Halter oder Verbindung verschieben.",
 "nv.patinInt": "Zwischenstütze",
 "nv.reparto": "📐 Verteilung",
@@ -912,6 +916,7 @@ it: {
 "nv.maxFila": "Massima",
 "nv.warnRec": "<b>ℹ L = {L} mm sotto la larghezza consigliata ({rec} mm):</b> ci sta, ma i terminali non saranno equidistanti (manuale pp. 12 e 15).",
 "nv.salidaFuera": "<b>⚠ Sporgenza {S} mm fuori manuale:</b> da 1500 a 4000 mm.",
+"nv.unionManual": "Giunzione di due cassonetti · manuale p. 35 · consigliato L1 = L2",
 "nv.unionEncima": "<b>⚠ Giunzione cassonetti ({c} mm)</b> sopra {lista}: sposta il supporto o la giunzione.",
 "nv.patinInt": "supporto intermedio",
 "nv.reparto": "📐 Distribuzione",
@@ -1053,6 +1058,7 @@ pt: {
 "nv.maxFila": "Máxima",
 "nv.warnRec": "<b>ℹ L = {L} mm abaixo da largura recomendada ({rec} mm):</b> cabe, mas os terminais não ficarão equidistantes (manual págs. 12 e 15).",
 "nv.salidaFuera": "<b>⚠ Avanço {S} mm fora do manual:</b> de 1500 a 4000 mm.",
+"nv.unionManual": "União de dois cofres · manual p. 35 · recomenda-se L1 = L2",
 "nv.unionEncima": "<b>⚠ União de cofres ({c} mm)</b> em cima de {lista}: mova o suporte ou a união.",
 "nv.patinInt": "suporte intermédio",
 "nv.reparto": "📐 Distribuição",
@@ -1212,6 +1218,8 @@ const App = (() => {
 const A_AUX = 200;
 const SEP_PATIN = 4500;
 const L_PARTIDO = 7000;
+// Distancia mínima (entre centros) de un soporte brazo a la unión de cofres (L/2): 200 mm (criterio de Andrés, 26-oct-2026).
+const UNION_LIBRE = 200;
 const MIN_VISUAL_WIDTH = 300;
 const TERMINAL_OFFSET = 230;
 // Copia Taller (confirmado por Andrés, 25-sep-2026): se mide sobre el perfil sin tapa,
@@ -1715,10 +1723,10 @@ if (lineaMax && L > lineaMax) alerts.push(`<div><b>⚠ ${t('alert.lineaMax')} ${
 // Salida del manual: de 1,50 a 4,00 m (págs. 6 y 9–17).
 if (S > 0 && (S < 1500 || S > 4000)) alerts.push(`<div>${t('nv.salidaFuera').replace('{S}', S)}</div>`);
 // La unión de cofres solo puede estorbar a un soporte (brazo o patín intermedio) que caiga
-// encima: se avisa si hay uno a menos de 60 mm del centro.
+// encima: se avisa si hay un soporte brazo a menos de UNION_LIBRE del centro o un patín a menos de 60 mm.
 if (partido) {
-const choca = [...brazos.map(b => ({ c: b.cota, nom: 'P' + b.n })), ...patines.map(p => ({ c: p.cota, nom: t('nv.patinInt') }))]
-.filter(s => Math.abs(s.c - L / 2) < 60);
+const choca = [...brazos.map(b => ({ c: b.cota, nom: 'P' + b.n, d: UNION_LIBRE })), ...patines.map(p => ({ c: p.cota, nom: t('nv.patinInt'), d: 60 }))]
+.filter(s => Math.abs(s.c - L / 2) < s.d);
 if (choca.length) alerts.push(`<div>${t('nv.unionEncima').replace('{c}', Math.round(L / 2)).replace('{lista}', choca.map(s => `${s.nom} (${s.c} mm)`).join(', '))}</div>`);
 }
 if (partido) warns.push(`<div><b>ℹ L=${L} mm > 7000:</b> ${t('alert.partido')}<br><span style="font-size:0.85em; opacity:0.9;">${t('alert.union')} ${Math.round(L / 2)} mm.</span></div>`);
@@ -1978,6 +1986,25 @@ return `
 <text x="${xl}" y="${cBot + 27}" font-size="10" font-weight="bold" fill="#c026d3" text-anchor="middle" ${txtMask}>${l.cota - TAPA}</text>`;
 }).join('')}</g>` : '';
 
+// L > 7000: la unión de los dos cofres, remarcada en rojo, con L1 y L2 y el dibujo del manual
+// (pág. 35) debajo, donde el plano está libre. Va por detrás de la placa de unión. No sale en «Solo placas».
+const xUnionR = marginLeft + (L / 2) * scale, colUnion = '#c0102e';
+const unionFondo = (partido && !soloPlacas) ? `
+<line x1="${xUnionR}" y1="${cTop - 30}" x2="${xUnionR}" y2="428" stroke="${colUnion}" stroke-width="2" stroke-dasharray="7 4"/>
+<rect x="${xUnionR - 5}" y="${cTop - 14}" width="10" height="${cH + 28}" fill="${colUnion}"/>` : '';
+const unionArriba = (partido && !soloPlacas) ? (() => {
+const L1 = Math.round(L / 2), yC = 412, xA = marginLeft, xB = marginLeft + L * scale;
+const flecha = (a, b, txt) => `
+<line x1="${a + 4}" y1="${yC}" x2="${b - 4}" y2="${yC}" stroke="${colUnion}" stroke-width="1.6"/>
+<path d="M${a} ${yC} l9 -4.5 v9 z M${b} ${yC} l-9 -4.5 v9 z" fill="${colUnion}"/>
+<text x="${(a + b) / 2}" y="${yC - 7}" font-size="14" font-weight="bold" fill="${colUnion}" text-anchor="middle" ${txtMask}>${txt}</text>`;
+return `
+<rect x="${xUnionR - 146}" y="428" width="292" height="122" rx="5" fill="#fff" stroke="${colUnion}" stroke-width="1.5"/>
+<image href="${PIEZAS_KUADBOX.union}" x="${xUnionR - 141}" y="431" width="282" height="116"/>
+<text x="${xUnionR}" y="566" font-size="11" font-weight="bold" fill="${colUnion}" text-anchor="middle" ${txtMask}>${t('nv.unionManual')}</text>
+${flecha(xA, xUnionR, `L1 = ${L1} mm`)}${flecha(xUnionR, xB, `L2 = ${L - L1} mm`)}`;
+})() : '';
+
 // Soporte brazo (manual pág. 21) difuminado encima de cada placa, como las bandas de los
 // brazos; el del manual es el izquierdo y el derecho va en espejo. El centro del cuerpo del
 // soporte (37 % del dibujo) cae en la cota del soporte. No sale en «Solo placas».
@@ -2171,6 +2198,7 @@ refs.planoOut.innerHTML = `
 <text x="94" y="19" font-size="11" font-weight="bold" fill="#4b5563" text-anchor="middle" letter-spacing="1">${t('plan.unidad')}</text>
 
 ${cofreSilueta}
+${unionFondo}
 ${bandas}
 ${soloPlacas ? `<line x1="${marginLeft}" y1="${yBar}" x2="${viewBoxWidth - marginRight}" y2="${yBar}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>
 <line x1="${marginLeft}" y1="${yBar - 16}" x2="${marginLeft}" y2="${yBar + 16}" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>
@@ -2188,6 +2216,7 @@ ${fgShapes}
 ${soportesDifuminados}
 ${fgTexts}
 ${textosTerminal}
+${unionArriba}
 
 <g transform="translate(0, -5)">
 ${iconoLeyenda('brazo', marginLeft + 7, 615)}<text x="${marginLeft + 22}" y="${620}" font-size="12" fill="#4b5563">${t('plan.leyenda.soporte')}</text>
@@ -2442,6 +2471,9 @@ cotas = [dist];
 for (let i = 0; i < n - 1; i++) cotas.push(cotas[i] + huecos[i]);
 }
 
+// L > 7000: un soporte brazo nunca puede caer en la unión de cofres (L/2); el que quede a menos
+// de UNION_LIBRE se aparta hacia su lado (izq. hacia el motor, der. hacia la punta).
+if (L > L_PARTIDO) cotas = cotas.map((c, i) => Math.abs(c - L / 2) < UNION_LIBRE ? Math.round(L / 2 + (lados[i] === 'izq' ? -UNION_LIBRE : UNION_LIBRE)) : c);
 const hayCotas = lados.some((_, i) => document.getElementById('cota' + (i + 1))?.value);
 if (hayCotas && !confirm(t('sug.confirmar'))) return;
 for (let i = 1; i <= n; i++) {
