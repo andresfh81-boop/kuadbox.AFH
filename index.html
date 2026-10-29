@@ -76,6 +76,8 @@ svg.plano-main { width: 100%; height: auto; display: block; }
 
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .animate-render { animation: fadeUp 0.4s ease-out forwards; }
+/* Copia fuera de pantalla para el PDF: sin animación (si no, html2canvas la pilla a opacidad 0). */
+.pdf-hoja .animate-render { animation: none !important; opacity: 1 !important; transform: none !important; }
 
 .alert { padding: 14px 16px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 16px; display: flex; gap: 10px; align-items: flex-start; }
 .alert.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
@@ -298,7 +300,8 @@ body { background: #fff; }
 <div class="btn-group">
 <button id="btnPrint" data-i18n="form.imprimir">🖨 Imprimir (Cliente)</button>
 <button id="btnPrintTaller" class="secondary" data-i18n="form.imprimirTaller">🖨 Imprimir (Taller)</button>
-<button id="btnPDF" class="pdf" data-i18n="form.generarPdf">📄 Generar PDF</button>
+<button id="btnPDF" class="pdf" data-i18n="form.generarPdf">📄 PDF (Cliente)</button>
+<button id="btnPDFTaller" class="pdf" data-i18n="form.generarPdfTaller">📄 PDF (Taller)</button>
 <button id="btnExport" class="export" data-i18n="form.exportar">⬇ Exportar PNG</button>
 </div>
 </div>
@@ -396,7 +399,8 @@ es: {
 'taller.bordeDer': 'borde der.',
 'taller.colSoporte': 'Soporte taller (mm, al borde, sin tapa)',
 'taller.colTerminal': 'Terminal taller (mm, al centro, sin tapa)',
-'form.generarPdf': '📄 Generar PDF',
+'form.generarPdf': '📄 PDF (Cliente)',
+'form.generarPdfTaller': '📄 PDF (Taller)',
 'form.exportar': '⬇ Exportar PNG',
 'brazo.label': 'Brazo',
 'brazo.select': '— Lado —',
@@ -436,6 +440,13 @@ es: {
 'plan.colLado': 'Lado',
 'plan.colSoporte': 'Cota soporte (mm)',
 'plan.colTerminal': 'Cota terminal (mm, al centro, desde el extremo de su lado)',
+'plan.tablaPlacas': 'Cotas de las placas',
+'plan.ud': 'ud.',
+'plan.uds': 'uds.',
+'plan.colPlaca': 'Placa',
+'plan.colTipo': 'Tipo',
+'plan.colCotaPlaca': 'Cota (mm, al centro, desde 0)',
+'plan.colSep': 'Distancia a la anterior (mm, de centro a centro)',
 'plan.generado': 'Generado',
 'install.msg': 'Instala esta app en tu móvil para usarla sin conexión.',
 'install.btn': 'Instalar',
@@ -543,7 +554,8 @@ en: {
 'taller.bordeDer': 'right edge',
 'taller.colSoporte': 'Workshop support (mm, edge, no cap)',
 'taller.colTerminal': 'Workshop terminal (mm, center, no cap)',
-'form.generarPdf': '📄 Generate PDF',
+'form.generarPdf': '📄 PDF (Customer)',
+'form.generarPdfTaller': '📄 PDF (Workshop)',
 'form.exportar': '⬇ Export PNG',
 'brazo.label': 'Arm',
 'brazo.select': '— Side —',
@@ -583,6 +595,13 @@ en: {
 'plan.colLado': 'Side',
 'plan.colSoporte': 'Support position (mm)',
 'plan.colTerminal': 'Terminal position (mm, center, from the end on its side)',
+'plan.tablaPlacas': 'Plate positions',
+'plan.ud': 'pc.',
+'plan.uds': 'pcs.',
+'plan.colPlaca': 'Plate',
+'plan.colTipo': 'Type',
+'plan.colCotaPlaca': 'Position (mm, centre, from 0)',
+'plan.colSep': 'Distance to previous (mm, centre to centre)',
 'plan.generado': 'Generated',
 'install.msg': 'Install this app on your phone to use it offline.',
 'install.btn': 'Install',
@@ -690,7 +709,8 @@ fr: {
 "taller.bordeDer": "bord droit",
 "taller.colSoporte": "Support atelier (mm, au bord, sans embout)",
 "taller.colTerminal": "Terminal atelier (mm, au centre, sans embout)",
-"form.generarPdf": "📄 Générer PDF",
+"form.generarPdf": "📄 PDF (Client)",
+"form.generarPdfTaller": "📄 PDF (Atelier)",
 "form.exportar": "⬇ Exporter PNG",
 "brazo.label": "Bras",
 "brazo.select": "— Côté —",
@@ -730,6 +750,13 @@ fr: {
 "plan.colLado": "Côté",
 "plan.colSoporte": "Cote support (mm)",
 "plan.colTerminal": "Cote terminal (mm, au centre, depuis l’extrémité de son côté)",
+"plan.tablaPlacas": "Cotes des plaques",
+"plan.ud": "u.",
+"plan.uds": "u.",
+"plan.colPlaca": "Plaque",
+"plan.colTipo": "Type",
+"plan.colCotaPlaca": "Cote (mm, au centre, depuis 0)",
+"plan.colSep": "Distance à la précédente (mm, centre à centre)",
 "plan.generado": "Généré",
 "install.msg": "Installez cette application sur votre mobile pour l'utiliser hors ligne.",
 "install.btn": "Installer",
@@ -837,7 +864,8 @@ de: {
 "taller.bordeDer": "rechte Kante",
 "taller.colSoporte": "Stütze Werkstatt (mm, Kante, ohne Kappe)",
 "taller.colTerminal": "Endstück Werkstatt (mm, Mitte, ohne Kappe)",
-"form.generarPdf": "📄 PDF erstellen",
+"form.generarPdf": "📄 PDF (Kunde)",
+"form.generarPdfTaller": "📄 PDF (Werkstatt)",
 "form.exportar": "⬇ PNG exportieren",
 "brazo.label": "Arm",
 "brazo.select": "— Seite —",
@@ -877,6 +905,13 @@ de: {
 "plan.colLado": "Seite",
 "plan.colSoporte": "Position Stütze (mm)",
 "plan.colTerminal": "Position Endstück (mm, Mitte, ab dem Ende seiner Seite)",
+"plan.tablaPlacas": "Positionen der Platten",
+"plan.ud": "Stk.",
+"plan.uds": "Stk.",
+"plan.colPlaca": "Platte",
+"plan.colTipo": "Typ",
+"plan.colCotaPlaca": "Position (mm, Mitte, ab 0)",
+"plan.colSep": "Abstand zur vorherigen (mm, Mitte zu Mitte)",
 "plan.generado": "Erstellt",
 "install.msg": "Installieren Sie diese App auf Ihrem Handy, um sie offline zu nutzen.",
 "install.btn": "Installieren",
@@ -984,7 +1019,8 @@ it: {
 "taller.bordeDer": "bordo destro",
 "taller.colSoporte": "Supporto officina (mm, al bordo, senza tappo)",
 "taller.colTerminal": "Terminale officina (mm, al centro, senza tappo)",
-"form.generarPdf": "📄 Genera PDF",
+"form.generarPdf": "📄 PDF (Cliente)",
+"form.generarPdfTaller": "📄 PDF (Officina)",
 "form.exportar": "⬇ Esporta PNG",
 "brazo.label": "Braccio",
 "brazo.select": "— Lato —",
@@ -1024,6 +1060,13 @@ it: {
 "plan.colLado": "Lato",
 "plan.colSoporte": "Quota supporto (mm)",
 "plan.colTerminal": "Quota terminale (mm, al centro, dall’estremità del suo lato)",
+"plan.tablaPlacas": "Quote delle piastre",
+"plan.ud": "pz.",
+"plan.uds": "pz.",
+"plan.colPlaca": "Piastra",
+"plan.colTipo": "Tipo",
+"plan.colCotaPlaca": "Quota (mm, al centro, da 0)",
+"plan.colSep": "Distanza dalla precedente (mm, da centro a centro)",
 "plan.generado": "Generato",
 "install.msg": "Installa questa app sul tuo cellulare per usarla offline.",
 "install.btn": "Installa",
@@ -1131,7 +1174,8 @@ pt: {
 "taller.bordeDer": "bordo dir.",
 "taller.colSoporte": "Suporte oficina (mm, no bordo, sem tampa)",
 "taller.colTerminal": "Terminal oficina (mm, ao centro, sem tampa)",
-"form.generarPdf": "📄 Gerar PDF",
+"form.generarPdf": "📄 PDF (Cliente)",
+"form.generarPdfTaller": "📄 PDF (Oficina)",
 "form.exportar": "⬇ Exportar PNG",
 "brazo.label": "Braço",
 "brazo.select": "— Lado —",
@@ -1171,6 +1215,13 @@ pt: {
 "plan.colLado": "Lado",
 "plan.colSoporte": "Cota suporte (mm)",
 "plan.colTerminal": "Cota terminal (mm, ao centro, desde a extremidade do seu lado)",
+"plan.tablaPlacas": "Cotas das placas",
+"plan.ud": "un.",
+"plan.uds": "un.",
+"plan.colPlaca": "Placa",
+"plan.colTipo": "Tipo",
+"plan.colCotaPlaca": "Cota (mm, ao centro, desde 0)",
+"plan.colSep": "Distância à anterior (mm, de centro a centro)",
 "plan.generado": "Gerado",
 "install.msg": "Instale esta aplicação no seu telemóvel para a usar sem ligação.",
 "install.btn": "Instalar",
@@ -1347,6 +1398,7 @@ btnSugerirBrazos: document.getElementById('btnSugerirBrazos'),
 btnVerCliente: document.getElementById('btnVerCliente'),
 btnVerTaller: document.getElementById('btnVerTaller'),
 btnPDF: document.getElementById('btnPDF'),
+btnPDFTaller: document.getElementById('btnPDFTaller'),
 btnExport: document.getElementById('btnExport'),
 btnAmpliarPlano: document.getElementById('btnAmpliarPlano'),
 btnCerrarPlano: document.getElementById('btnCerrarPlano'),
@@ -1453,7 +1505,8 @@ soloPlacas = !soloPlacas;
 e.currentTarget.classList.toggle('active', soloPlacas);
 render();
 });
-refs.btnPDF.addEventListener('click', exportPDF);
+refs.btnPDF.addEventListener('click', () => exportPDF(false));
+refs.btnPDFTaller.addEventListener('click', () => exportPDF(true));
 refs.btnExport.addEventListener('click', exportPNG);
 
 refs.btnAmpliarPlano.addEventListener('click', abrirPlanoModal);
@@ -2199,6 +2252,36 @@ union: { k: 0.22, cy: -18, svg: `<rect x="-24" y="-55" width="48" height="74" rx
 };
 const iconoLeyenda = (tipo, cx, cy) => { const p = PIEZA_LEYENDA[tipo]; return `<g transform="translate(${cx}, ${cy - p.cy * p.k}) scale(${p.k})">${p.svg}</g>`; };
 
+// Tabla con todas las placas de izquierda a derecha: las mismas cotas que el plano (al centro,
+// desde 0; el soporte brazo, en Taller, al borde y sin tapa como en el plano) y la distancia
+// de centro a centro con la anterior.
+let placasTableHtml = '';
+if (L > 0) {
+const placas = [
+...brazos.map(b => ({ cota: b.cota, nom: `P${b.n}`, tipo: t('plan.leyenda.soporte'), b })),
+...aux.map(a => ({ cota: a.cota, nom: 'AUX', tipo: t('plan.leyenda.aux') })),
+...patines.map((p, k) => ({ cota: p.cota, nom: `I${k + 1}`, tipo: t('plan.leyenda.patin') })),
+...(partido ? [{ cota: Math.round(L / 2), nom: 'U', tipo: t('plan.leyenda.union') }] : []),
+].sort((a, b) => a.cota - b.cota);
+const rows = placas.map((p, i) => `
+<tr>
+<td><b>${p.nom}</b></td>
+<td>${p.tipo}</td>
+${p.b && p.b.lado
+? `<td class="solo-cliente">${p.cota} mm</td><td class="solo-taller"><b>${p.b.soporteTaller} mm</b> (${t(p.b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')})</td>`
+: `<td>${p.cota} mm</td>`}
+<td>${i ? `${p.cota - placas[i - 1].cota} mm` : '—'}</td>
+</tr>`).join('');
+placasTableHtml = `
+<div class="terminal-table animate-render">
+<h4>${t('plan.tablaPlacas')} (${placas.length} ${t(placas.length === 1 ? 'plan.ud' : 'plan.uds')})</h4>
+<table>
+<thead><tr><th>${t('plan.colPlaca')}</th><th>${t('plan.colTipo')}</th><th>${t('plan.colCotaPlaca')}</th><th>${t('plan.colSep')}</th></tr></thead>
+<tbody>${rows}</tbody>
+</table>
+</div>`;
+}
+
 let terminalTableHtml = '';
 const brazosConLado = brazos.filter(b => b.lado);
 if (brazosConLado.length) {
@@ -2282,6 +2365,7 @@ ${soloPlacas ? '' : `<g class="solo-taller"><image href="${PIEZAS_KUADBOX.lira}"
 </g>
 </svg>
 ${barraRx}
+${placasTableHtml}
 ${terminalTableHtml}
 </div>`;
 };
@@ -2329,7 +2413,11 @@ alert(t('err.png'));
 });
 };
 
-const exportPDF = () => {
+// PDF en A4 apaisado con márgenes de 10 mm, copia Cliente o Taller. Se captura una copia
+// del plano con ancho fijo (así no depende de la pantalla del móvil) y cada bloque
+// (cabecera, plano, barra de carga, tablas) va entero: si no cabe en lo que queda de la
+// página, pasa a la siguiente. Así ni los márgenes ni el salto de página cortan texto.
+const exportPDF = async (taller) => {
 const element = document.getElementById('planoContainer');
 if (!element) {
 alert(t('err.sinPlano'));
@@ -2339,24 +2427,47 @@ if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
 alert(t('err.pdfModulo'));
 return;
 }
-html2canvas(element, {
-scale: 2,
-useCORS: true,
-backgroundColor: '#ffffff'
-}).then(canvas => {
-const { jsPDF } = window.jspdf;
-const imgData = canvas.toDataURL('image/png');
-const pdf = new jsPDF({
-orientation: canvas.width >= canvas.height ? 'landscape' : 'portrait',
-unit: 'px',
-format: [canvas.width, canvas.height]
+const previa = document.body.classList.contains('view-taller');
+setVistaTaller(taller);
+const hoja = document.createElement('div');
+hoja.className = 'pdf-hoja';
+hoja.style.cssText = 'position:fixed;left:-20000px;top:0;width:1120px;background:#fff;';
+// Cada bloque en su propio <div>: html2canvas no sabe capturar un <svg> suelto.
+const bloques = [...element.children].map(b => {
+const d = document.createElement('div');
+d.appendChild(b.cloneNode(true));
+hoja.appendChild(d);
+return d;
 });
-pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-pdf.save(`KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}.pdf`);
-}).catch(err => {
+document.body.appendChild(hoja);
+try {
+const { jsPDF } = window.jspdf;
+const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+const M = 10, AW = 297 - 2 * M, AH = 210 - 2 * M, HUECO = 4;
+let y = M;
+for (const bloque of bloques) {
+if (!bloque.offsetHeight) continue; // lo de la otra copia (solo-cliente / solo-taller)
+const c = await html2canvas(bloque, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+let w = AW, h = c.height * AW / c.width;
+if (h > AH) { w *= AH / h; h = AH; }
+// Si no cabe en lo que queda, se encoge hasta el 70 % antes de pasar a otra página
+// (así la cabecera no se queda sola en la primera).
+const resto = M + AH - y;
+if (h > resto) {
+if (y > M && resto < 0.7 * h) { pdf.addPage(); y = M; }
+else { w *= resto / h; h = resto; }
+}
+pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', M + (AW - w) / 2, y, w, h);
+y += h + HUECO;
+}
+pdf.save(`KUADBOX400_${sanitizeFilename(refs.pedido.value || 'plano')}${taller ? '_TALLER' : ''}.pdf`);
+} catch (err) {
 console.error(err);
 alert(t('err.pdf'));
-});
+} finally {
+hoja.remove();
+setVistaTaller(previa);
+}
 };
 
 // ===== Sugerir soportes brazo =====
@@ -2947,7 +3058,7 @@ updateOfflineBanner();
 (function () {
   const APP = 'kuadbox';
   const URL_BLOQUEO = 'https://andresfh81-boop.github.io/catalogo-llaza/bloqueo.json';
-  const BOTONES = ['btnPrint', 'btnPrintTaller', 'btnPDF', 'btnExport', 'btnAmpliarPlano'];
+  const BOTONES = ['btnPrint', 'btnPrintTaller', 'btnPDF', 'btnPDFTaller', 'btnExport', 'btnAmpliarPlano'];
   const lee = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const guarda = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
   let cfg = {};
