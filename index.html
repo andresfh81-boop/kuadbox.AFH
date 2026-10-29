@@ -2255,6 +2255,8 @@ const iconoLeyenda = (tipo, cx, cy) => { const p = PIEZA_LEYENDA[tipo]; return `
 // Tabla con todas las placas de izquierda a derecha: las mismas cotas que el plano (al centro,
 // desde 0; el soporte brazo, en Taller, al borde y sin tapa como en el plano) y la distancia
 // de centro a centro con la anterior.
+// En Taller van además los soportes lira (20033003), con su cota del plano (sin tapa, desde
+// el extremo izq.); por eso cada copia lleva sus filas y su distancia a la anterior.
 let placasTableHtml = '';
 if (L > 0) {
 const placas = [
@@ -2263,18 +2265,25 @@ const placas = [
 ...patines.map((p, k) => ({ cota: p.cota, nom: `I${k + 1}`, tipo: t('plan.leyenda.patin') })),
 ...(partido ? [{ cota: Math.round(L / 2), nom: 'U', tipo: t('plan.leyenda.union') }] : []),
 ].sort((a, b) => a.cota - b.cota);
-const rows = placas.map((p, i) => `
-<tr>
+const liras = soloPlacas ? [] : lirasCofre.map(l => ({ cota: l.cota, nom: `L${l.n}`, tipo: `${t('nv.soporteLira')} 20033003`, lira: true }));
+const placasTaller = [...placas, ...liras].sort((a, b) => a.cota - b.cota);
+const filas = (lista, taller) => lista.map((p, i) => {
+let cota = `${p.cota} mm`;
+if (taller && p.b && p.b.lado) cota = `<b>${p.b.soporteTaller} mm</b> (${t(p.b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')})`;
+else if (p.lira) cota = `<b>${p.cota - TAPA} mm</b> (${t('taller.desdeIzq')})`;
+return `
+<tr class="${taller ? 'solo-taller' : 'solo-cliente'}"${p.lira ? ' style="color:#a21caf"' : ''}>
 <td><b>${p.nom}</b></td>
 <td>${p.tipo}</td>
-${p.b && p.b.lado
-? `<td class="solo-cliente">${p.cota} mm</td><td class="solo-taller"><b>${p.b.soporteTaller} mm</b> (${t(p.b.lado === 'izq' ? 'taller.bordeIzq' : 'taller.bordeDer')})</td>`
-: `<td>${p.cota} mm</td>`}
-<td>${i ? `${p.cota - placas[i - 1].cota} mm` : '—'}</td>
-</tr>`).join('');
+<td>${cota}</td>
+<td>${i ? `${p.cota - lista[i - 1].cota} mm` : '—'}</td>
+</tr>`;
+}).join('');
+const rows = filas(placas, false) + filas(placasTaller, true);
+const cuantas = n => `${n} ${t(n === 1 ? 'plan.ud' : 'plan.uds')}`;
 placasTableHtml = `
 <div class="terminal-table animate-render">
-<h4>${t('plan.tablaPlacas')} (${placas.length} ${t(placas.length === 1 ? 'plan.ud' : 'plan.uds')})</h4>
+<h4>${t('plan.tablaPlacas')} (<span class="solo-cliente">${cuantas(placas.length)}</span><span class="solo-taller">${cuantas(placas.length)} + ${cuantas(liras.length)} ${t('nv.soporteLira')}</span>)</h4>
 <table>
 <thead><tr><th>${t('plan.colPlaca')}</th><th>${t('plan.colTipo')}</th><th>${t('plan.colCotaPlaca')}</th><th>${t('plan.colSep')}</th></tr></thead>
 <tbody>${rows}</tbody>
