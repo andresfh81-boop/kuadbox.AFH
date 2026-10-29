@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kuadbox-v33';
+const CACHE_NAME = 'kuadbox-v34';
 const APP_SHELL = [
 './',
 './index.html',

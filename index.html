@@ -173,6 +173,8 @@ body { background: #fff; }
 .plan-header { margin-bottom: 4px; padding-bottom: 4px; }
 .plan-header svg { width: 50px; height: auto; }
 .terminal-table { page-break-inside: avoid; margin-top: 8px; padding-top: 6px; }
+/* Las tablas, en hoja aparte (detrás del plano y la barra de carga). */
+.tabla-placas { page-break-before: always; break-before: page; }
 .terminal-table h4 { font-size: 11px; margin-bottom: 4px; }
 .terminal-table table { font-size: 9px; }
 .terminal-table th, .terminal-table td { padding: 3px 6px; }
@@ -2282,7 +2284,7 @@ return `
 const rows = filas(placas, false) + filas(placasTaller, true);
 const cuantas = n => `${n} ${t(n === 1 ? 'plan.ud' : 'plan.uds')}`;
 placasTableHtml = `
-<div class="terminal-table animate-render">
+<div class="terminal-table tabla-placas animate-render">
 <h4>${t('plan.tablaPlacas')} (<span class="solo-cliente">${cuantas(placas.length)}</span><span class="solo-taller">${cuantas(placas.length)} + ${cuantas(liras.length)} ${t('nv.soporteLira')}</span>)</h4>
 <table>
 <thead><tr><th>${t('plan.colPlaca')}</th><th>${t('plan.colTipo')}</th><th>${t('plan.colCotaPlaca')}</th><th>${t('plan.colSep')}</th></tr></thead>
@@ -2456,6 +2458,9 @@ const M = 10, AW = 297 - 2 * M, AH = 210 - 2 * M, HUECO = 4;
 let y = M;
 for (const bloque of bloques) {
 if (!bloque.offsetHeight) continue; // lo de la otra copia (solo-cliente / solo-taller)
+// Las tablas van en hoja aparte, detrás del plano y la barra de carga (lo pidió Andrés).
+const tabla = !!bloque.querySelector('.terminal-table');
+if (bloque.querySelector('.tabla-placas') && y > M) { pdf.addPage(); y = M; }
 const c = await html2canvas(bloque, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
 let w = AW, h = c.height * AW / c.width;
 if (h > AH) { w *= AH / h; h = AH; }
@@ -2463,7 +2468,7 @@ if (h > AH) { w *= AH / h; h = AH; }
 // (así la cabecera no se queda sola en la primera).
 const resto = M + AH - y;
 if (h > resto) {
-if (y > M && resto < 0.7 * h) { pdf.addPage(); y = M; }
+if (y > M && (tabla || resto < 0.7 * h)) { pdf.addPage(); y = M; }
 else { w *= resto / h; h = resto; }
 }
 pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', M + (AW - w) / 2, y, w, h);
