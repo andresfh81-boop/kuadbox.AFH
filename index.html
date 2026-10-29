@@ -118,6 +118,11 @@ button.presup:disabled { opacity: .7; cursor: wait; transform: none; }
 .presup-status { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; min-height: 1em; }
 .presup-status.ok { color: #047857; }
 .presup-status.err { color: #b91c1c; }
+.presup-elegir { font-size: 0.8rem; margin: 6px 0 4px; display: flex; flex-direction: column; gap: 4px; }
+.presup-elegir[hidden] { display: none; }
+button.presup-opcion { margin-top: 0; padding: 6px 10px; font-size: 0.8rem; text-align: left; background: #e5e7eb; color: #374151; border: 1px solid var(--border-color); }
+button.presup-opcion:hover { background: #d1d5db; }
+button.presup-opcion.active { background: #1f2937; color: #fff; }
 #ocrDebugBox summary { cursor: pointer; font-size: 0.8rem; color: var(--text-muted); }
 #ocrDebugText { width: 100%; margin-top: 4px; font-family: monospace; font-size: 0.7rem; }
 
@@ -208,6 +213,7 @@ body { background: #fff; }
 <button id="btnUploadPresupuesto" class="presup" type="button" data-i18n="presup.btn">📤 Subir presupuesto (foto/PDF)</button>
 <input id="filePresupuesto" type="file" accept="image/*,application/pdf" hidden>
 <div id="presupStatus" class="presup-status"></div>
+<div id="presupElegir" class="presup-elegir" hidden></div>
 <details id="ocrDebugBox" hidden>
 <summary data-i18n="presup.debug">🔍 Ver texto leído (OCR)</summary>
 <textarea id="ocrDebugText" readonly rows="8"></textarea>
@@ -443,6 +449,11 @@ es: {
 'presup.sinPedido': 'Presupuesto leído ({n} campos), pero no salió el Nº de pedido: escríbelo a mano.',
 'presup.vacio': 'No se reconoció ningún dato del presupuesto.',
 'presup.err': 'No se pudo leer el presupuesto.',
+'presup.varios': 'Este pedido trae {n} KÜADBOX. Elige cuál cargar (luego puedes volver aquí para cargar el siguiente):',
+'presup.pos': 'Pos.',
+'presup.uds': 'uds.',
+'presup.brazos': 'brazos',
+'presup.sinKuadbox': 'El pedido no trae ningún KÜADBOX: solo se ha rellenado el Nº de pedido y el cliente.',
 "confirm.reducirBrazos": "Vas a reducir el número de brazos. Se perderán los datos de los brazos eliminados. ¿Continuar?",
 "tipo.enfrentados": "enfrentados → hueco DOBLE",
 "tipo.unBrazo": "un brazo en el hueco",
@@ -585,6 +596,11 @@ en: {
 'presup.sinPedido': 'Quote read ({n} fields), but the order number was not found: type it in.',
 'presup.vacio': 'No data recognised from the quote.',
 'presup.err': 'Could not read the quote.',
+'presup.varios': 'This order has {n} KÜADBOX awnings. Choose which one to load (you can come back here for the next one):',
+'presup.pos': 'Pos.',
+'presup.uds': 'units',
+'presup.brazos': 'arms',
+'presup.sinKuadbox': 'The order has no KÜADBOX: only the order number and customer were filled in.',
 "confirm.reducirBrazos": "You are reducing the number of arms. Data for the removed arms will be lost. Continue?",
 "tipo.enfrentados": "facing → DOUBLE gap",
 "tipo.unBrazo": "one arm in gap",
@@ -727,6 +743,11 @@ fr: {
 "presup.sinPedido": "Devis lu ({n} champs), mais le n° de commande est introuvable : saisissez-le.",
 "presup.vacio": "Aucune donnée reconnue dans le devis.",
 "presup.err": "Impossible de lire le devis.",
+"presup.varios": "Cette commande contient {n} KÜADBOX. Choisissez lequel charger (revenez ici pour le suivant) :",
+"presup.pos": "Pos.",
+"presup.uds": "u.",
+"presup.brazos": "bras",
+"presup.sinKuadbox": "La commande ne contient aucun KÜADBOX : seuls le n° de commande et le client ont été remplis.",
 "confirm.reducirBrazos": "Vous allez réduire le nombre de bras. Les données des bras supprimés seront perdues. Continuer ?",
 "tipo.enfrentados": "face à face → écart DOUBLE",
 "tipo.unBrazo": "un bras dans l'écart",
@@ -869,6 +890,11 @@ de: {
 "presup.sinPedido": "Angebot gelesen ({n} Felder), aber die Bestellnummer fehlt: bitte eintippen.",
 "presup.vacio": "Keine Daten im Angebot erkannt.",
 "presup.err": "Angebot konnte nicht gelesen werden.",
+"presup.varios": "Diese Bestellung enthält {n} KÜADBOX. Wählen Sie, welche geladen werden soll (danach hier die nächste):",
+"presup.pos": "Pos.",
+"presup.uds": "Stk.",
+"presup.brazos": "Arme",
+"presup.sinKuadbox": "Die Bestellung enthält keine KÜADBOX: nur Bestellnummer und Kunde wurden ausgefüllt.",
 "confirm.reducirBrazos": "Sie reduzieren die Anzahl der Arme. Die Daten der entfernten Arme gehen verloren. Fortfahren?",
 "tipo.enfrentados": "gegenüber → DOPPELTER Abstand",
 "tipo.unBrazo": "ein Arm im Abstand",
@@ -1011,6 +1037,11 @@ it: {
 "presup.sinPedido": "Preventivo letto ({n} campi), ma il n. ordine non è stato trovato: scrivilo a mano.",
 "presup.vacio": "Nessun dato riconosciuto nel preventivo.",
 "presup.err": "Impossibile leggere il preventivo.",
+"presup.varios": "Questo ordine contiene {n} KÜADBOX. Scegli quale caricare (poi torna qui per il successivo):",
+"presup.pos": "Pos.",
+"presup.uds": "pz.",
+"presup.brazos": "bracci",
+"presup.sinKuadbox": "L'ordine non contiene nessun KÜADBOX: compilati solo n. ordine e cliente.",
 "confirm.reducirBrazos": "Stai riducendo il numero di bracci. I dati dei bracci eliminati andranno persi. Continuare?",
 "tipo.enfrentados": "contrapposti → spazio DOPPIO",
 "tipo.unBrazo": "un braccio nello spazio",
@@ -1153,6 +1184,11 @@ pt: {
 "presup.sinPedido": "Orçamento lido ({n} campos), mas o n.º de encomenda não apareceu: escreva-o à mão.",
 "presup.vacio": "Nenhum dado reconhecido no orçamento.",
 "presup.err": "Não foi possível ler o orçamento.",
+"presup.varios": "Esta encomenda tem {n} KÜADBOX. Escolha qual carregar (depois volte aqui para o seguinte):",
+"presup.pos": "Pos.",
+"presup.uds": "un.",
+"presup.brazos": "braços",
+"presup.sinKuadbox": "A encomenda não tem nenhum KÜADBOX: só foram preenchidos o n.º de encomenda e o cliente.",
 "confirm.reducirBrazos": "Vai reduzir o número de braços. Os dados dos braços eliminados serão perdidos. Continuar?",
 "tipo.enfrentados": "frente a frente → vão DUPLO",
 "tipo.unBrazo": "um braço no vão",
@@ -1319,6 +1355,7 @@ planoModalBody: document.getElementById('planoModalBody'),
 btnUploadPresupuesto: document.getElementById('btnUploadPresupuesto'),
 filePresupuesto: document.getElementById('filePresupuesto'),
 presupStatus: document.getElementById('presupStatus'),
+presupElegir: document.getElementById('presupElegir'),
 ocrDebugBox: document.getElementById('ocrDebugBox'),
 ocrDebugText: document.getElementById('ocrDebugText')
 };
@@ -2631,19 +2668,24 @@ return data.text || '';
 
 const esPDF = (file) => file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
 
+// Se leen TODAS las páginas: en un pedido con varios modelos los KÜADBOX pueden ir en la 2ª, 3ª…
 const textoDesdePDF = async (file) => {
 const buf = await file.arrayBuffer();
 const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
-const page = await pdf.getPage(1);
+const paginas = [];
+for (let n = 1; n <= pdf.numPages; n++) {
+const page = await pdf.getPage(n);
 const tc = await page.getTextContent();
-const txt = tc.items.map(i => i.str).join(' ').trim();
-if (txt.replace(/\s/g, '').length > 40) return txt; // el PDF ya trae capa de texto
+const txt = tc.items.map(i => i.str + (i.hasEOL ? '\n' : ' ')).join('').trim();
+if (txt.replace(/\s/g, '').length > 40) { paginas.push(txt); continue; } // el PDF ya trae capa de texto
 const viewport = page.getViewport({ scale: 2 }); // si no, rasterizar y OCR
 const canvas = document.createElement('canvas');
 canvas.width = viewport.width;
 canvas.height = viewport.height;
 await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-return ocrImagen(canvas);
+paginas.push(await ocrImagen(canvas));
+}
+return paginas.join('\n');
 };
 
 const extraerTextoPresupuesto = (file) => esPDF(file) ? textoDesdePDF(file) : ocrImagen(file);
@@ -2654,11 +2696,10 @@ const extraerTextoPresupuesto = (file) => esPDF(file) ? textoDesdePDF(file) : oc
 const normOCR = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '')
 .replace(/\r/g, '').replace(/[·•|]/g, ' ').replace(/[—–]/g, ' ');
 
-const parsePresupuestoLlaza = (raw) => {
-const U = normOCR(raw).toUpperCase();
+// Cabecera del pedido (se repite en cada página): Nº de pedido y cliente.
+const parseCabeceraLlaza = (U) => {
 const out = {};
 const grab = (re) => { const m = U.match(re); return m ? m[1].trim() : null; };
-const has = (re) => re.test(U);
 
 // Nº de pedido: 7-9 dígitos tras "Num. Pedido", tolerante a erratas de OCR
 // (O->0, I/l->1, S->5, B->8).
@@ -2678,12 +2719,22 @@ if (ped) out.pedido = ped;
 const JUNK = /ACCESORIO|PARA\s+TODO|AUTOMATIZ|PERSIANA|ESTUDIOS|PROYECTOS|SHIP|PARTY|CONDICION|TRANSPORT|FABRICAC|PEDIDO|UNIT|PRICE|MATERIAL|DESCR|QUANTITY|KUADBOX|MODULBOX|RECACRIL/;
 const limpiaCli = (v) => {
 if (!v) return null;
-v = v.replace(/\s+(?:UNIT|PRICE|ITEM|MATERIAL|DESCR|QUANTITY|KUADBOX|MODULBOX)\b[\s\S]*$/, '').replace(/\s{2,}/g, ' ').trim();
+v = v.replace(/\s+(?:UNIT|PRICE|ITEM|MATERIAL|DESCR|QUANTITY|KUADBOX|MODULBOX)\b[\s\S]*$/, '')
+.replace(/(?:\s+[0-9][0-9.,]*)+$/, '') // nº de posición y material de la 1ª línea pegados detrás
+.replace(/\s{2,}/g, ' ').trim();
 return (v.length >= 3 && v.length <= 40 && !JUNK.test(v)) ? v : null;
 };
 let cli = limpiaCli(grab(/SU\s*REF[\s:.\-]{0,4}([A-Z][A-Z0-9.'\/-]*(?: [A-Z0-9][A-Z0-9.'\/-]*){0,3})/));
 if (!cli) cli = limpiaCli(grab(/OBSERVACIONES[\s:.\-]{0,4}([A-Z][A-Z.'\/-]*(?: [A-Z][A-Z.'\/-]*){0,3})/));
 if (cli) out.cliente = cli;
+return out;
+};
+
+// Datos de UN toldo: línea, salida, nº de brazos y lado del motor.
+const parseToldoLlaza = (U) => {
+const out = {};
+const grab = (re) => { const m = U.match(re); return m ? m[1].trim() : null; };
+const has = (re) => re.test(U);
 
 const lin = grab(/LINEA\s*TOTAL[:\s]*([0-9]{3,5})\s*MM/) || grab(/LINEA[^0-9]{0,10}([0-9]{3,5})\s*MM/);
 if (lin) out.linea = lin;
@@ -2706,13 +2757,34 @@ if (lado) { if (/IZQ/.test(lado)) out.ladoMotor = 'izq'; else if (/DER/.test(lad
 return out;
 };
 
+const parsePresupuestoLlaza = (raw) => {
+const U = normOCR(raw).toUpperCase();
+return { ...parseCabeceraLlaza(U), ...parseToldoLlaza(U) };
+};
+
+// Un pedido puede traer ELYA, KLAIS y varios KÜADBOX. Se trocea por posiciones
+// ("000030 90005405909 1,00 KÜADBOX-400…") y se leen solo los KÜADBOX, cada uno por
+// separado, para no mezclar la línea de uno con el lado de otro.
+// Devuelve null si no se encuentran posiciones (foto mal leída: se lee todo junto, como antes).
+const kuadboxDelPresupuesto = (U) => {
+const cortes = [...U.matchAll(/(?:^|\s)(\d{6})\s+\d{10,12}(?:\s+(\d+)[.,]\d{2})?/g)];
+if (!cortes.length) return null;
+return cortes.map((m, i) => ({
+pos: String(+m[1]),
+uds: m[2] ? +m[2] : 1,
+txt: U.slice(m.index, i + 1 < cortes.length ? cortes[i + 1].index : undefined),
+}))
+.filter(b => /K\s?UADBOX|MODELO\s*Y\s*MEDIDA\s*DE\s*BRAZOS/.test(b.txt))
+.map(b => ({ ...parseToldoLlaza(b.txt), _pos: b.pos, _uds: b.uds }));
+};
+
 const setPresupStatus = (msg, tipo) => {
 refs.presupStatus.textContent = msg;
 refs.presupStatus.className = 'presup-status' + (tipo ? ' ' + tipo : '');
 };
 
 const aplicarPresupuesto = (parcial) => {
-const n = Object.keys(parcial).length;
+const n = Object.keys(parcial).filter(k => k[0] !== '_').length;
 if (!n) { setPresupStatus(t('presup.vacio'), 'err'); return; }
 ['pedido', 'cliente', 'linea', 'salida', 'ladoMotor'].forEach(k => {
 if (parcial[k] != null) refs[k].value = parcial[k];
@@ -2726,16 +2798,44 @@ render();
 setPresupStatus(t(parcial.pedido ? 'presup.ok' : 'presup.sinPedido').replace('{n}', n), parcial.pedido ? 'ok' : 'err');
 };
 
+// Con varios KÜADBOX en el pedido, un botón por toldo. Se quedan a la vista para
+// cargar el siguiente cuando se acabe el plano del primero.
+const mostrarEleccionKuadbox = (lista) => {
+const box = refs.presupElegir;
+box.innerHTML = '';
+box.hidden = lista.length < 2;
+if (box.hidden) return;
+const msg = document.createElement('div');
+msg.textContent = t('presup.varios').replace('{n}', lista.length);
+box.appendChild(msg);
+lista.forEach(k => {
+const b = document.createElement('button');
+b.type = 'button';
+b.className = 'presup-opcion';
+const lado = k.ladoMotor === 'izq' ? t('form.izquierdo') : k.ladoMotor === 'der' ? t('form.derecho') : '?';
+b.textContent = `${t('presup.pos')} ${k._pos}${k._uds > 1 ? ` (${k._uds} ${t('presup.uds')})` : ''}`
++ ` · L ${k.linea || '?'} mm · S ${k.salida || '?'} mm · ${k.numBrazos || '?'} ${t('presup.brazos')} · ${lado}`;
+b.addEventListener('click', () => {
+box.querySelectorAll('.presup-opcion').forEach(x => x.classList.toggle('active', x === b));
+aplicarPresupuesto(k);
+});
+box.appendChild(b);
+});
+};
+
 const procesarPresupuesto = async (file) => {
 if (!file) return;
 const btn = refs.btnUploadPresupuesto;
 btn.disabled = true;
 btn.textContent = t('presup.leyendo');
 setPresupStatus('');
+mostrarEleccionKuadbox([]);
 try {
 await cargarPresupLibs();
 const texto = await extraerTextoPresupuesto(file);
-const parcial = parsePresupuestoLlaza(texto);
+const U = normOCR(texto).toUpperCase();
+const parcial = parseCabeceraLlaza(U);
+const toldos = kuadboxDelPresupuesto(U);
 let dbg = texto;
 // La tabla del Nº de pedido (arriba a la izq., con recuadros) se lee mal en la
 // pasada completa. Si no salió, se reintenta OCR sobre 2 recortes de esa zona.
@@ -2750,10 +2850,20 @@ dbg += '\n\n----- recorte ' + (i + 1) + ' -----\n' + t2;
 } catch (e2) { console.warn('[presupuesto] recorte falló', e2); }
 }
 }
-console.log('[presupuesto] detectado:', parcial);
+console.log('[presupuesto] detectado:', parcial, toldos);
 refs.ocrDebugText.value = dbg;
 refs.ocrDebugBox.hidden = false;
+// Cada toldo lleva su posición en el Nº de pedido (54007673-30) para distinguir los planos.
+const conPos = (k) => ({ ...parcial, ...k, ...(parcial.pedido ? { pedido: `${parcial.pedido}-${k._pos}` } : {}) });
+if (!toldos) aplicarPresupuesto({ ...parcial, ...parseToldoLlaza(U) });
+else if (!toldos.length) {
 aplicarPresupuesto(parcial);
+setPresupStatus(t('presup.sinKuadbox'), 'err');
+} else if (toldos.length === 1) aplicarPresupuesto(conPos(toldos[0]));
+else {
+mostrarEleccionKuadbox(toldos.map(conPos));
+setPresupStatus('');
+}
 } catch (e) {
 console.error('[presupuesto]', e);
 setPresupStatus(t('presup.err'), 'err');
