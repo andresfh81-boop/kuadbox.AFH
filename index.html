@@ -132,6 +132,9 @@ button.presup-opcion.active { background: #1f2937; color: #fff; }
 
 /* Ampliar plano: botón, clic sobre el plano y vista a pantalla completa */
 .plano-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+/* Cliente / Taller también encima del plano (los mismos que abajo, van a la par). */
+.vista-arriba { display: flex; gap: 6px; margin-right: auto; }
+.vista-arriba .view-toggle-btn { width: auto; padding: 6px 14px; font-size: 0.85rem; }
 .btn-zoom-plano { margin-top: 0; width: auto; padding: 6px 14px; font-size: 0.85rem; background: #6b7280; }
 .btn-zoom-plano:hover { background: #4b5563; }
 svg.plano-main { cursor: zoom-in; }
@@ -318,6 +321,10 @@ body { background: #fff; }
 <div class="panel plan">
 <div id="alertOut"></div>
 <div class="plano-toolbar no-print">
+<div class="vista-arriba">
+<button id="btnVerClienteArriba" class="view-toggle-btn active" type="button" data-i18n="vista.cliente">👤 Cliente</button>
+<button id="btnVerTallerArriba" class="view-toggle-btn" type="button" data-i18n="vista.taller">🔧 Taller</button>
+</div>
 <button id="btnAmpliarPlano" class="btn-zoom-plano" type="button" data-i18n="plan.ampliar">🔍 Ampliar plano</button>
 </div>
 <div id="planoOut">
@@ -1464,6 +1471,8 @@ refs.btnSugerirBrazos.addEventListener('click', () => sugerirSoportesBrazo());
 refs.holgura.addEventListener('input', () => { if (recolocarInteriores()) render(); });
 refs.btnVerCliente.addEventListener('click', () => setVistaTaller(false));
 refs.btnVerTaller.addEventListener('click', () => setVistaTaller(true));
+document.getElementById('btnVerClienteArriba').addEventListener('click', () => setVistaTaller(false));
+document.getElementById('btnVerTallerArriba').addEventListener('click', () => setVistaTaller(true));
 [refs.idiomaCliente, refs.idiomaTaller].forEach(el => el.addEventListener('change', render));
 // Lupa sobre el plano (como en Modulbox): círculo que sigue al cursor con una copia del SVG que
 // hay debajo, ampliada LENS_ZOOM veces y desplazada para que el punto del cursor quede en el
@@ -2425,6 +2434,8 @@ const antes = document.body.classList.contains('view-taller');
 document.body.classList.toggle('view-taller', activo);
 refs.btnVerTaller.classList.toggle('active', activo);
 refs.btnVerCliente.classList.toggle('active', !activo);
+document.getElementById('btnVerTallerArriba').classList.toggle('active', activo);
+document.getElementById('btnVerClienteArriba').classList.toggle('active', !activo);
 if (antes !== activo) render(); // cada vista, en el idioma de su copia
 };
 
