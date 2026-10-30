@@ -121,6 +121,8 @@ button.presup:disabled { opacity: .7; cursor: wait; transform: none; }
 .presup-status.ok { color: #047857; }
 .presup-status.err { color: #b91c1c; }
 .presup-elegir { font-size: 0.8rem; margin: 6px 0 4px; display: flex; flex-direction: column; gap: 4px; }
+.presup-arrastrar { font-size: 0.75rem; color: var(--text-muted, #6b7280); text-align: center; margin: 4px 0 0; }
+@media (hover: none) { .presup-arrastrar { display: none; } }
 .presup-elegir[hidden] { display: none; }
 button.presup-opcion { margin-top: 0; padding: 6px 10px; font-size: 0.8rem; text-align: left; background: #e5e7eb; color: #374151; border: 1px solid var(--border-color); }
 button.presup-opcion:hover { background: #d1d5db; }
@@ -216,6 +218,7 @@ body { background: #fff; }
 </div>
 <button id="btnUploadPresupuesto" class="presup" type="button" data-i18n="presup.btn">📤 Subir presupuesto (foto/PDF)</button>
 <input id="filePresupuesto" type="file" accept="image/*,application/pdf" hidden>
+<div class="presup-arrastrar" data-i18n="presup.arrastrar">o arrastra el PDF o la foto a cualquier parte de esta ventana</div>
 <div id="presupStatus" class="presup-status"></div>
 <div id="presupElegir" class="presup-elegir" hidden></div>
 <details id="ocrDebugBox" hidden>
@@ -226,6 +229,10 @@ body { background: #fff; }
 <div class="row">
 <div><label data-i18n="form.pedido" for="pedido">Nº Pedido</label><input id="pedido" type="text" placeholder="Ej. 12345"></div>
 <div><label data-i18n="form.cliente" for="cliente">Cliente</label><input id="cliente" type="text" placeholder="Nombre"></div>
+</div>
+<div class="row">
+<div><label data-i18n="form.idiomaCliente" for="idiomaCliente">🌐 Idioma plano Cliente</label><select id="idiomaCliente"><option value="es">Español</option><option value="en">English</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="it">Italiano</option><option value="pt">Português</option></select></div>
+<div><label data-i18n="form.idiomaTaller" for="idiomaTaller">🔧 Idioma plano Taller</label><select id="idiomaTaller"><option value="es">Español</option><option value="en">English</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="it">Italiano</option><option value="pt">Português</option></select></div>
 </div>
 
 <div class="row">
@@ -390,6 +397,8 @@ es: {
 'form.3brazos': '3 brazos',
 'form.4brazos': '4 brazos',
 'form.imprimir': '🖨 Imprimir (Cliente)',
+'form.idiomaCliente': '🌐 Idioma plano Cliente',
+'form.idiomaTaller': '🔧 Idioma plano Taller',
 'form.imprimirTaller': '🖨 Imprimir (Taller)',
 'vista.cliente': '👤 Cliente',
 'vista.taller': '🔧 Taller',
@@ -456,6 +465,8 @@ es: {
 'plan.ampliar': '🔍 Ampliar plano',
 'plan.ampliarClick': 'Clic para ampliar / reducir',
 'presup.btn': '📤 Subir presupuesto (foto/PDF)',
+'presup.arrastrar': 'o arrastra el PDF o la foto a cualquier parte de esta ventana',
+'presup.soltar': '📤 Suelta aquí el presupuesto',
 'presup.leyendo': '⏳ Leyendo presupuesto…',
 'presup.debug': '🔍 Ver texto leído (OCR)',
 'presup.ok': 'Presupuesto leído: {n} campos rellenados. Revísalos antes de seguir.',
@@ -547,6 +558,8 @@ en: {
 'form.3brazos': '3 arms',
 'form.4brazos': '4 arms',
 'form.imprimir': '🖨 Print (Customer)',
+'form.idiomaCliente': '🌐 Customer drawing language',
+'form.idiomaTaller': '🔧 Workshop drawing language',
 'form.imprimirTaller': '🖨 Print (Workshop)',
 'vista.cliente': '👤 Customer',
 'vista.taller': '🔧 Workshop',
@@ -613,6 +626,8 @@ en: {
 'plan.ampliar': '🔍 Enlarge drawing',
 'plan.ampliarClick': 'Click to enlarge / reduce',
 'presup.btn': '📤 Upload quote (photo/PDF)',
+'presup.arrastrar': 'or drag the PDF or photo anywhere onto this window',
+'presup.soltar': '📤 Drop the quote here',
 'presup.leyendo': '⏳ Reading quote…',
 'presup.debug': '🔍 View scanned text (OCR)',
 'presup.ok': 'Quote read: {n} fields filled in. Check them before continuing.',
@@ -1392,6 +1407,8 @@ linea: document.getElementById('linea'),
 salida: document.getElementById('salida'),
 numBrazos: document.getElementById('numBrazos'),
 pedido: document.getElementById('pedido'),
+idiomaCliente: document.getElementById('idiomaCliente'),
+idiomaTaller: document.getElementById('idiomaTaller'),
 cliente: document.getElementById('cliente'),
 ladoMotor: document.getElementById('ladoMotor'),
 holgura: document.getElementById('holgura'),
@@ -1447,6 +1464,7 @@ refs.btnSugerirBrazos.addEventListener('click', () => sugerirSoportesBrazo());
 refs.holgura.addEventListener('input', () => { if (recolocarInteriores()) render(); });
 refs.btnVerCliente.addEventListener('click', () => setVistaTaller(false));
 refs.btnVerTaller.addEventListener('click', () => setVistaTaller(true));
+[refs.idiomaCliente, refs.idiomaTaller].forEach(el => el.addEventListener('change', render));
 // Lupa sobre el plano (como en Modulbox): círculo que sigue al cursor con una copia del SVG que
 // hay debajo, ampliada LENS_ZOOM veces y desplazada para que el punto del cursor quede en el
 // centro. Vale para el plano y para el dibujo de la barra de carga.
@@ -1541,7 +1559,7 @@ let arrastres = 0;
 const capaSoltar = document.createElement('div');
 capaSoltar.style.cssText = 'position:fixed;inset:12px;z-index:9999;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;border:4px dashed #c0102e;border-radius:16px;background:rgba(255,255,255,.88);font:700 26px system-ui,sans-serif;color:#c0102e;pointer-events:none';
 document.body.appendChild(capaSoltar);
-const mostrarCapa = v => { capaSoltar.textContent = refs.btnUploadPresupuesto.textContent; capaSoltar.style.display = v ? 'flex' : 'none'; };
+const mostrarCapa = v => { capaSoltar.textContent = t('presup.soltar'); capaSoltar.style.display = v ? 'flex' : 'none'; };
 window.addEventListener('dragenter', e => { if (!hayArchivo(e)) return; e.preventDefault(); arrastres++; mostrarCapa(true); });
 window.addEventListener('dragover', e => { if (hayArchivo(e)) e.preventDefault(); });
 window.addEventListener('dragleave', e => { if (hayArchivo(e) && --arrastres <= 0) { arrastres = 0; mostrarCapa(false); } });
@@ -1650,8 +1668,22 @@ return hasError;
 };
 
 let soloPlacas = false;
+// Idioma del plano: el de la copia Cliente (país del presupuesto) o el de la copia Taller
+// (español por defecto), según la vista. El formulario sigue en el idioma de la app (uiLang).
+let uiLang = currentLang;
+let pintando = false;
+const idiomaPlano = () => (document.body.classList.contains('view-taller') ? refs.idiomaTaller.value : refs.idiomaCliente.value) || uiLang;
+const enUI = (fn) => { const c = currentLang; currentLang = uiLang; try { return fn(); } finally { currentLang = c; } };
 const render = () => {
-document.getElementById('btnSoloPlacas').title = t('nv.soloPlacasTit');
+if (pintando) return pintar();
+uiLang = currentLang;
+currentLang = idiomaPlano();
+pintando = true;
+try { pintar(); } finally { pintando = false; currentLang = uiLang; }
+};
+
+const pintar = () => {
+enUI(() => { document.getElementById('btnSoloPlacas').title = t('nv.soloPlacasTit'); });
 const L = +refs.linea.value || 0;
 const S = +refs.salida.value || 0;
 const v = refs.numBrazos.value;
@@ -1717,8 +1749,10 @@ patines.push({ cota: Math.round((boundaryPoints[i - 1] + boundaryPoints[i]) / 2)
 // (0 = ninguno); cotas escritas (las del plano, con tapa) = mandan esas.
 {
 const numEl = document.getElementById('numPatines'), cotasEl = document.getElementById('cotasPatines');
+enUI(() => {
 numEl.placeholder = `${t('nv.sugerido')}: ${patines.length}`;
 cotasEl.placeholder = t('nv.auto');
+});
 const escritas = cotasEl.value.split(/[,;\n\s]+/).map(Number).filter(c => c > 0 && c < L);
 if (escritas.length) patines = [...new Set(escritas.map(Math.round))].sort((a, b) => a - b).map(cota => ({ cota }));
 else if (numEl.value !== '') {
@@ -2387,9 +2421,11 @@ ${terminalTableHtml}
 
 // Vista Cliente / Taller en pantalla (misma regla CSS que la copia impresa).
 const setVistaTaller = (activo) => {
+const antes = document.body.classList.contains('view-taller');
 document.body.classList.toggle('view-taller', activo);
 refs.btnVerTaller.classList.toggle('active', activo);
 refs.btnVerCliente.classList.toggle('active', !activo);
+if (antes !== activo) render(); // cada vista, en el idioma de su copia
 };
 
 // Imprime la copia pedida y deja la pantalla como estaba.
@@ -2859,6 +2895,25 @@ return (v.length >= 3 && v.length <= 40 && !JUNK.test(v)) ? v : null;
 let cli = limpiaCli(grab(/SU\s*REF[\s:.\-]{0,4}([A-Z][A-Z0-9.'\/-]*(?: [A-Z0-9][A-Z0-9.'\/-]*){0,3})/));
 if (!cli) cli = limpiaCli(grab(/OBSERVACIONES[\s:.\-]{0,4}([A-Z][A-Z.'\/-]*(?: [A-Z][A-Z.'\/-]*){0,3})/));
 if (cli) out.cliente = cli;
+
+// País del cliente → idioma del plano Cliente: el país de la dirección, que va en español
+// (FRANCIA, IRLANDA…) y, si no sale, el prefijo del NIF (FR…, IE…). «SPAIN» es la dirección de Llaza.
+// Países sin idioma propio en la app: inglés.
+const IDIOMA_PAIS = {
+  ESPANA: 'es', ANDORRA: 'es', MEXICO: 'es', ARGENTINA: 'es', CHILE: 'es', COLOMBIA: 'es', URUGUAY: 'es',
+  FRANCIA: 'fr', BELGICA: 'fr', LUXEMBURGO: 'fr', MONACO: 'fr', MARRUECOS: 'fr', ARGELIA: 'fr', TUNEZ: 'fr',
+  ALEMANIA: 'de', AUSTRIA: 'de', SUIZA: 'de', ITALIA: 'it', 'SAN MARINO': 'it', PORTUGAL: 'pt', BRASIL: 'pt',
+  IRLANDA: 'en', 'REINO UNIDO': 'en', INGLATERRA: 'en', ESCOCIA: 'en', CANADA: 'en', 'ESTADOS UNIDOS': 'en',
+  AUSTRALIA: 'en', 'NUEVA ZELANDA': 'en', HUNGRIA: 'en', 'PAISES BAJOS': 'en', HOLANDA: 'en', DINAMARCA: 'en',
+  SUECIA: 'en', NORUEGA: 'en', FINLANDIA: 'en', ISLANDIA: 'en', POLONIA: 'en', GRECIA: 'en', CHIPRE: 'en',
+  MALTA: 'en', 'REPUBLICA CHECA': 'en', CHEQUIA: 'en', ESLOVAQUIA: 'en', ESLOVENIA: 'en', CROACIA: 'en',
+  RUMANIA: 'en', BULGARIA: 'en', ESTONIA: 'en', LETONIA: 'en', LITUANIA: 'en', TURQUIA: 'en', ISRAEL: 'en',
+};
+const IDIOMA_NIF = { ES: 'es', AD: 'es', FR: 'fr', BE: 'fr', LU: 'fr', MC: 'fr', DE: 'de', AT: 'de', CH: 'de', IT: 'it', SM: 'it', PT: 'pt' };
+const pais = (U.match(new RegExp(`\\b(${Object.keys(IDIOMA_PAIS).join('|')})\\b`)) || [])[1];
+const nif = grab(/\bNIF[:.\s]*([A-Z]{2})[-0-9A-Z]/);
+const idioma = (pais && IDIOMA_PAIS[pais]) || (nif && (IDIOMA_NIF[nif] || 'en'));
+if (idioma) out.idiomaCliente = idioma;
 return out;
 };
 
@@ -2918,7 +2973,7 @@ refs.presupStatus.className = 'presup-status' + (tipo ? ' ' + tipo : '');
 const aplicarPresupuesto = (parcial) => {
 const n = Object.keys(parcial).filter(k => k[0] !== '_').length;
 if (!n) { setPresupStatus(t('presup.vacio'), 'err'); return; }
-['pedido', 'cliente', 'linea', 'salida', 'ladoMotor'].forEach(k => {
+['pedido', 'cliente', 'idiomaCliente', 'linea', 'salida', 'ladoMotor'].forEach(k => {
 if (parcial[k] != null) refs[k].value = parcial[k];
 });
 // Solo se reconstruyen los brazos si cambia el número (así no se pierden cotas ya escritas).
