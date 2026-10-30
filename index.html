@@ -467,6 +467,8 @@ es: {
 'presup.uds': 'uds.',
 'presup.brazos': 'brazos',
 'presup.sinKuadbox': 'El pedido no trae ningún KÜADBOX: solo se ha rellenado el Nº de pedido y el cliente.',
+'presup.calculado': ' Soportes brazo calculados (puedes cambiar cualquier cota).',
+'presup.sinCalculo': ' Los soportes brazo no se han podido calcular: revisa los datos y pulsa «Sugerir soportes brazo» o escribe las cotas a mano.',
 "confirm.reducirBrazos": "Vas a reducir el número de brazos. Se perderán los datos de los brazos eliminados. ¿Continuar?",
 "tipo.enfrentados": "enfrentados → hueco DOBLE",
 "tipo.unBrazo": "un brazo en el hueco",
@@ -622,6 +624,8 @@ en: {
 'presup.uds': 'units',
 'presup.brazos': 'arms',
 'presup.sinKuadbox': 'The order has no KÜADBOX: only the order number and customer were filled in.',
+'presup.calculado': ' Arm brackets calculated (you can change any position).',
+'presup.sinCalculo': ' The arm brackets could not be calculated: check the data and press «Suggest arm brackets» or type the positions by hand.',
 "confirm.reducirBrazos": "You are reducing the number of arms. Data for the removed arms will be lost. Continue?",
 "tipo.enfrentados": "facing → DOUBLE gap",
 "tipo.unBrazo": "one arm in gap",
@@ -1439,7 +1443,7 @@ buildBrazosUI();
 });
 refs.btnPrint.addEventListener('click', () => printPlan(false));
 refs.btnPrintTaller.addEventListener('click', () => printPlan(true));
-refs.btnSugerirBrazos.addEventListener('click', sugerirSoportesBrazo);
+refs.btnSugerirBrazos.addEventListener('click', () => sugerirSoportesBrazo());
 refs.holgura.addEventListener('input', () => { if (recolocarInteriores()) render(); });
 refs.btnVerCliente.addEventListener('click', () => setVistaTaller(false));
 refs.btnVerTaller.addEventListener('click', () => setVistaTaller(true));
@@ -2598,19 +2602,22 @@ for (let i = 1; i < n - 1; i++) { pos += huecos[i - 1]; document.getElementById(
 return true;
 };
 
-const sugerirSoportesBrazo = () => {
+// auto = true: lo lanza la subida del presupuesto. Sin avisos ni confirmación (las cotas
+// de antes eran de otro toldo); devuelve si ha podido calcular.
+const sugerirSoportesBrazo = (auto = false) => {
 const L = +refs.linea.value || 0;
 const S = +refs.salida.value || 0;
 const n = +refs.numBrazos.value || 0;
-if (L <= 0 || S <= 0 || n < 2) { alert(t('sug.faltanDatos')); return; }
+const aviso = (msg) => { if (!auto) alert(msg); return false; };
+if (L <= 0 || S <= 0 || n < 2) return aviso(t('sug.faltanDatos'));
 const lados = [];
 for (let i = 1; i <= n; i++) lados.push(document.getElementById('lado' + i)?.value || '');
 // Extremos siempre Izq / Der; los centrales, los que haya elegido el usuario o, si están
 // vacíos, los del manual (3 brazos: P2 Izq; 4 brazos: P2 Izq, P3 Der).
 lados[0] = 'izq';
 lados[n - 1] = 'der';
-for (let i = 1; i < n - 1; i++) if (!lados[i]) lados[i] = (LADOS_MANUAL[n] || [])[i] || '';
-if (lados.some(l => !l)) { alert(t('sug.faltaLado')); return; }
+for (let i = 1; i < n - 1; i++) if (auto || !lados[i]) lados[i] = (LADOS_MANUAL[n] || [])[i] || '';
+if (lados.some(l => !l)) return aviso(t('sug.faltaLado'));
 
 const R = getBrazoPlegadoReal(S);
 const holgura = +refs.holgura.value || 0;
@@ -2641,10 +2648,7 @@ cotas = cotas.map(Math.round);
 // a ambos lados) sin bajar de 90 (A = 70).
 const dist = Math.max(DIST_EXTREMO_MIN, Math.min(DIST_EXTREMO_BRAZO, Math.floor((L - sumaMin - holgura * enfrentados) / 2)));
 const total = L - 2 * dist;
-if (sumaMin > total) {
-alert(t('sug.noCabe').replace('{min}', sumaMin + 2 * DIST_EXTREMO_MIN).replace('{L}', L));
-return;
-}
+if (sumaMin > total) return aviso(t('sug.noCabe').replace('{min}', sumaMin + 2 * DIST_EXTREMO_MIN).replace('{L}', L));
 const huecos = repartoConHolgura(total, lados, minimos, holgura);
 cotas = [dist];
 for (let i = 0; i < n - 1; i++) cotas.push(cotas[i] + huecos[i]);
@@ -2654,12 +2658,13 @@ for (let i = 0; i < n - 1; i++) cotas.push(cotas[i] + huecos[i]);
 // de UNION_LIBRE se aparta hacia su lado (izq. hacia el motor, der. hacia la punta).
 if (L > L_PARTIDO) cotas = cotas.map((c, i) => Math.abs(c - L / 2) < UNION_LIBRE ? Math.round(L / 2 + (lados[i] === 'izq' ? -UNION_LIBRE : UNION_LIBRE)) : c);
 const hayCotas = lados.some((_, i) => document.getElementById('cota' + (i + 1))?.value);
-if (hayCotas && !confirm(t('sug.confirmar'))) return;
+if (!auto && hayCotas && !confirm(t('sug.confirmar'))) return false;
 for (let i = 1; i <= n; i++) {
 document.getElementById('lado' + i).value = lados[i - 1];
 document.getElementById('cota' + i).value = cotas[i - 1];
 }
 render();
+return true;
 };
 
 // ===== Ampliar plano a pantalla completa =====
@@ -2919,8 +2924,16 @@ if (parcial.numBrazos && parcial.numBrazos !== refs.numBrazos.value) {
 refs.numBrazos.value = parcial.numBrazos;
 buildBrazosUI();
 }
+// Con las medidas del toldo, los soportes brazo se calculan solos; si no se puede, se dejan vacíos
+// para escribirlos a mano o pulsar el botón.
+let calc = '';
+if (parcial.linea || parcial.salida || parcial.numBrazos) {
+const ok = sugerirSoportesBrazo(true);
+if (!ok) for (let i = 1; i <= (+refs.numBrazos.value || 0); i++) { const c = document.getElementById('cota' + i); if (c) c.value = ''; }
+calc = t(ok ? 'presup.calculado' : 'presup.sinCalculo');
+}
 render();
-setPresupStatus(t(parcial.pedido ? 'presup.ok' : 'presup.sinPedido').replace('{n}', n), parcial.pedido ? 'ok' : 'err');
+setPresupStatus(t(parcial.pedido ? 'presup.ok' : 'presup.sinPedido').replace('{n}', n) + calc, parcial.pedido ? 'ok' : 'err');
 };
 
 // Con varios KÜADBOX en el pedido, un botón por toldo. Se quedan a la vista para
