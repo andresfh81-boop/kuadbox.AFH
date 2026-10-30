@@ -324,6 +324,7 @@ body { background: #fff; }
 <div class="vista-arriba">
 <button id="btnVerClienteArriba" class="view-toggle-btn active" type="button" data-i18n="vista.cliente">👤 Cliente</button>
 <button id="btnVerTallerArriba" class="view-toggle-btn" type="button" data-i18n="vista.taller">🔧 Taller</button>
+<button id="btnImprimirArriba" class="btn-zoom-plano" type="button" data-i18n="plan.imprimir" title="Imprime la copia que estás viendo (Cliente o Taller)">🖨 Imprimir</button>
 </div>
 <button id="btnAmpliarPlano" class="btn-zoom-plano" type="button" data-i18n="plan.ampliar">🔍 Ampliar plano</button>
 </div>
@@ -470,6 +471,7 @@ es: {
 'install.btn': 'Instalar',
 'offline.msg': 'Sin conexión — la app sigue funcionando con los datos guardados en el dispositivo.',
 'plan.ampliar': '🔍 Ampliar plano',
+'plan.imprimir': '🖨 Imprimir',
 'plan.ampliarClick': 'Clic para ampliar / reducir',
 'presup.btn': '📤 Subir presupuesto (foto/PDF)',
 'presup.arrastrar': 'o arrastra el PDF o la foto a cualquier parte de esta ventana',
@@ -631,6 +633,7 @@ en: {
 'install.btn': 'Install',
 'offline.msg': 'Offline — the app keeps working with data stored on this device.',
 'plan.ampliar': '🔍 Enlarge drawing',
+'plan.imprimir': '🖨 Print',
 'plan.ampliarClick': 'Click to enlarge / reduce',
 'presup.btn': '📤 Upload quote (photo/PDF)',
 'presup.arrastrar': 'or drag the PDF or photo anywhere onto this window',
@@ -1473,6 +1476,8 @@ refs.btnVerCliente.addEventListener('click', () => setVistaTaller(false));
 refs.btnVerTaller.addEventListener('click', () => setVistaTaller(true));
 document.getElementById('btnVerClienteArriba').addEventListener('click', () => setVistaTaller(false));
 document.getElementById('btnVerTallerArriba').addEventListener('click', () => setVistaTaller(true));
+// Imprime la copia que se está viendo.
+document.getElementById('btnImprimirArriba').addEventListener('click', () => printPlan(document.body.classList.contains('view-taller')));
 [refs.idiomaCliente, refs.idiomaTaller].forEach(el => el.addEventListener('change', render));
 // Lupa sobre el plano (como en Modulbox): círculo que sigue al cursor con una copia del SVG que
 // hay debajo, ampliada LENS_ZOOM veces y desplazada para que el punto del cursor quede en el
@@ -3153,7 +3158,7 @@ updateOfflineBanner();
 (function () {
   const APP = 'kuadbox';
   const URL_BLOQUEO = 'https://andresfh81-boop.github.io/catalogo-llaza/bloqueo.json';
-  const BOTONES = ['btnPrint', 'btnPrintTaller', 'btnPDF', 'btnPDFTaller', 'btnExport', 'btnAmpliarPlano'];
+  const BOTONES = ['btnPrint', 'btnPrintTaller', 'btnImprimirArriba', 'btnPDF', 'btnPDFTaller', 'btnExport', 'btnAmpliarPlano'];
   const lee = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const guarda = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
   let cfg = {};
