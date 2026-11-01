@@ -1451,6 +1451,7 @@ refs[id].addEventListener('input', render);
 });
 // La salida es un desplegable: también se recalcula con «change» (algunos navegadores no envían «input»).
 refs.salida.addEventListener('change', render);
+refs.ladoMotor.addEventListener('change', alCambiarLadoMotor);
 
 refs.numBrazos.addEventListener('change', (e) => {
 const newN = +e.target.value || 0;
@@ -1594,6 +1595,8 @@ render();
 };
 
 // El primer brazo siempre es izquierdo y el último derecho; solo los interiores eligen mano.
+// Con 3 brazos, el central va de entrada en la misma mano que el lado del motor.
+// Con 4 brazos, de entrada Izq-Izq-Der-Der.
 const fijarLadosExtremos = () => {
 const n = +refs.numBrazos.value || 0;
 if (n < 2) return;
@@ -1601,6 +1604,24 @@ const primero = document.getElementById('lado1');
 const ultimo = document.getElementById('lado' + n);
 if (primero) primero.value = 'izq';
 if (ultimo) ultimo.value = 'der';
+const central = n === 3 && document.getElementById('lado2');
+if (central && !central.value) central.value = refs.ladoMotor.value;
+if (n === 4) {
+const segundo = document.getElementById('lado2');
+const tercero = document.getElementById('lado3');
+if (segundo && !segundo.value) segundo.value = 'izq';
+if (tercero && !tercero.value) tercero.value = 'der';
+}
+};
+
+// Con 3 brazos, al cambiar el lado del motor cambia la mano del central: las cotas que hubiera
+// eran de la otra mano, así que los soportes brazo se recalculan.
+const alCambiarLadoMotor = () => {
+const central = +refs.numBrazos.value === 3 && document.getElementById('lado2');
+if (!central || central.value === refs.ladoMotor.value) return;
+central.value = refs.ladoMotor.value;
+if ([1, 2, 3].some(i => document.getElementById('cota' + i)?.value)) sugerirSoportesBrazo(true);
+render();
 };
 
 const buildBrazosUI = () => {
@@ -1826,12 +1847,13 @@ const Amax = Math.min(700, Math.floor(L / 10));
 const aI = conLado[0].cota - TAPA, aD = L - conLado[n - 1].cota - TAPA;
 const huecos = conLado.slice(1).map((b, i) => `${conLado[i].lado === conLado[i + 1].lado ? 'C' : (conLado[i].lado === 'izq' ? 'B' : '·')} ${b.cota - conLado[i].cota}`);
 const ok = v => v ? '<span style="color:#059669">✓</span>' : '<span style="color:#b45309">✗</span>';
-const aMaxCabe = esRepartoManual(conLado.map(b => b.lado), n) ? aManual(L, n, conLado.slice(1).map((b, i) => huecoNecesario(conLado[i].lado, b.lado, S, brazoRep, 0)), holgura) : null;
+const ladosRep = conLado.map(b => b.lado);
+const aMaxCabe = esRepartoManual(ladosRep, n) ? aManual(L, n, enOrdenManual(ladosRep, conLado.slice(1).map((b, i) => huecoNecesario(conLado[i].lado, b.lado, S, brazoRep, 0))), holgura) : null;
 const aMayor = aMaxCabe !== null ? 2 * aMaxCabe - 70 : null;
 html = `${t('nv.reparto')}: A = ${aI} · ${aD} mm ${ok(Math.min(aI, aD) >= 70 && Math.max(aI, aD) <= Amax)} (${t('nv.entre').replace('{a}', aMayor !== null ? aMayor : Amax)}${aMayor !== null ? t('nv.media').replace('{m}', aMaxCabe) : ''}) · ${t('nv.huecos')} ${huecos.join(' · ')}`;
 if (n > 2 && esRepartoManual(conLado.map(b => b.lado), n)) {
 const ts = conLado.map(b => b.lado === 'izq' ? b.cota + TERMINAL_OFFSET : b.cota - TERMINAL_OFFSET);
-const C = conLado[1].cota - conLado[0].cota, B = conLado[2].cota - conLado[1].cota;
+const [C, B] = enOrdenManual(ladosRep, [conLado[1].cota - conLado[0].cota, conLado[2].cota - conLado[1].cota]);
 const equi = Math.abs(B - C - DIF_B_C - holgura) < 5;
 html += `<br>${t('nv.termCada')} ${ts.slice(1).map((v, i) => v - ts[i]).join(' · ')} mm · B = C + 602,6: ${ok(equi)}${equi ? ' ' + t('nv.equi') : ''}`;
 if (!equi && Math.max(aI, aD) <= 70) html += `<br>${t('nv.col70')}`;
@@ -2592,7 +2614,11 @@ return huecos;
 // holgura se suma al hueco B. `total` = del primer al último soporte brazo; devuelve los
 // huecos, o null si alguno no llega a su mínimo.
 const DIF_B_C = 602.6;
-const esRepartoManual = (lados, n) => LADOS_MANUAL[n] && lados.every((l, i) => l === LADOS_MANUAL[n][i]);
+// Con 3 brazos y motor a la derecha el central es Der: I-D-D es el I-I-D del manual en espejo
+// (huecos B, C en vez de C, B). enOrdenManual pasa los huecos de un orden al otro.
+const esEspejo = (lados) => lados.length === 3 && lados[0] === 'izq' && lados[1] === 'der' && lados[2] === 'der';
+const enOrdenManual = (lados, huecos) => huecos && esEspejo(lados) ? [...huecos].reverse() : huecos;
+const esRepartoManual = (lados, n) => LADOS_MANUAL[n] && (esEspejo(lados) || lados.every((l, i) => l === LADOS_MANUAL[n][i]));
 const huecosManual = (total, n, minimos, holgura) => {
 if (n === 2) return total >= minimos[0] ? [total] : null;
 const C = (total - DIF_B_C - holgura) / (n - 1), B = C + DIF_B_C + holgura;
@@ -2645,9 +2671,10 @@ for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 
 const total = c[n - 1] - c[0];
 if (minimos.reduce((a, m) => a + Math.ceil(m), 0) > total) return false;
 // Como «Sugerir»: terminales equidistantes; si no cabe, B a su mínimo y el resto para C.
-const bMinimo = minimos[1] + holgura, cResto = (total - bMinimo) / (n - 2);
-const huecos = (esRepartoManual(lados, n) && (huecosManual(total, n, minimos, holgura)
-|| (cResto >= minimos[0] ? (n === 3 ? [cResto, bMinimo] : [cResto, bMinimo, cResto]) : null)))
+const minimosM = enOrdenManual(lados, minimos);
+const bMinimo = minimosM[1] + holgura, cResto = (total - bMinimo) / (n - 2);
+const huecos = (esRepartoManual(lados, n) && enOrdenManual(lados, huecosManual(total, n, minimosM, holgura)
+|| (cResto >= minimosM[0] ? (n === 3 ? [cResto, bMinimo] : [cResto, bMinimo, cResto]) : null)))
 || repartoConHolgura(total, lados, minimos, holgura);
 let pos = c[0];
 for (let i = 1; i < n - 1; i++) { pos += huecos[i - 1]; document.getElementById('cota' + (i + 1)).value = Math.round(pos); }
@@ -2665,10 +2692,10 @@ if (L <= 0 || S <= 0 || n < 2) return aviso(t('sug.faltanDatos'));
 const lados = [];
 for (let i = 1; i <= n; i++) lados.push(document.getElementById('lado' + i)?.value || '');
 // Extremos siempre Izq / Der; los centrales, los que haya elegido el usuario o, si están
-// vacíos, los del manual (3 brazos: P2 Izq; 4 brazos: P2 Izq, P3 Der).
+// vacíos, los de entrada (3 brazos: P2 en la mano del motor; 4 brazos: P2 Izq, P3 Der).
 lados[0] = 'izq';
 lados[n - 1] = 'der';
-for (let i = 1; i < n - 1; i++) if (auto || !lados[i]) lados[i] = (LADOS_MANUAL[n] || [])[i] || '';
+for (let i = 1; i < n - 1; i++) if (auto || !lados[i]) lados[i] = n === 3 ? refs.ladoMotor.value : (LADOS_MANUAL[n] || [])[i] || '';
 if (lados.some(l => !l)) return aviso(t('sug.faltaLado'));
 
 const R = getBrazoPlegadoReal(S);
@@ -2681,16 +2708,18 @@ for (let i = 0; i < n - 1; i++) if (esEnfrentado(lados[i], lados[i + 1])) enfren
 let cotas;
 // Con los lados del manual: A lo mayor posible (hasta L/10, máx. 700) y terminales
 // equidistantes. Si no cabe así, o los lados son otros, el reparto de antes.
-let A = esRepartoManual(lados, n) ? aManual(L, n, minimos, holgura) : null;
-let huecosM = A !== null ? huecosManual(L - 2 * (TAPA + A), n, minimos, holgura) : null;
+const minimosM = enOrdenManual(lados, minimos);
+let A = esRepartoManual(lados, n) ? aManual(L, n, minimosM, holgura) : null;
+let huecosM = A !== null ? huecosManual(L - 2 * (TAPA + A), n, minimosM, holgura) : null;
 // Línea por debajo de la recomendada (columna «70*» de las tablas): A = 70 (A mín.), B a su
 // mínimo (+ holgura) y el resto para C. Los terminales no quedan equidistantes, pero es lo
 // más parecido que permite el manual.
 if (!huecosM && esRepartoManual(lados, n) && n > 2) {
-const T = L - 2 * (TAPA + 70), B = minimos[1] + holgura, C = (T - B) / (n - 2);
-if (C >= minimos[0]) { A = 70; huecosM = n === 3 ? [C, B] : [C, B, C]; }
+const T = L - 2 * (TAPA + 70), B = minimosM[1] + holgura, C = (T - B) / (n - 2);
+if (C >= minimosM[0]) { A = 70; huecosM = n === 3 ? [C, B] : [C, B, C]; }
 }
 if (huecosM) {
+huecosM = enOrdenManual(lados, huecosM);
 cotas = [TAPA + A];
 for (let i = 0; i < n - 2; i++) cotas.push(cotas[i] + huecosM[i]);
 cotas.push(L - TAPA - A);
