@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kuadbox-v42';
+const CACHE_NAME = 'kuadbox-v43';
 const APP_SHELL = [
 './',
 './index.html',
@@ -25,10 +25,11 @@ caches.open(CACHE_NAME)
 );
 });
 
+// Solo borra copias viejas de esta app: todas las apps de andresfh81-boop.github.io comparten las copias guardadas.
 self.addEventListener('activate', (event) => {
 event.waitUntil(
 caches.keys().then((keys) =>
-Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+Promise.all(keys.filter((key) => key.startsWith('kuadbox-') && key !== CACHE_NAME).map((key) => caches.delete(key)))
 ).then(() => self.clients.claim())
 );
 });
