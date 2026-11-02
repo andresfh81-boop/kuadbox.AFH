@@ -270,6 +270,15 @@ body { background: #fff; }
 </div>
 </div>
 
+<div id="grupoMotorNm">
+<label data-i18n="form.motorNm" for="motorNm">🔩 Motor (Nm)</label>
+<div style="display:flex; gap:6px; align-items:center;">
+<input id="motorNm" type="number" min="0" step="1" placeholder="—" inputmode="numeric">
+<button id="btnMotorNmManual" type="button" class="secondary" style="margin-top:0; width:auto; flex:none; padding:8px 12px;" hidden>↺</button>
+</div>
+<div id="motorNmInfo" style="font-size:0.75rem; margin:4px 0 8px;"></div>
+</div>
+
 <label data-i18n="form.numBrazos" for="numBrazos">Número de brazos (2–4)</label>
 <select id="numBrazos">
 <option value="" data-i18n="form.elegir">— Elegir —</option>
@@ -399,6 +408,13 @@ es: {
 'form.izquierdo': 'Izquierdo',
 'form.derecho': 'Derecho',
 'form.holgura': 'Holgura seg. (mm)',
+'form.motorNm': '🔩 Motor (Nm)',
+'nm.volver': 'Volver al valor del manual',
+'nm.manual': 'Manual: ',
+'nm.editado': 'Editado a mano · ',
+'nm.bajo': '⚠ Por debajo del mínimo del manual · ',
+'nm.sinDato': '⚠ El manual no da esta medida: valor más cercano · ',
+'plan.motorPar': 'Motor',
 'form.numBrazos': 'Número de brazos (2–4)',
 'form.elegir': '— Elegir —',
 'form.2brazos': '2 brazos',
@@ -561,6 +577,13 @@ en: {
 'form.izquierdo': 'Left hand side',
 'form.derecho': 'Right hand side',
 'form.holgura': 'Safety clearance (mm)',
+'form.motorNm': '🔩 Motor (Nm)',
+'nm.volver': 'Back to the manual value',
+'nm.manual': 'Manual: ',
+'nm.editado': 'Edited by hand · ',
+'nm.bajo': '⚠ Below the manual minimum · ',
+'nm.sinDato': '⚠ The manual has no value for this size: nearest value · ',
+'plan.motorPar': 'Motor',
 'form.numBrazos': 'Number of arms (2–4)',
 'form.elegir': '— Choose —',
 'form.2brazos': '2 arms',
@@ -723,6 +746,13 @@ fr: {
 "form.izquierdo": "Gauche",
 "form.derecho": "Droite",
 "form.holgura": "Jeu de sécurité (mm)",
+"form.motorNm": "🔩 Moteur (Nm)",
+"nm.volver": "Revenir à la valeur du manuel",
+"nm.manual": "Manuel : ",
+"nm.editado": "Modifié à la main · ",
+"nm.bajo": "⚠ Inférieur au minimum du manuel · ",
+"nm.sinDato": "⚠ Le manuel ne donne pas cette mesure : valeur la plus proche · ",
+"plan.motorPar": "Moteur",
 "form.numBrazos": "Nombre de bras (2 à 4)",
 "form.elegir": "— Choisir —",
 "form.2brazos": "2 bras",
@@ -878,6 +908,13 @@ de: {
 "form.izquierdo": "Links",
 "form.derecho": "Rechts",
 "form.holgura": "Sicherheitsspiel (mm)",
+"form.motorNm": "🔩 Motor (Nm)",
+"nm.volver": "Zurück zum Handbuchwert",
+"nm.manual": "Handbuch: ",
+"nm.editado": "Von Hand geändert · ",
+"nm.bajo": "⚠ Unter dem Mindestwert des Handbuchs · ",
+"nm.sinDato": "⚠ Für dieses Maß kein Handbuchwert: nächster Wert · ",
+"plan.motorPar": "Motor",
 "form.numBrazos": "Anzahl der Arme (2–4)",
 "form.elegir": "— Wählen —",
 "form.2brazos": "2 Arme",
@@ -1033,6 +1070,13 @@ it: {
 "form.izquierdo": "Sinistro",
 "form.derecho": "Destro",
 "form.holgura": "Gioco di sicurezza (mm)",
+"form.motorNm": "🔩 Motore (Nm)",
+"nm.volver": "Torna al valore del manuale",
+"nm.manual": "Manuale: ",
+"nm.editado": "Modificato a mano · ",
+"nm.bajo": "⚠ Inferiore al minimo del manuale · ",
+"nm.sinDato": "⚠ Il manuale non indica questa misura: valore più vicino · ",
+"plan.motorPar": "Motore",
 "form.numBrazos": "Numero di bracci (2–4)",
 "form.elegir": "— Scegli —",
 "form.2brazos": "2 bracci",
@@ -1188,6 +1232,13 @@ pt: {
 "form.izquierdo": "Esquerdo",
 "form.derecho": "Direito",
 "form.holgura": "Folga de segurança (mm)",
+"form.motorNm": "🔩 Motor (Nm)",
+"nm.volver": "Voltar ao valor do manual",
+"nm.manual": "Manual: ",
+"nm.editado": "Editado à mão · ",
+"nm.bajo": "⚠ Abaixo do mínimo do manual · ",
+"nm.sinDato": "⚠ O manual não dá esta medida: valor mais próximo · ",
+"plan.motorPar": "Motor",
 "form.numBrazos": "Número de braços (2–4)",
 "form.elegir": "— Escolher —",
 "form.2brazos": "2 braços",
@@ -1366,6 +1417,50 @@ return Math.round(salida / 2) + 100;
 };
 // Línea máxima según nº de brazos (manual de fabricación KÜADBOX-400, apdo. 2.3).
 const LINEA_MAX_POR_BRAZOS = { 2: 6000, 3: 9000, 4: 12000 };
+// Manual de fabricación KÜADBOX-400 (rev. 2.2), apdo. 3.7: par mínimo del motor (Nm) por nº de brazos.
+// l = línea (mm), s = salida (mm), null = el manual no da esa medida. Las tablas llegan más allá de la línea máxima.
+const NM_MOTOR = {
+2: { l: [2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000],
+s: [1500, 2000, 2500, 3000, 3500, 4000],
+v: [[30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
+[null, 30, 35, 35, 35, 35, 35, 35, 35, 35, 35],
+[null, null, 40, 40, 40, 40, 40, 40, 40, 40, 40],
+[null, null, null, 50, 50, 50, 50, 50, 50, 50, 50],
+[null, null, null, null, 50, 50, 50, 50, 50, 50, 50],
+[null, null, null, null, null, 50, 50, 50, 50, 55, 55]] },
+3: { l: [4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 10500],
+s: [1500, 2000, 2500, 3000, 3500, 4000],
+v: [[40, 40, 40, 40, 40, 40, 50, 50, 50, 50, 50, 50, 50, 50],
+[50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 55, 55],
+[null, 55, 55, 55, 55, 55, 55, 55, 70, 70, 70, 70, 70, 70],
+[null, null, null, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70],
+[null, null, null, null, 70, 70, 70, 70, 70, 70, 70, 70, 70, 85],
+[null, null, null, null, null, null, 70, 85, 85, 85, 85, 85, 85, 85]] },
+4: { l: [5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000],
+s: [1500, 2000, 2500, 3000, 3500, 4000],
+v: [[70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70],
+[70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70],
+[null, null, 70, 70, 70, 70, 70, 70, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85],
+[null, null, null, null, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 100],
+[null, null, null, null, null, null, 85, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+[null, null, null, null, null, null, null, null, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]] },
+};
+// Medidas intermedias: siempre a la fila y columna superiores, porque la tabla da el par mínimo.
+const buscarNm = (tabla, S_mm, L_mm) => {
+  if (!tabla || !(S_mm > 0) || !(L_mm > 0)) return null;
+  const pos = (lista, v) => { const i = lista.findIndex(x => x >= v); return i < 0 ? lista.length - 1 : i; };
+  const iS = pos(tabla.s, S_mm);
+  const fila = tabla.v[iS];
+  const iL = pos(tabla.l, L_mm);
+  let col = iL;
+  if (fila[col] == null) {
+    col = -1;
+    for (let i = iL - 1; i >= 0 && col < 0; i--) if (fila[i] != null) col = i;
+    if (col < 0) col = fila.findIndex(v => v != null);
+  }
+  return { nm: fila[col], l: tabla.l[col], s: tabla.s[iS], exacto: col === iL };
+};
+
 // Sugerir soportes brazo (criterio de Andrés, 25-sep-2026): P1 Izq a 100 mm del extremo
 // izquierdo y el último Der a 100 mm del extremo derecho (cotas al centro del soporte).
 const DIST_EXTREMO_BRAZO = 100;
@@ -1442,7 +1537,10 @@ filePresupuesto: document.getElementById('filePresupuesto'),
 presupStatus: document.getElementById('presupStatus'),
 presupElegir: document.getElementById('presupElegir'),
 ocrDebugBox: document.getElementById('ocrDebugBox'),
-ocrDebugText: document.getElementById('ocrDebugText')
+ocrDebugText: document.getElementById('ocrDebugText'),
+motorNm: document.getElementById('motorNm'),
+motorNmInfo: document.getElementById('motorNmInfo'),
+btnMotorNmManual: document.getElementById('btnMotorNmManual')
 };
 
 const init = () => {
@@ -1452,6 +1550,8 @@ refs[id].addEventListener('input', render);
 // La salida es un desplegable: también se recalcula con «change» (algunos navegadores no envían «input»).
 refs.salida.addEventListener('change', render);
 refs.ladoMotor.addEventListener('change', alCambiarLadoMotor);
+refs.motorNm.addEventListener('input', () => { refs.motorNm.dataset.editado = refs.motorNm.value.trim() === '' ? '' : '1'; render(); });
+refs.btnMotorNmManual.addEventListener('click', () => { refs.motorNm.dataset.editado = ''; render(); });
 
 refs.numBrazos.addEventListener('change', (e) => {
 const newN = +e.target.value || 0;
@@ -1729,6 +1829,21 @@ const ladoMotor = refs.ladoMotor.value;
 const holgura = +refs.holgura.value || 0;
 const brazoRep = S > 0 ? getBrazoPlegadoReal(S) : 0;
 const partido = L > L_PARTIDO;
+// Campo de Nm: sale solo con el valor del manual; lo escrito a mano se conserva hasta pulsar ↺.
+const datoNm = buscarNm(NM_MOTOR[n], S, L);
+const nmEditado = refs.motorNm.dataset.editado === '1';
+if (!nmEditado) refs.motorNm.value = datoNm ? datoNm.nm : '';
+const motorNmValor = +refs.motorNm.value || 0;
+const nmBajo = nmEditado && datoNm && motorNmValor < datoNm.nm;
+refs.btnMotorNmManual.hidden = !nmEditado;
+refs.motorNm.style.borderColor = nmEditado ? '#d97706' : '';
+refs.motorNmInfo.style.color = (nmBajo || (datoNm && !datoNm.exacto)) ? '#991b1b' : 'var(--text-muted)';
+refs.motorNmInfo.style.fontWeight = nmBajo ? '700' : '400';
+enUI(() => {
+refs.btnMotorNmManual.title = t('nm.volver');
+refs.motorNmInfo.textContent = !datoNm ? '' : (datoNm.exacto ? '' : t('nm.sinDato')) + (nmBajo ? t('nm.bajo') : nmEditado ? t('nm.editado') : '')
++ `${t('nm.manual')}${datoNm.nm} Nm (L ${datoNm.l} mm · S ${datoNm.s} mm · ${n} ${t('plan.brazos')})`;
+});
 
 let brazos = [];
 for (let i = 1; i <= n; i++) {
@@ -2400,7 +2515,7 @@ refs.planoOut.innerHTML = `
 </svg>
 <div class="plan-meta">
 <span class="no-print"><b>KÜADBOX-400</b> · </span>L=<b>${Ltxt}</b> mm · S=<b>${S || '—'}</b> mm · <b>${n || '—'}</b> ${n === 1 ? t('plan.brazo') : t('plan.brazos')} <span class="no-print">${partido ? '<span style="color:#c0102e;font-weight:bold;">· (' + t('plan.2mitades') + ')</span>' : ''}</span><br>
-<span>${t('plan.pedido')}: <b>${pedido}</b> · ${t('plan.cliente')}: <b>${cliente}</b></span><br>
+<span>${t('plan.pedido')}: <b>${pedido}</b> · ${t('plan.cliente')}: <b>${cliente}</b>${motorNmValor ? ` · ${t('plan.motorPar')}: <b>${motorNmValor} Nm</b>` : ''}</span><br>
 <span class="no-print">${t('plan.generado')}: <b>${new Date().toLocaleString(t('locale'))}</b></span>
 </div>
 </div>
@@ -3030,6 +3145,7 @@ buildBrazosUI();
 // para escribirlos a mano o pulsar el botón.
 let calc = '';
 if (parcial.linea || parcial.salida || parcial.numBrazos) {
+refs.motorNm.dataset.editado = '';
 const ok = sugerirSoportesBrazo(true);
 if (!ok) for (let i = 1; i <= (+refs.numBrazos.value || 0); i++) { const c = document.getElementById('cota' + i); if (c) c.value = ''; }
 calc = t(ok ? 'presup.calculado' : 'presup.sinCalculo');
