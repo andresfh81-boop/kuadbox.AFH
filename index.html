@@ -168,13 +168,16 @@ header { flex-wrap: wrap; }
 
 @media print {
 @page { size: landscape; margin: 10mm; }
+/* Sin la animación de entrada: al imprimir se vuelve a dibujar el plano (copia Taller) y saldría
+   transparente o pálido (07-nov-2026). */
+.animate-render { animation: none !important; opacity: 1 !important; transform: none !important; }
 header, .panel.form, .no-print, .btn-group, button.secondary, button.export, button.pdf, .lang-selector { display: none !important; }
 body { background: #fff; }
 .wrap { padding: 0; display: block; }
 .panel.plan { box-shadow: none; border: none; width: 100%; padding: 0; display: block; }
 .alert { display: none; }
 #planoOut, #planoContainer { display: block; }
-#planoContainer svg.plano-main { width: auto; height: auto; max-width: 100%; max-height: 140mm; display: block; margin: 0 auto; page-break-inside: avoid; }
+#planoContainer svg.plano-main { width: auto; height: auto; max-width: 100%; max-height: 168mm; display: block; margin: 0 auto; page-break-inside: avoid; }
 .plan-header { margin-bottom: 4px; padding-bottom: 4px; }
 .plan-header svg { width: 50px; height: auto; }
 .terminal-table { page-break-inside: avoid; margin-top: 8px; padding-top: 6px; }
@@ -1687,8 +1690,15 @@ window.addEventListener('drop', e => {
   if (f) procesarPresupuesto(f);
 });
 
+// Al pulsar un idioma de la app cambian también los dos planos (Cliente y Taller) a ese idioma, para
+// que salga todo igual (criterio de Andrés, 07-nov-2026); luego se pueden cambiar uno a uno.
 document.querySelectorAll('.lang-btn').forEach(btn => {
-btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+btn.addEventListener('click', () => {
+refs.idiomaCliente.value = btn.dataset.lang;
+refs.idiomaTaller.value = btn.dataset.lang;
+setLanguage(btn.dataset.lang);
+refs.idiomaCliente.dispatchEvent(new Event('change'));
+});
 });
 
 render();
