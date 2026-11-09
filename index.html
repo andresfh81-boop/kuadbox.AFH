@@ -2036,6 +2036,7 @@ let alerts = [];
 // Medidas de control (como en MODULBOX-400): hueco libre entre codos, o codo–borde del soporte vecino,
 // y entre codos de brazos divergentes. Solo pantalla (fuera del plano: no sale al imprimir ni en PDF/PNG).
 const medidasCodo = [];
+const codosPlano = []; // hueco entre codos (o codo–borde del soporte vecino) para dibujarlo en el plano
 if (L > 0 && S > 0) {
 for (let i = 1; i < brazos.length; i++) {
 const a = brazos[i - 1];
@@ -2053,8 +2054,13 @@ tipo = t('tipo.unBrazo');
 tipo = t('tipo.divergentes');
 }
 const sepCodo = b.cota - a.cota;
-if (aInv && bInv) medidasCodo.push(`${t('nv.codo')} P${a.n} – ${t('nv.codo')} P${b.n}: <b>${Math.round(sepCodo - brazoRep * 2)} mm</b>`);
-else if (aInv || bInv) medidasCodo.push(`${t('nv.codo')} P${aInv ? a.n : b.n} – ${t('nv.soporte')} P${aInv ? b.n : a.n}: <b>${Math.round(sepCodo - brazoRep - ANCHO_SOPORTE_BRAZO / 2)} mm</b>`);
+if (aInv && bInv) {
+medidasCodo.push(`${t('nv.codo')} P${a.n} – ${t('nv.codo')} P${b.n}: <b>${Math.round(sepCodo - brazoRep * 2)} mm</b>`);
+codosPlano.push({ c1: a.cota + brazoRep, c2: b.cota - brazoRep, valor: Math.round(sepCodo - brazoRep * 2) });
+} else if (aInv || bInv) {
+medidasCodo.push(`${t('nv.codo')} P${aInv ? a.n : b.n} – ${t('nv.soporte')} P${aInv ? b.n : a.n}: <b>${Math.round(sepCodo - brazoRep - ANCHO_SOPORTE_BRAZO / 2)} mm</b>`);
+codosPlano.push({ c1: aInv ? a.cota + brazoRep : a.cota + MITAD_SOPORTE, c2: aInv ? b.cota - MITAD_SOPORTE : b.cota - brazoRep, valor: Math.round(sepCodo - brazoRep - ANCHO_SOPORTE_BRAZO / 2) });
+}
 else medidasCodo.push(`${t('nv.codo')} P${a.n} – ${t('nv.codo')} P${b.n} (${t('nv.diverg')}): <b>${Math.round(sepCodo + brazoRep * 2)} mm</b>`);
 const necPlegado = huecoPlegado(a.lado, b.lado, brazoRep, 0);
 const necManual = huecoMinimoManual(a.lado, b.lado, S);
@@ -2163,8 +2169,7 @@ if (partido) warns.push(`<div><b>ℹ L=${L} mm > 7000:</b> ${t('alert.partido')}
 
 refs.alertOut.innerHTML =
 (alerts.length ? `<div class="alert err animate-render">${alerts.join('')}</div>` : '') +
-(warns.length ? `<div class="alert warn animate-render">${warns.join('')}</div>` : '') +
-(medidasCodo.length ? `<div class="alert no-print animate-render" style="display:block; border:1px dashed #c99; background:#fff6f6; color:#333;"><div style="font-weight:700; color:#a33; margin-bottom:4px;">🔒 ${t('nv.control')}</div>${medidasCodo.map(m => `<div>${m}</div>`).join('')}</div>` : '');
+(warns.length ? `<div class="alert warn animate-render">${warns.join('')}</div>` : '');
 
 if (L <= 0 && n === 0) {
 refs.planoOut.innerHTML = `
@@ -2683,6 +2688,18 @@ ${fgShapes}
 ${soportesDifuminados}
 ${fgTexts}
 ${textosTerminal}
+${codosPlano.map(m => {
+const x1 = marginLeft + m.c1 * scale, x2 = marginLeft + m.c2 * scale, xm = (x1 + x2) / 2, yC = yBar - 40;
+const col = m.valor < CODO_MIN ? '#dc2626' : '#a33', txt = `${m.valor} mm`, w = txt.length * 7 + 12;
+return `<g class="no-print medida-control">
+<line x1="${x1}" y1="${yBar - 10}" x2="${x1}" y2="${yC - 4}" stroke="${col}" stroke-width="1"/>
+<line x1="${x2}" y1="${yBar - 10}" x2="${x2}" y2="${yC - 4}" stroke="${col}" stroke-width="1"/>
+<line x1="${x1}" y1="${yC}" x2="${x2}" y2="${yC}" stroke="${col}" stroke-width="1.2"/>
+<line x1="${xm}" y1="${yC}" x2="${xm}" y2="${yC - 8}" stroke="${col}" stroke-width="0.8"/>
+<rect x="${xm - w / 2}" y="${yC - 25}" width="${w}" height="17" rx="3" fill="#fff6f6" stroke="${col}" stroke-width="1" stroke-dasharray="3 2"/>
+<text x="${xm}" y="${yC - 12}" text-anchor="middle" font-size="11.5" font-weight="800" fill="${col}">${txt}</text>
+</g>`;
+}).join('')}
 ${unionArriba}
 
 <g transform="translate(0, -5)">
@@ -2697,6 +2714,7 @@ ${soloPlacas ? '' : `<g class="solo-taller"><image href="${PIEZAS_KUADBOX.lira}"
 ${barraRx}
 ${placasTableHtml}
 ${terminalTableHtml}
+${medidasCodo.length ? `<div class="no-print medida-control" style="margin-top:16px; padding:10px 14px; border:1px dashed #c99; border-radius:6px; background:#fff6f6; font-size:0.82rem; color:#333;"><div style="font-weight:700; color:#a33; margin-bottom:6px; font-size:0.85rem;">🔒 ${t('nv.control')}</div>${medidasCodo.map(m => `<div>${m}</div>`).join('')}</div>` : ''}
 </div>`;
 };
 
@@ -2735,7 +2753,8 @@ return;
 html2canvas(element, {
 scale: 2,
 useCORS: true,
-backgroundColor: '#ffffff'
+backgroundColor: '#ffffff',
+ignoreElements: el => el.classList && el.classList.contains('medida-control')
 }).then(canvas => {
 const link = document.createElement('a');
 link.download = `KUADBOX400_${sanitizeFilename(refs.pedido.value || 'drawing')}.png`;
@@ -2784,7 +2803,7 @@ if (!bloque.offsetHeight) continue; // lo de la otra copia (solo-cliente / solo-
 // Las tablas van en hoja aparte, detrás del plano y la barra de carga (lo pidió Andrés).
 const tabla = !!bloque.querySelector('.terminal-table');
 if (bloque.querySelector('.tabla-placas') && y > M) { pdf.addPage(); y = M; }
-const c = await html2canvas(bloque, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+const c = await html2canvas(bloque, { scale: 2, useCORS: true, backgroundColor: '#ffffff', ignoreElements: el => el.classList && el.classList.contains('medida-control') });
 let w = AW, h = c.height * AW / c.width;
 if (h > AH) { w *= AH / h; h = AH; }
 // Si no cabe en lo que queda, se encoge hasta el 70 % antes de pasar a otra página
