@@ -376,6 +376,8 @@ es: {
 "nv.lineaCon": "📏 Línea con S = {S} y {n} brazos",
 "nv.minima": "mínima",
 "nv.recomendada": "recomendada",
+"nv.conLados": "con los lados {lados}",
+"nv.minLados": "<b>⚠ Con los lados {lados} la línea mínima es {min} mm</b> (actual {L} mm): los brazos chocan al plegar (huecos mínimos del manual y del plegado, extremos a 90 mm y, si L > 7000, brazos a 240 mm de la unión de cofres como mínimo).",
 "nv.noAlcanza": "(no se alcanza)",
 "nv.maxima": "máxima",
 "nv.tabla": "Tabla de líneas del manual",
@@ -545,6 +547,8 @@ en: {
 "nv.lineaCon": "📏 Width with S = {S} and {n} arms",
 "nv.minima": "minimum",
 "nv.recomendada": "recommended",
+"nv.conLados": "with sides {lados}",
+"nv.minLados": "<b>⚠ With sides {lados} the minimum width is {min} mm</b> (current {L} mm): the arms collide when folding (manual and folding minimum gaps, ends at 90 mm and, if L > 7000, arms at least 240 mm from the cassette joint).",
 "nv.noAlcanza": "(not reachable)",
 "nv.maxima": "maximum",
 "nv.tabla": "Manual width chart",
@@ -714,6 +718,8 @@ fr: {
 "nv.lineaCon": "📏 Largeur avec S = {S} et {n} bras",
 "nv.minima": "minimale",
 "nv.recomendada": "recommandée",
+"nv.conLados": "avec les côtés {lados}",
+"nv.minLados": "<b>⚠ Avec les côtés {lados} la largeur minimale est {min} mm</b> (actuelle {L} mm) : les bras se heurtent au repli (écarts minimaux du manuel et du repli, extrémités à 90 mm et, si L > 7000, bras à 240 mm minimum de la jonction des coffres).",
 "nv.noAlcanza": "(non atteignable)",
 "nv.maxima": "maximale",
 "nv.tabla": "Tableau des largeurs du manuel",
@@ -876,6 +882,8 @@ de: {
 "nv.lineaCon": "📏 Breite mit S = {S} und {n} Armen",
 "nv.minima": "Minimum",
 "nv.recomendada": "empfohlen",
+"nv.conLados": "mit den Seiten {lados}",
+"nv.minLados": "<b>⚠ Mit den Seiten {lados} beträgt die Mindeststrecke {min} mm</b> (aktuell {L} mm): Die Arme stoßen beim Einklappen zusammen (Mindestabstände aus Handbuch und Einklappen, Enden bei 90 mm und bei L > 7000 Arme mindestens 240 mm von der Kassettenverbindung).",
 "nv.noAlcanza": "(nicht erreichbar)",
 "nv.maxima": "Maximum",
 "nv.tabla": "Breitentabelle des Handbuchs",
@@ -1038,6 +1046,8 @@ it: {
 "nv.lineaCon": "📏 Larghezza con S = {S} e {n} bracci",
 "nv.minima": "minima",
 "nv.recomendada": "consigliata",
+"nv.conLados": "con i lati {lados}",
+"nv.minLados": "<b>⚠ Con i lati {lados} la lunghezza minima è {min} mm</b> (attuale {L} mm): i bracci si scontrano chiudendo (distanze minime del manuale e della chiusura, estremità a 90 mm e, se L > 7000, bracci ad almeno 240 mm dalla giunzione dei cassonetti).",
 "nv.noAlcanza": "(non raggiungibile)",
 "nv.maxima": "massima",
 "nv.tabla": "Tabella larghezze del manuale",
@@ -1200,6 +1210,8 @@ pt: {
 "nv.lineaCon": "📏 Largura com S = {S} e {n} braços",
 "nv.minima": "mínima",
 "nv.recomendada": "recomendada",
+"nv.conLados": "com os lados {lados}",
+"nv.minLados": "<b>⚠ Com os lados {lados} a largura mínima é {min} mm</b> (atual {L} mm): os braços chocam ao recolher (distâncias mínimas do manual e do recolhimento, extremos a 90 mm e, se L > 7000, braços a pelo menos 240 mm da união dos cofres).",
 "nv.noAlcanza": "(não se alcança)",
 "nv.maxima": "máxima",
 "nv.tabla": "Tabela de larguras do manual",
@@ -1390,8 +1402,11 @@ const App = (() => {
 const A_AUX = 200;
 const SEP_PATIN = 4500;
 const L_PARTIDO = 7000;
-// Distancia mínima (entre centros) de un soporte brazo a la unión de cofres (L/2): 500 mm (criterio de Andrés, 26-oct-2026; antes 200 mm).
-const UNION_LIBRE = 500;
+// Distancia (entre centros) de los soportes brazo a la unión de cofres (L/2), criterio de Andrés 09-nov-2026
+// (antes 500, y antes 200), igual que MODULBOX-400: 300 mm si la línea da para ello; si los brazos no caben,
+// hasta UNION_MIN = 240 mm. Un soporte brazo a menos de UNION_MIN está encima de la unión y el plano avisa.
+const UNION_LIBRE = 300;
+const UNION_MIN = 240;
 const MIN_VISUAL_WIDTH = 300;
 const TERMINAL_OFFSET = 230;
 // Copia Taller (confirmado por Andrés, 25-sep-2026): se mide sobre el perfil sin tapa,
@@ -1527,6 +1542,51 @@ Math.max(huecoPlegado(ladoA, ladoB, R, 0), huecoMinimoManual(ladoA, ladoB, S))
 // Lados de los brazos según el manual: 3 brazos Izq-Izq-Der, 4 brazos Izq-Izq-Der-Der.
 const LADOS_MANUAL = { 2: ['izq', 'der'], 3: ['izq', 'izq', 'der'], 4: ['izq', 'izq', 'der', 'der'] };
 const MITAD_SOPORTE = 27;
+// L > 7000: a qué lado de la unión va cada brazo. Manda el ORDEN (la mitad izquierda de los brazos a la
+// izquierda), no su mano: con I-D-I-D, P2 (Der) queda a la izquierda de la unión y P3 (Izq) a la derecha.
+// El central de un nº impar va según su mano.
+const ladoUnion = (idx, n, lado) => { const c = (n - 1) / 2; return idx < c ? -1 : idx > c ? 1 : (lado === 'izq' ? -1 : 1); };
+const minimosLados = (lados, S, holgura) => {
+const R = getBrazoPlegadoReal(S), m = [];
+for (let i = 1; i < lados.length; i++) m.push(Math.ceil(huecoNecesario(lados[i - 1], lados[i], S, R, holgura)));
+return m;
+};
+// L > 7000: brazos de la mitad izquierda a UNION_LIBRE (o más) a la izquierda de la unión y los de la derecha a
+// la derecha; si no caben los huecos mínimos, se acercan hasta UNION_MIN. Los exteriores se apartan hacia los
+// extremos lo justo, sin bajar de DIST_EXTREMO_MIN (A = 70).
+const colocarConUnion = (pos, lados, L, S, holgura) => {
+const n = pos.length, U = L / 2, min = minimosLados(lados, S, holgura), margen = DIST_EXTREMO_MIN;
+const k = lados.filter((l, i) => ladoUnion(i, n, l) < 0).length;
+if (k === 0 || k === n) return pos;
+const suma = (a, b) => min.slice(a, b).reduce((x, y) => x + y, 0);
+const dIzq = Math.max(UNION_MIN, Math.min(UNION_LIBRE, Math.floor(U - margen - suma(0, k - 1))));
+const dDer = Math.max(UNION_MIN, Math.min(UNION_LIBRE, Math.floor(L - margen - suma(k, n - 1) - U)));
+const p = pos.slice();
+const cadenaIzq = () => {
+for (let i = k - 1; i >= 0; i--) p[i] = Math.min(p[i], i === k - 1 ? Math.round(U - dIzq) : p[i + 1] - min[i]);
+if (p[0] < margen) { p[0] = margen; for (let i = 1; i < k; i++) p[i] = Math.max(p[i], p[i - 1] + min[i - 1]); }
+};
+const cadenaDer = () => {
+for (let i = k; i < n; i++) p[i] = Math.max(p[i], i === k ? Math.round(U + dDer) : p[i - 1] + min[i - 1]);
+if (p[n - 1] > L - margen) { p[n - 1] = L - margen; for (let i = n - 2; i >= k; i--) p[i] = Math.min(p[i], p[i + 1] - min[i]); }
+};
+cadenaIzq(); cadenaDer();
+const falta = min[k - 1] - (p[k] - p[k - 1]);
+if (falta > 0) { p[k - 1] -= Math.ceil(falta / 2); p[k] += Math.ceil(falta / 2); cadenaIzq(); cadenaDer(); }
+return p.map(Math.round);
+};
+// Línea mínima según los lados elegidos: huecos mínimos + extremos a DIST_EXTREMO_MIN y, si pasa de 7000,
+// brazos a UNION_MIN de la unión. null si faltan lados.
+const lineaMinimaLados = (lados, S, holgura) => {
+const n = lados.length;
+if (!S || n < 2 || lados.some(l => !l)) return null;
+const min = minimosLados(lados, S, holgura), suma = (a, b) => min.slice(a, b).reduce((x, y) => x + y, 0);
+let nec = 2 * DIST_EXTREMO_MIN + suma(0, n - 1);
+const k = lados.filter((l, i) => ladoUnion(i, n, l) < 0).length;
+if (nec > L_PARTIDO && k > 0 && k < n) nec = Math.max(nec, 2 * (DIST_EXTREMO_MIN + Math.max(suma(0, k - 1), suma(k, n - 1)) + UNION_MIN));
+return nec;
+};
+const textoLados = (lados) => lados.map(l => l === 'der' ? 'D' : 'I').join('-');
 
 const escapeHtml = (str) => String(str).replace(/[&<>"']/g, ch => ({
 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -2027,7 +2087,11 @@ let html = '';
 if (S > 0 && LINEA_MAX_POR_BRAZOS[n]) {
 const lm = lineasManual(S, n);
 const rec = n > 2 ? ` · ${t('nv.recomendada')} ≥ <b>${lm.rec}</b>${lm.rec > lm.max ? ' ' + t('nv.noAlcanza') : ''}` : '';
-html = `${t('nv.lineaCon').replace('{S}', S).replace('{n}', n)}: ${t('nv.minima')} <b>${lm.min}</b>${rec} · ${t('nv.maxima')} <b>${lm.max}</b> mm`;
+const ladosSel = Array.from({ length: n }, (_, i) => document.getElementById('lado' + (i + 1))?.value || '');
+const minLados = lineaMinimaLados(ladosSel, S, +refs.holgura.value || 0);
+const conLados = minLados && minLados > lm.min ? ` · ${t('nv.conLados').replace('{lados}', textoLados(ladosSel))}: <b style="color:#b45309">${minLados}</b>` : '';
+html = `${t('nv.lineaCon').replace('{S}', S).replace('{n}', n)}: ${t('nv.minima')} <b>${lm.min}</b>${conLados}${rec} · ${t('nv.maxima')} <b>${lm.max}</b> mm`;
+if (L > 0 && minLados && minLados > lm.min && L < minLados) alerts.push(`<div>${t('nv.minLados').replace('{lados}', textoLados(ladosSel)).replace('{min}', minLados).replace('{L}', L)}</div>`);
 if (L > 0 && n > 2 && L >= lm.min && L < lm.rec) warns.push(`<div>${t('nv.warnRec').replace('{L}', L).replace('{rec}', lm.rec)}</div>`);
 }
 const filas = [1500, 2000, 2500, 3000, 3500, 4000].map(s => `<tr><td>${s}</td>${[2, 3, 4].map(nb => { const lm = lineasManual(s, nb); return `<td>${lm.min}${nb > 2 ? ` / ${lm.rec}` : ''}</td>`; }).join('')}</tr>`).join('');
@@ -2058,9 +2122,9 @@ if (lineaMax && L > lineaMax) alerts.push(`<div><b>⚠ ${t('alert.lineaMax')} ${
 // Salida del manual: de 1,50 a 4,00 m (págs. 6 y 9–17).
 if (S > 0 && (S < 1500 || S > 4000)) alerts.push(`<div>${t('nv.salidaFuera').replace('{S}', S)}</div>`);
 // La unión de cofres solo puede estorbar a un soporte (brazo o patín intermedio) que caiga
-// encima: se avisa si hay un soporte brazo a menos de UNION_LIBRE del centro o un patín a menos de 60 mm.
+// encima: se avisa si hay un soporte brazo a menos de UNION_MIN del centro o un patín a menos de 60 mm.
 if (partido) {
-const choca = [...brazos.map(b => ({ c: b.cota, nom: 'P' + b.n, d: UNION_LIBRE })), ...patines.map(p => ({ c: p.cota, nom: t('nv.patinInt'), d: 60 }))]
+const choca = [...brazos.map(b => ({ c: b.cota, nom: 'P' + b.n, d: UNION_MIN })), ...patines.map(p => ({ c: p.cota, nom: t('nv.patinInt'), d: 60 }))]
 .filter(s => Math.abs(s.c - L / 2) < s.d);
 if (choca.length) alerts.push(`<div>${t('nv.unionEncima').replace('{c}', Math.round(L / 2)).replace('{lista}', choca.map(s => `${s.nom} (${s.c} mm)`).join(', '))}</div>`);
 }
@@ -2852,6 +2916,8 @@ const holgura = +refs.holgura.value || 0;
 const minimos = [];
 for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, 0));
 const sumaMin = minimos.reduce((a, b) => a + Math.ceil(b), 0);
+const minLados = lineaMinimaLados(lados, S, holgura);
+if (minLados && L < minLados) return aviso(t('nv.minLados').replace(/<[^>]+>/g, '').replace('{lados}', textoLados(lados)).replace('{min}', minLados).replace('{L}', L));
 let enfrentados = 0;
 for (let i = 0; i < n - 1; i++) if (esEnfrentado(lados[i], lados[i + 1])) enfrentados++;
 let cotas;
@@ -2884,9 +2950,8 @@ cotas = [dist];
 for (let i = 0; i < n - 1; i++) cotas.push(cotas[i] + huecos[i]);
 }
 
-// L > 7000: un soporte brazo nunca puede caer en la unión de cofres (L/2); el que quede a menos
-// de UNION_LIBRE se aparta hacia su lado (izq. hacia el motor, der. hacia la punta).
-if (L > L_PARTIDO) cotas = cotas.map((c, i) => Math.abs(c - L / 2) < UNION_LIBRE ? Math.round(L / 2 + (lados[i] === 'izq' ? -UNION_LIBRE : UNION_LIBRE)) : c);
+// L > 7000: un soporte brazo nunca puede caer en la unión de cofres (L/2): ver colocarConUnion.
+if (L > L_PARTIDO) cotas = colocarConUnion(cotas, lados, L, S, holgura);
 const hayCotas = lados.some((_, i) => document.getElementById('cota' + (i + 1))?.value);
 if (!auto && hayCotas && !confirm(t('sug.confirmar'))) return false;
 for (let i = 1; i <= n; i++) {
