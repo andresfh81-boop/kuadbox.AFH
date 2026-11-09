@@ -193,10 +193,7 @@ body { background: #fff; }
 <body>
 
 <header>
-<svg width="46" height="34" viewBox="0 0 120 80">
-<ellipse cx="60" cy="40" rx="56" ry="30" fill="none" stroke="#fff" stroke-width="5"/>
-<path d="M14 40 Q60 18 106 40 Q60 62 14 40 Z" fill="#fff"/>
-</svg>
+<img src="icon-192.png" width="44" height="44" alt="" style="display:block; border-radius:10px; flex-shrink:0;">
 <div>
 <h1 data-i18n="header.title">Configurador de Placas — KÜADBOX-400</h1>
 <span data-i18n="header.subtitle">LLAZA WORLD · Aux. A>200 · Auxiliar si sep.>4500 · 2 mitades si L>7000</span>
@@ -1601,13 +1598,14 @@ return p.map(Math.round);
 };
 // Línea mínima según los lados elegidos: huecos mínimos + extremos a DIST_EXTREMO_MIN y, si pasa de 7000,
 // brazos a UNION_MIN de la unión. null si faltan lados.
-const lineaMinimaLados = (lados, S, holgura) => {
+// Lmed = línea elegida: si pasa de 7000 hay unión aunque la mínima sin unión quede por debajo (L 7001).
+const lineaMinimaLados = (lados, S, holgura, Lmed = 0) => {
 const n = lados.length;
 if (!S || n < 2 || lados.some(l => !l)) return null;
 const min = minimosLados(lados, S, holgura), suma = (a, b) => min.slice(a, b).reduce((x, y) => x + y, 0);
 let nec = 2 * DIST_EXTREMO_MIN + suma(0, n - 1);
 const k = lados.filter((l, i) => ladoUnion(i, n, l) < 0).length;
-if (nec > L_PARTIDO && k > 0 && k < n) nec = Math.max(nec, 2 * (DIST_EXTREMO_MIN + Math.max(suma(0, k - 1), suma(k, n - 1)) + UNION_MIN));
+if ((nec > L_PARTIDO || Lmed > L_PARTIDO) && k > 0 && k < n) nec = Math.max(nec, 2 * (DIST_EXTREMO_MIN + Math.max(suma(0, k - 1), suma(k, n - 1)) + UNION_MIN));
 return nec;
 };
 const textoLados = (lados) => lados.map(l => l === 'der' ? 'D' : 'I').join('-');
@@ -2125,7 +2123,7 @@ if (S > 0 && LINEA_MAX_POR_BRAZOS[n]) {
 const lm = lineasManual(S, n);
 const rec = n > 2 ? ` · ${t('nv.recomendada')} ≥ <b>${lm.rec}</b>${lm.rec > lm.max ? ' ' + t('nv.noAlcanza') : ''}` : '';
 const ladosSel = Array.from({ length: n }, (_, i) => document.getElementById('lado' + (i + 1))?.value || '');
-const minLados = lineaMinimaLados(ladosSel, S, +refs.holgura.value || 0);
+const minLados = lineaMinimaLados(ladosSel, S, +refs.holgura.value || 0, L);
 const conLados = minLados && minLados > lm.min ? ` · ${t('nv.conLados').replace('{lados}', textoLados(ladosSel))}: <b style="color:#b45309">${minLados}</b>` : '';
 html = `${t('nv.lineaCon').replace('{S}', S).replace('{n}', n)}: ${t('nv.minima')} <b>${lm.min}</b>${conLados}${rec} · ${t('nv.maxima')} <b>${lm.max}</b> mm`;
 if (L > 0 && minLados && minLados > lm.min && L < minLados) alerts.push(`<div>${t('nv.minLados').replace('{lados}', textoLados(ladosSel)).replace('{min}', minLados).replace('{L}', L)}</div>`);
@@ -2884,10 +2882,10 @@ const esEspejo = (lados) => lados.length === 3 && lados[0] === 'izq' && lados[1]
 const enOrdenManual = (lados, huecos) => huecos && esEspejo(lados) ? [...huecos].reverse() : huecos;
 const esRepartoManual = (lados, n) => LADOS_MANUAL[n] && (esEspejo(lados) || lados.every((l, i) => l === LADOS_MANUAL[n][i]));
 const huecosManual = (total, n, minimos, holgura) => {
-if (n === 2) return total >= minimos[0] ? [total] : null;
+if (n === 2) return total >= minimos[0] + holgura ? [total] : null;
 const C = (total - DIF_B_C - holgura) / (n - 1), B = C + DIF_B_C + holgura;
 const huecos = n === 3 ? [C, B] : [C, B, C];
-return huecos.every((h, i) => h >= minimos[i]) ? huecos : null;
+return huecos.every((h, i) => h >= minimos[i] + (i === 1 ? holgura : 0)) ? huecos : null;
 };
 // A (del extremo del perfil sin tapa al centro del soporte brazo): lo mayor posible hasta
 // Amax = L/10 con un máximo de 700 («valores máximos siempre que sea posible», pág. 11),
@@ -2898,7 +2896,9 @@ let Aajuste;
 if (n === 2) Aajuste = (L - 2 * TAPA - minimos[0] - holgura) / 2;
 else {
 const minC = minimos[0], minB = minimos[1];
-const C = Math.max(minC, minB - DIF_B_C - holgura);
+// B = C + 602,6 + holgura tiene que llegar a Bmin + holgura → C ≥ Bmin − 602,6 (antes se restaba también la
+// holgura y, con holgura, B quedaba por debajo del mínimo; prueba de estrés 09-nov-2026).
+const C = Math.max(minC, minB - DIF_B_C);
 Aajuste = (L - 2 * TAPA - (n - 1) * C - DIF_B_C - holgura) / 2;
 }
 const A = Math.floor(Math.min(Amax, Aajuste));
@@ -2967,7 +2967,7 @@ const holgura = +refs.holgura.value || 0;
 const minimos = [];
 for (let i = 0; i < n - 1; i++) minimos.push(huecoNecesario(lados[i], lados[i + 1], S, R, 0));
 const sumaMin = minimos.reduce((a, b) => a + Math.ceil(b), 0);
-const minLados = lineaMinimaLados(lados, S, holgura);
+const minLados = lineaMinimaLados(lados, S, holgura, L);
 if (minLados && L < minLados) return aviso(t('nv.minLados').replace(/<[^>]+>/g, '').replace('{lados}', textoLados(lados)).replace('{min}', minLados).replace('{L}', L));
 let enfrentados = 0;
 for (let i = 0; i < n - 1; i++) if (esEnfrentado(lados[i], lados[i + 1])) enfrentados++;
