@@ -1489,8 +1489,18 @@ return 0;
 };
 // Plegado: un brazo Izq pliega hacia la derecha (ocupa el hueco con su brazo), uno Der
 // hacia la izquierda.
+// Distancia mínima entre codos (criterio de Andrés, 09-nov-2026), igual en todos los configuradores:
+// 50 mm libres entre el codo del brazo plegado y lo que tenga al lado.
+//  - enfrentados (Izq → Der): codo–codo ≥ 50 mm → hueco ≥ 2 brazos + 50.
+//  - un brazo en el hueco: codo plegado–soporte del vecino ≥ 50 mm → hueco ≥ 1 brazo + 50.
+//  - divergentes (Der → Izq): los codos se alejan; se pide 50 mm libres entre los bordes de
+//    sus dos soportes brazo → hueco ≥ ancho del soporte (54 mm en KÜADBOX) + 50.
+const CODO_MIN = 50;
+const ANCHO_SOPORTE_BRAZO = 54;
 const huecoPlegado = (ladoA, ladoB, R, holgura) =>
-(ladoA === 'izq' ? R : 0) + (ladoB === 'der' ? R : 0) + holgura;
+((ladoA === 'izq' && ladoB === 'der') ? R * 2 + CODO_MIN
+: (ladoA === 'izq' || ladoB === 'der') ? R + CODO_MIN
+: ANCHO_SOPORTE_BRAZO + CODO_MIN) + holgura;
 // Holgura (criterio de Andrés, 25-sep-2026): por defecto 0. Solo se suma al hueco donde
 // se pliegan dos brazos uno contra otro (Izq → Der), que es donde chocan brazo con brazo.
 // Al cambiarla, los soportes interiores se recolocan solos (los extremos no se tocan):
@@ -1948,7 +1958,7 @@ const nec = Math.max(necPlegado, necManual) + holguraHueco;
 if (sep < nec) {
 const motivo = necManual >= necPlegado
 ? `${t('alert.minManual')} ${aInv && bInv ? 'B' : 'C'}min = ${Math.round(necManual)} mm`
-: `${t('alert.brazoOnyx')}: ${brazoRep} mm`;
+: `${(aInv || bInv) ? `${t('alert.brazoOnyx')}: ${brazoRep} mm` : `Soporte ${ANCHO_SOPORTE_BRAZO} mm`} + ${CODO_MIN} mm entre codos`;
 alerts.push(`<div><b>⚠ P${a.n}–P${b.n} (${tipo}):</b> ${sep} mm < ${Math.round(nec)} mm (${motivo}${holguraHueco ? ` + holgura ${holguraHueco} mm` : ''}).<br><span style="font-size:0.85em; opacity:0.9;">${t(necManual >= necPlegado ? 'alert.bajoManual' : 'alert.colision')}</span></div>`);
 a.conflict = true;
 b.conflict = true;
