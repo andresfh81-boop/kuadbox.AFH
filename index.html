@@ -377,6 +377,10 @@ es: {
 "nv.minima": "mínima",
 "nv.recomendada": "recomendada",
 "nv.conLados": "con los lados {lados}",
+"nv.control": "Medidas de control (solo pantalla, no sale en cliente/taller/PDF/PNG)",
+"nv.codo": "Codo",
+"nv.soporte": "Soporte",
+"nv.diverg": "divergentes",
 "nv.minLados": "<b>⚠ Con los lados {lados} la línea mínima es {min} mm</b> (actual {L} mm): los brazos chocan al plegar (huecos mínimos del manual y del plegado, extremos a 90 mm y, si L > 7000, brazos a 240 mm de la unión de cofres como mínimo).",
 "nv.noAlcanza": "(no se alcanza)",
 "nv.maxima": "máxima",
@@ -548,6 +552,10 @@ en: {
 "nv.minima": "minimum",
 "nv.recomendada": "recommended",
 "nv.conLados": "with sides {lados}",
+"nv.control": "Check measurements (screen only, not in client/workshop/PDF/PNG)",
+"nv.codo": "Elbow",
+"nv.soporte": "Bracket",
+"nv.diverg": "diverging",
 "nv.minLados": "<b>⚠ With sides {lados} the minimum width is {min} mm</b> (current {L} mm): the arms collide when folding (manual and folding minimum gaps, ends at 90 mm and, if L > 7000, arms at least 240 mm from the cassette joint).",
 "nv.noAlcanza": "(not reachable)",
 "nv.maxima": "maximum",
@@ -719,6 +727,10 @@ fr: {
 "nv.minima": "minimale",
 "nv.recomendada": "recommandée",
 "nv.conLados": "avec les côtés {lados}",
+"nv.control": "Mesures de contrôle (écran seulement, pas dans client/atelier/PDF/PNG)",
+"nv.codo": "Coude",
+"nv.soporte": "Support",
+"nv.diverg": "divergents",
 "nv.minLados": "<b>⚠ Avec les côtés {lados} la largeur minimale est {min} mm</b> (actuelle {L} mm) : les bras se heurtent au repli (écarts minimaux du manuel et du repli, extrémités à 90 mm et, si L > 7000, bras à 240 mm minimum de la jonction des coffres).",
 "nv.noAlcanza": "(non atteignable)",
 "nv.maxima": "maximale",
@@ -883,6 +895,10 @@ de: {
 "nv.minima": "Minimum",
 "nv.recomendada": "empfohlen",
 "nv.conLados": "mit den Seiten {lados}",
+"nv.control": "Kontrollmaße (nur Bildschirm, nicht in Kunde/Werkstatt/PDF/PNG)",
+"nv.codo": "Gelenk",
+"nv.soporte": "Konsole",
+"nv.diverg": "divergierend",
 "nv.minLados": "<b>⚠ Mit den Seiten {lados} beträgt die Mindeststrecke {min} mm</b> (aktuell {L} mm): Die Arme stoßen beim Einklappen zusammen (Mindestabstände aus Handbuch und Einklappen, Enden bei 90 mm und bei L > 7000 Arme mindestens 240 mm von der Kassettenverbindung).",
 "nv.noAlcanza": "(nicht erreichbar)",
 "nv.maxima": "Maximum",
@@ -1047,6 +1063,10 @@ it: {
 "nv.minima": "minima",
 "nv.recomendada": "consigliata",
 "nv.conLados": "con i lati {lados}",
+"nv.control": "Misure di controllo (solo schermo, non in cliente/officina/PDF/PNG)",
+"nv.codo": "Gomito",
+"nv.soporte": "Supporto",
+"nv.diverg": "divergenti",
 "nv.minLados": "<b>⚠ Con i lati {lados} la lunghezza minima è {min} mm</b> (attuale {L} mm): i bracci si scontrano chiudendo (distanze minime del manuale e della chiusura, estremità a 90 mm e, se L > 7000, bracci ad almeno 240 mm dalla giunzione dei cassonetti).",
 "nv.noAlcanza": "(non raggiungibile)",
 "nv.maxima": "massima",
@@ -1211,6 +1231,10 @@ pt: {
 "nv.minima": "mínima",
 "nv.recomendada": "recomendada",
 "nv.conLados": "com os lados {lados}",
+"nv.control": "Medidas de controlo (só no ecrã, não sai em cliente/oficina/PDF/PNG)",
+"nv.codo": "Cotovelo",
+"nv.soporte": "Suporte",
+"nv.diverg": "divergentes",
 "nv.minLados": "<b>⚠ Com os lados {lados} a largura mínima é {min} mm</b> (atual {L} mm): os braços chocam ao recolher (distâncias mínimas do manual e do recolhimento, extremos a 90 mm e, se L > 7000, braços a pelo menos 240 mm da união dos cofres).",
 "nv.noAlcanza": "(não se alcança)",
 "nv.maxima": "máxima",
@@ -2009,6 +2033,9 @@ window.__patinesActuales = patines.map(p => p.cota);
 }
 
 let alerts = [];
+// Medidas de control (como en MODULBOX-400): hueco libre entre codos, o codo–borde del soporte vecino,
+// y entre codos de brazos divergentes. Solo pantalla (fuera del plano: no sale al imprimir ni en PDF/PNG).
+const medidasCodo = [];
 if (L > 0 && S > 0) {
 for (let i = 1; i < brazos.length; i++) {
 const a = brazos[i - 1];
@@ -2025,6 +2052,10 @@ tipo = t('tipo.unBrazo');
 } else {
 tipo = t('tipo.divergentes');
 }
+const sepCodo = b.cota - a.cota;
+if (aInv && bInv) medidasCodo.push(`${t('nv.codo')} P${a.n} – ${t('nv.codo')} P${b.n}: <b>${Math.round(sepCodo - brazoRep * 2)} mm</b>`);
+else if (aInv || bInv) medidasCodo.push(`${t('nv.codo')} P${aInv ? a.n : b.n} – ${t('nv.soporte')} P${aInv ? b.n : a.n}: <b>${Math.round(sepCodo - brazoRep - ANCHO_SOPORTE_BRAZO / 2)} mm</b>`);
+else medidasCodo.push(`${t('nv.codo')} P${a.n} – ${t('nv.codo')} P${b.n} (${t('nv.diverg')}): <b>${Math.round(sepCodo + brazoRep * 2)} mm</b>`);
 const necPlegado = huecoPlegado(a.lado, b.lado, brazoRep, 0);
 const necManual = huecoMinimoManual(a.lado, b.lado, S);
 const holguraHueco = esEnfrentado(a.lado, b.lado) ? holgura : 0;
@@ -2132,7 +2163,8 @@ if (partido) warns.push(`<div><b>ℹ L=${L} mm > 7000:</b> ${t('alert.partido')}
 
 refs.alertOut.innerHTML =
 (alerts.length ? `<div class="alert err animate-render">${alerts.join('')}</div>` : '') +
-(warns.length ? `<div class="alert warn animate-render">${warns.join('')}</div>` : '');
+(warns.length ? `<div class="alert warn animate-render">${warns.join('')}</div>` : '') +
+(medidasCodo.length ? `<div class="alert no-print animate-render" style="display:block; border:1px dashed #c99; background:#fff6f6; color:#333;"><div style="font-weight:700; color:#a33; margin-bottom:4px;">🔒 ${t('nv.control')}</div>${medidasCodo.map(m => `<div>${m}</div>`).join('')}</div>` : '');
 
 if (L <= 0 && n === 0) {
 refs.planoOut.innerHTML = `
